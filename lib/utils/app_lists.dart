@@ -28,4 +28,13 @@ class AppLists {
     "Thailand",
     "United Arab Emirates",
   ];
+
+  static const List<String> categories = [
+    "Adventure",
+    "Beach",
+    "Cultural",
+    "Family",
+    "Romantic",
+    "Wildlife",
+  ];
 }

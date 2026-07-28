@@ -10,4 +10,5 @@ class AppColors {
   static const Color success = Colors.green;
   static const Color error = Colors.redAccent;
   static const Color disabled = Color(0xFFBDBDBD);
+  static const Color buttonColor = Colors.blue;
 }

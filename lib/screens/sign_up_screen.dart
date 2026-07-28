@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
+import 'package:travel_buddy_finder/screens/login_screen.dart';
+import 'package:travel_buddy_finder/screens/main_nav_screen.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_lists.dart';
@@ -441,7 +443,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => AddNewTripScreen()));
+                                builder: (context) => MainNavScreen()));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -470,7 +472,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AddNewTripScreen(),
+                              builder: (context) => const LoginScreen(),
                             ),
                           );
                         },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/screens/main_nav_screen.dart';
 import 'package:travel_buddy_finder/screens/sign_up_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/utils/validators.dart';
@@ -29,15 +30,25 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Login Successful 🎉"),
+          duration: Duration(seconds: 1),
         ),
       );
 
-      // TODO: Navigate to Home Screen
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainNavScreen(),
+        ),
+      );
     }
   }
 
@@ -154,7 +165,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: _login,
+                        onPressed: () {
+                          _login();
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(

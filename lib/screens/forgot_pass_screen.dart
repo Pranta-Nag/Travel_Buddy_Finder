@@ -86,7 +86,6 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     if (!otpSent) ...[
                       TextFormField(
                         controller: _emailController,
@@ -100,14 +99,24 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
                       const SizedBox(height: 25),
                       SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 45,
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              )),
                           onPressed: _sendOtp,
-                          child: const Text("Send OTP"),
+                          child: const Text(
+                            "Send OTP",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ],
-
                     if (otpSent) ...[
                       TextFormField(
                         controller: _otpController,

@@ -1,4 +1,4 @@
-import 'dart:typed_data'; // Imported for Uint8List
+import 'dart:typed_data'; 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -13,12 +13,10 @@ class AddNewTripScreen extends StatefulWidget {
   @override
   State<AddNewTripScreen> createState() => _AddNewTripScreenState();
 }
-
 class _AddNewTripScreenState extends State<AddNewTripScreen> {
   String? _selectedCategory;
   final ImagePicker _picker = ImagePicker();
 
-  // Changed from File? to Uint8List? for cross-platform support
   Uint8List? _coverImageBytes;
 
   final TextEditingController _tripNameController = TextEditingController();
@@ -64,8 +62,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // Trip Title
                   const Text(
                     "TRIP TITLE",
                     style: TextStyle(
@@ -86,8 +82,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // Destination
                   const Text(
                     "DESTINATION CITY",
                     style: TextStyle(
@@ -108,8 +102,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // Dates Row
                   Row(
                     children: [
                       Expanded(
@@ -169,8 +161,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // Budget + Category
                   Row(
                     children: [
                       Expanded(
@@ -243,8 +233,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // Description
                   const Text(
                     "DESCRIPTION & PACE",
                     style: TextStyle(

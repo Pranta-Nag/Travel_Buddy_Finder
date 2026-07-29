@@ -5,6 +5,7 @@ import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/utils/validators.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/screens/forgot_pass_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -152,7 +153,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Forgot Password
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPassScreen(),
+                            ),
+                          );
                         },
                         child: const Text(
                           "Forgot Password?",

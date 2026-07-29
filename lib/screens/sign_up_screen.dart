@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
 import 'package:travel_buddy_finder/screens/login_screen.dart';
 import 'package:travel_buddy_finder/screens/main_nav_screen.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
@@ -29,11 +28,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   String? _selectedGender = AppLists.genders.first;
   String? _selectedCountry = AppLists.countries.first;
   bool _agreeTerms = false;
   bool? _usernameAvailable;
+  bool _obscurePassword = true;
 
   Future<({File? file, Uint8List? bytes})?> _pickImage() async {
     try {
@@ -102,7 +104,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _showMessage(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.success),
+        ),
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 
@@ -135,6 +143,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_validateExtraFields()) return;
 
     _showMessage("Registration Successful 🎉");
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MainNavScreen()),
+      (route) => false,
+    );
   }
 
   Widget fieldLabel(String title) {
@@ -157,6 +171,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _fullNameController.dispose();
     _usernameController.dispose();
     _dobController.dispose();
+    _passwordController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -192,8 +208,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
-                  // Profile Image Picker
                   Center(
                     child: GestureDetector(
                       onTap: _pickProfileImage,
@@ -369,7 +383,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ),
-
                   if (_nidImageBytes != null) ...[
                     const SizedBox(height: 15),
                     Container(
@@ -412,6 +425,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  fieldLabel("Email"),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: AppValidators.email,
+                    decoration: inputDecoration(
+                      hint: "Enter your email",
+                      suffixIcon: const Icon(Icons.email),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  fieldLabel("Password"),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: inputDecoration(
+                      hint: "Enter your password",
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: AppValidators.password,
+                  ),
+                  const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -439,12 +485,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   SizedBox(
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => MainNavScreen()));
-                      },
+                      onPressed: _signUp,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         elevation: 0,

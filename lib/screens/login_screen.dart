@@ -29,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  //Snackbar and Navigation to MainNavScreen
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -50,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
-
+  
   Widget fieldLabel(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -65,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,6 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 35),
+
+                    // Username Field
                     fieldLabel("Username"),
                     TextFormField(
                       controller: _usernameController,
@@ -113,6 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: AppValidators.username,
                     ),
                     const SizedBox(height: 20),
+
+                    // Password Field
                     fieldLabel("Password"),
                     TextFormField(
                       controller: _passwordController,
@@ -135,6 +140,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: AppValidators.password,
                     ),
                     const SizedBox(height: 12),
+
+                    // Forgot Password Button
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -152,6 +159,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
+
+                    // Login Button
                     SizedBox(
                       height: 55,
                       child: ElevatedButton(
@@ -173,6 +182,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 25),
+
+                    // Sign Up Button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

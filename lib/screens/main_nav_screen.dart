@@ -29,16 +29,16 @@ class _MainNavScreenState extends State<MainNavScreen> {
         preferredSize: const Size.fromHeight(70),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Title and Subtitle Section
-                Column(
+              const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children:[
                     Text(
                       "EXPLORE FEED",
                       style: TextStyle(
@@ -59,8 +59,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     ),
                   ],
                 ),
-
-                // Notification Bell
                 Stack(
                   children: [
                     Container(
@@ -73,9 +71,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                           Icons.notifications_none_outlined,
                           color: Colors.black87,
                         ),
-                        onPressed: () {
-                         
-                        },
+                        onPressed: () {},
                       ),
                     ),
                     Positioned(
@@ -88,7 +84,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: const Text(
-                          '2',
+                          "2",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -105,14 +101,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
         ),
       ),
 
-  
       body: _screens[_currentIndex],
 
-      // BOTTOM NAV BAR 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Add New Trip Screen
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -140,33 +133,25 @@ class _MainNavScreenState extends State<MainNavScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Home Tab
               _buildNavItem(
                 icon: Icons.explore_outlined,
                 activeIcon: Icons.explore,
                 label: "HOME",
                 index: 0,
               ),
-
-              // Explore Tab
               _buildNavItem(
                 icon: Icons.search,
                 activeIcon: Icons.search,
                 label: "EXPLORE",
                 index: 1,
               ),
-
-              const SizedBox(width: 48), 
-
-              // Chat Tab
+              const SizedBox(width: 48),
               _buildNavItem(
                 icon: Icons.chat_bubble_outline_rounded,
                 activeIcon: Icons.chat_bubble_rounded,
                 label: "CHAT",
                 index: 2,
               ),
-
-              // Profile Tab
               _buildNavItem(
                 icon: Icons.person_outline_rounded,
                 activeIcon: Icons.person_rounded,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class TripCard extends StatefulWidget {
   const TripCard({super.key});
@@ -17,7 +18,7 @@ class _TripCardState extends State<TripCard> {
       height: 300,
       child: Card(
         elevation: 2,
-        shadowColor: Colors.grey.shade300,
+        shadowColor: AppColors.greyText.withOpacity(0.2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -77,7 +78,7 @@ class _TripCardState extends State<TripCard> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.primary.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(

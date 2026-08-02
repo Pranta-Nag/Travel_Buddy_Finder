@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/widgets/trip_card.dart';
 
 class MainNavScreen extends StatefulWidget {
   const MainNavScreen({super.key});
@@ -22,7 +23,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
 
       // Top Bar
       appBar: PreferredSize(
@@ -35,10 +36,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-              const Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children:[
+                  children: [
                     Text(
                       "EXPLORE FEED",
                       style: TextStyle(
@@ -54,7 +55,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -63,7 +64,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: AppColors.primary.withOpacity(0.10),
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
@@ -101,7 +102,24 @@ class _MainNavScreenState extends State<MainNavScreen> {
         ),
       ),
 
-      body: _screens[_currentIndex],
+      body: _currentIndex == 0
+          ? Padding(
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                itemCount: 10,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount:
+                      MediaQuery.of(context).size.width < 600 ? 1 : 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  mainAxisExtent: 350,
+                ),
+                itemBuilder: (context, index) {
+                  return const TripCard();
+                },
+              ),
+            )
+          : _screens[_currentIndex],
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
@@ -119,14 +137,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
         child: const Icon(
           Icons.add,
           color: Colors.white,
-          size: 30,
+          size: 20,
         ),
       ),
 
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
-        color: Colors.white,
+        color: AppColors.background,
         elevation: 10,
         child: SizedBox(
           height: 60,

@@ -136,7 +136,10 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
                         height: 50,
                         child: ElevatedButton(
                           onPressed: _verifyOtp,
-                          child: const Text("Verify OTP"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                          ),
+                          child: const Text("Verify OTP",style: TextStyle(color: AppColors.fieldColor)),
                         ),
                       ),
                     ],

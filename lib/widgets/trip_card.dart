@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/screens/comment_screen.dart';
+import 'package:travel_buddy_finder/screens/rating_screen.dart';
+import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class TripCard extends StatefulWidget {
@@ -11,6 +14,7 @@ class TripCard extends StatefulWidget {
 class _TripCardState extends State<TripCard> {
   bool isFavorite = false;
   bool isBookmarked = false;
+  bool isRated = false;
 
   @override
   Widget build(BuildContext context) {
@@ -130,31 +134,61 @@ class _TripCardState extends State<TripCard> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        const CircleAvatar(
-                          radius: 16,
-                          backgroundImage: NetworkImage(
-                            "https://randomuser.me/api/portraits/women/68.jpg",
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UserProfileScreen(
+                                  name: "Yuki Tanaka",
+                                  username: "@yukitravels",
+                                  avatarUrl:
+                                      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrxDFKgAYu8ljREtSQvGVItBppd7lZZ0jyvTdBJ5EMLA&s=10",
+                                ),
+                              ),
+                            );
+                          },
+                          child: const CircleAvatar(
+                            radius: 16,
+                            backgroundImage: NetworkImage(
+                              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrxDFKgAYu8ljREtSQvGVItBppd7lZZ0jyvTdBJ5EMLA&s=10",
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "By Yuki Tanaka",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UserProfileScreen(
+                                    name: "Yuki Tanaka",
+                                    username: "@yukitravels",
+                                    avatarUrl:
+                                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrxDFKgAYu8ljREtSQvGVItBppd7lZZ0jyvTdBJ5EMLA&s=10",
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "@yukitravels",
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
+                              );
+                            },
+                            child: const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "By Yuki Tanaka",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  "@yukitravels",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         Container(
@@ -194,7 +228,14 @@ class _TripCardState extends State<TripCard> {
                         const SizedBox(width: 8),
                         _actionButton(
                           icon: Icons.chat_bubble_outline,
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CommentScreen(),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 8),
                         _actionButton(
@@ -207,6 +248,21 @@ class _TripCardState extends State<TripCard> {
                             setState(() {
                               isBookmarked = !isBookmarked;
                             });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        _actionButton(
+                          icon: isRated ? Icons.star : Icons.star_border,
+                          color: isRated
+                              ? Colors.orange.shade600
+                              : Colors.grey.shade700,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RatingScreen(),
+                              ),
+                            );
                           },
                         ),
                         const Spacer(),
@@ -224,19 +280,19 @@ class _TripCardState extends State<TripCard> {
                             child: const Text("Join Trip"),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          height: 42,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {},
-                            child: const Text("View"),
-                          ),
-                        ),
+                        // const SizedBox(width: 8),
+                        // SizedBox(
+                        //   height: 42,
+                        //   child: OutlinedButton(
+                        //     style: OutlinedButton.styleFrom(
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(12),
+                        //       ),
+                        //     ),
+                        //     onPressed: () {},
+                        //     child: const Text("View"),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ],

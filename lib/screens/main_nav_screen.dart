@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
+import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/trip_card.dart';
 
@@ -17,7 +18,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
     const Center(child: Text("Home Screen")),
     const Center(child: Text("Explore Screen")),
     const Center(child: Text("Chat Screen")),
-    const Center(child: Text("Profile Screen")),
+    const UserProfileScreen(),
   ];
 
   @override

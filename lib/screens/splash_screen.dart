@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/login_screen.dart';
 import 'package:travel_buddy_finder/utils/asset_path.dart';
@@ -36,8 +35,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Center(
           child: Image.asset(
             AssetsPath.logoImg,
-            width: 180,
-            height: 180,
+            width: 300,
+            height: 300,
           ),
         ),
       ),

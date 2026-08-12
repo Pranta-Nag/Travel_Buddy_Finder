@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/screens/main_nav_screen.dart';
 import 'package:travel_buddy_finder/screens/sign_up_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/utils/validators.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/screens/forgot_pass_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,10 +17,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _usernameController =
-  TextEditingController();
-  final TextEditingController _passwordController =
-  TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
 
@@ -29,18 +29,29 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  //Snackbar and Navigation to MainNavScreen
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Login Successful 🎉"),
+          duration: Duration(seconds: 5),
         ),
       );
 
-      // TODO: Navigate to Home Screen
+      // await Future.delayed(const Duration(seconds: 1));
+
+      //  if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainNavScreen(),
+        ),
+      );
     }
   }
-
+  
   Widget fieldLabel(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -55,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,9 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 80,
                       color: AppColors.primary,
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       "Welcome Back",
                       textAlign: TextAlign.center,
@@ -85,9 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     const Text(
                       "Login to continue your journey.",
                       textAlign: TextAlign.center,
@@ -96,11 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 14,
                       ),
                     ),
-
                     const SizedBox(height: 35),
 
+                    // Username Field
                     fieldLabel("Username"),
-
                     TextFormField(
                       controller: _usernameController,
                       decoration: inputDecoration(
@@ -109,11 +115,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: AppValidators.username,
                     ),
-
                     const SizedBox(height: 20),
 
+                    // Password Field
                     fieldLabel("Password"),
-
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -134,23 +139,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       validator: AppValidators.password,
                     ),
-
                     const SizedBox(height: 12),
 
+                    // Forgot Password Button
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Forgot Password
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPassScreen(),
+                            ),
+                          );
                         },
                         child: const Text(
                           "Forgot Password?",
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
 
+                    // Login Button
                     SizedBox(
                       height: 55,
                       child: ElevatedButton(
@@ -158,8 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: const Text(
@@ -172,12 +181,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 25),
 
+                    // Sign Up Button
                     Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
                           "Don't have an account?",
@@ -187,8 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                const SignUpScreen(),
+                                builder: (_) => const SignUpScreen(),
                               ),
                             );
                           },

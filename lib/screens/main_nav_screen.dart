@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
+import 'package:travel_buddy_finder/models/trip.dart';
+import 'package:travel_buddy_finder/models/trip_data.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/utils/bookmark_store.dart';
 import 'package:travel_buddy_finder/widgets/trip_card.dart';
 
 class MainNavScreen extends StatefulWidget {
@@ -107,7 +110,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
           ? Padding(
               padding: const EdgeInsets.all(16),
               child: GridView.builder(
-                itemCount: 10,
+                itemCount: tripList.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount:
                       MediaQuery.of(context).size.width < 600 ? 1 : 2,
@@ -116,7 +119,47 @@ class _MainNavScreenState extends State<MainNavScreen> {
                   mainAxisExtent: 350,
                 ),
                 itemBuilder: (context, index) {
-                  return const TripCard();
+                  final trip = tripList[index];
+                  return ValueListenableBuilder<List<Trip>>(
+                    valueListenable: BookmarkStore.savedTrips,
+                    builder: (context, savedTrips, _) => TripCard(
+                      trip: trip,
+                      isBookmarked:
+                          savedTrips.any((item) => item.id == trip.id),
+                      onBookmarkToggle: () => BookmarkStore.toggle(trip),
+                      onDelete: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Trip'),
+                            content: Text(
+                                'Are you sure you want to delete "${trip.title}"?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed == true) {
+                          setState(() {
+                            tripList.removeWhere((t) => t.id == trip.id);
+                            BookmarkStore.remove(trip.id);
+                          });
+                        }
+                      },
+                    ),
+                  );
                 },
               ),
             )
@@ -124,13 +167,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const AddNewTripScreen(),
             ),
           );
+          setState(() {});
         },
         backgroundColor: AppColors.primary,
         shape: const CircleBorder(),

@@ -1,330 +1,224 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/screens/rating_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class TripCard extends StatefulWidget {
-  const TripCard({super.key});
+  const TripCard(
+      {super.key,
+      required this.trip,
+      required this.isBookmarked,
+      this.onBookmarkToggle,
+      this.onDelete});
+
+  final Trip trip;
+  final bool isBookmarked;
+  final VoidCallback? onBookmarkToggle;
+  final VoidCallback? onDelete;
 
   @override
   State<TripCard> createState() => _TripCardState();
 }
 
 class _TripCardState extends State<TripCard> {
-  bool isFavorite = false;
-  bool isBookmarked = false;
-  bool isRated = false;
+  bool _isLiked = false;
 
   @override
   Widget build(BuildContext context) {
+    final bool isOwner = widget.trip.hostName == 'You' && widget.trip.username == '@you';
     return SizedBox(
-      height: 300,
+      // The content below the image needs enough vertical space in both the
+      // feed grid and the saved-trips list.
+      height: 340,
       child: Card(
         elevation: 2,
-        shadowColor: AppColors.greyText.withOpacity(0.2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: Image.network(
-                    "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800",
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          color: Colors.white,
-                          size: 14,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          "Kyoto, Japan",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      "\$1450",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+        shadowColor: AppColors.greyText.withOpacity(.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Stack(children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+            child: widget.trip.imageBytes != null
+                ? Image.memory(
+                    widget.trip.imageBytes!,
+                    height: 160, width: double.infinity, fit: BoxFit.cover)
+                : Image.network(widget.trip.imageUrl,
+                    height: 160, width: double.infinity, fit: BoxFit.cover),
             ),
-            Expanded(
+            Positioned(
+                left: 12,
+                bottom: 12,
+                child: _pill(Icons.location_on, widget.trip.location, Colors.black54)),
+            Positioned(
+                top: 12,
+                right: 12,
+                child:
+                    _pill(null, widget.trip.price, AppColors.primary.withOpacity(.9))),
+          ]),
+          Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Kyoto Autumn Shrines & Tea Ceremony",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: Colors.orange.shade600,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "4.8",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
+            padding: const EdgeInsets.all(14),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(widget.trip.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 10),
+              Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.star, color: Colors.orange.shade600, size: 18),
+                    const SizedBox(width: 4),
+                    Text(widget.trip.rating,
+                        style: const TextStyle(fontWeight: FontWeight.w600))
+                  ])),
+              const SizedBox(height: 12),
+              Row(children: [
+                GestureDetector(
+                    onTap: () => _openProfile(context),
+                    child: CircleAvatar(
+                        radius: 16,
+                        backgroundImage: NetworkImage(widget.trip.avatarUrl))),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: GestureDetector(
+                        onTap: () => _openProfile(context),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('By ${widget.trip.hostName}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
+                              Text(widget.trip.username,
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 12))
+                            ]))),
+                Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Text('${widget.trip.seatsLeft} seats left',
+                        style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600))),
+              ]),
+              const Spacer(),
+               Row(children: [
+                 _actionButton(
+                     _isLiked ? Icons.favorite : Icons.favorite_border,
+                     _isLiked ? Colors.red : Colors.grey.shade700,
+                     () {
+                       setState(() {
+                         _isLiked = !_isLiked;
+                       });
+                       if (_isLiked) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                           SnackBar(content: Text('You liked ${widget.trip.title}')),
+                         );
+                       }
+                     }),
+                 const SizedBox(width: 8),
+                 _actionButton(
+                     Icons.chat_bubble_outline,
+                     Colors.grey.shade700,
+                     () => Navigator.push(
+                         context,
+                         MaterialPageRoute(
+                             builder: (_) => const CommentScreen()))),
+                 const SizedBox(width: 8),
+                 _actionButton(
+                     widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                     widget.isBookmarked ? Colors.blue : Colors.grey.shade700,
+                     widget.onBookmarkToggle ?? () {}),
+                 const SizedBox(width: 8),
+                 _actionButton(
+                     Icons.star_border,
+                     Colors.grey.shade700,
+                     () => Navigator.push(
+                         context,
+                         MaterialPageRoute(
+                             builder: (_) => const RatingScreen()))),
+                 if (isOwner && widget.onDelete != null) ...[
+                   const SizedBox(width: 8),
+                   _actionButton(
+                       Icons.delete_outline,
+                       Colors.red,
+                       widget.onDelete!),
+                 ],
+                 const Spacer(),
+                SizedBox(
+                    height: 42,
+                    child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const UserProfileScreen(
-                                  name: "Yuki Tanaka",
-                                  username: "@yukitravels",
-                                  avatarUrl:
-                                      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrxDFKgAYu8ljREtSQvGVItBppd7lZZ0jyvTdBJ5EMLA&s=10",
-                                ),
-                              ),
-                            );
-                          },
-                          child: const CircleAvatar(
-                            radius: 16,
-                            backgroundImage: NetworkImage(
-                              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrxDFKgAYu8ljREtSQvGVItBppd7lZZ0jyvTdBJ5EMLA&s=10",
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const UserProfileScreen(
-                                    name: "Yuki Tanaka",
-                                    username: "@yukitravels",
-                                    avatarUrl:
-                                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrxDFKgAYu8ljREtSQvGVItBppd7lZZ0jyvTdBJ5EMLA&s=10",
-                                  ),
-                                ),
-                              );
-                            },
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "By Yuki Tanaka",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  "@yukitravels",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            "2 seats left",
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        _actionButton(
-                          icon: isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : Colors.grey.shade700,
-                          onPressed: () {
-                            setState(() {
-                              isFavorite = !isFavorite;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _actionButton(
-                          icon: Icons.chat_bubble_outline,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CommentScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _actionButton(
-                          icon: isBookmarked
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          color:
-                              isBookmarked ? Colors.blue : Colors.grey.shade700,
-                          onPressed: () {
-                            setState(() {
-                              isBookmarked = !isBookmarked;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        _actionButton(
-                          icon: isRated ? Icons.star : Icons.star_border,
-                          color: isRated
-                              ? Colors.orange.shade600
-                              : Colors.grey.shade700,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RatingScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const Spacer(),
-                        SizedBox(
-                          height: 42,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                        ElevatedButton(
                             onPressed: () {},
-                            child: const Text("Join Trip"),
-                          ),
-                        ),
-                        // const SizedBox(width: 8),
-                        // SizedBox(
-                        //   height: 42,
-                        //   child: OutlinedButton(
-                        //     style: OutlinedButton.styleFrom(
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(12),
-                        //       ),
-                        //     ),
-                        //     onPressed: () {},
-                        //     child: const Text("View"),
-                        //   ),
-                        // ),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10))),
+                            child: const Text('Join Trip')),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.grey.shade700,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10))),
+                            child: const Text('View Trip')),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+                    ),),
+              ]),
+            ]),
+          )),
+        ]),
       ),
     );
   }
 
-  Widget _actionButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-    Color color = Colors.grey,
-  }) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        splashRadius: 20,
-        iconSize: 20,
-        color: color,
-        onPressed: onPressed,
-        icon: Icon(icon),
-      ),
-    );
-  }
+  Widget _pill(IconData? icon, String label, Color color) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration:
+          BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icon != null) ...[
+          const Icon(Icons.location_on, color: Colors.white, size: 14),
+          const SizedBox(width: 4)
+        ],
+        Text(label,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))
+      ]));
+  Widget _actionButton(
+          IconData icon, Color color, VoidCallback onPressed) =>
+      Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(10)),
+          child: IconButton(
+              padding: EdgeInsets.zero,
+              splashRadius: 20,
+              iconSize: 20,
+              color: color,
+              onPressed: onPressed,
+              icon: Icon(icon)));
+  void _openProfile(BuildContext context) => Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => UserProfileScreen(
+              name: widget.trip.hostName,
+              username: widget.trip.username,
+              avatarUrl: widget.trip.avatarUrl)));
 }

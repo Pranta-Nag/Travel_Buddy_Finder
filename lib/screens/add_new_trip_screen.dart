@@ -2,10 +2,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/utils/app_lists.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/models/trip_data.dart';
 
 class AddNewTripScreen extends StatefulWidget {
   const AddNewTripScreen({super.key});
@@ -374,6 +376,24 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
 
   void _submitTrip() {
     if (_formKey.currentState!.validate() && _validateExtraFields()) {
+      final newTrip = Trip(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: _tripNameController.text.trim(),
+        location: _destinationController.text.trim(),
+        price: '\$${_budgetController.text.trim()}',
+        rating: '0.0',
+        hostName: 'You',
+        username: '@you',
+        imageUrl:
+            'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        seatsLeft: 2,
+        imageBytes: _coverImageBytes,
+      );
+
+      tripList.add(newTrip);
+      Navigator.pop(context);
       _showMessage("Trip published successfully!");
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/screens/comment_screen.dart';
+import 'package:travel_buddy_finder/screens/edit_trip_screen.dart';
 import 'package:travel_buddy_finder/screens/rating_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
@@ -47,6 +48,34 @@ class _TripCardState extends State<TripCard> {
                     height: 160, width: double.infinity, fit: BoxFit.cover)
                 : Image.network(widget.trip.imageUrl,
                     height: 160, width: double.infinity, fit: BoxFit.cover),
+            ),
+            Positioned(
+                top: 12,
+                left: 12,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditTripScreen(trip: widget.trip),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                        )
+                      ],
+                    ),
+                    child: const Icon(Icons.edit, size: 16, color: Colors.blue),
+                  ),
+                ),
             ),
             Positioned(
                 left: 12,

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 class Trip {
-  const Trip({
+  Trip({
     required this.id,
     required this.title,
     required this.location,
@@ -19,11 +19,11 @@ class Trip {
       title,
       location,
       price,
-      rating,
       hostName,
       username,
       imageUrl,
       avatarUrl;
+  String rating;
   final int seatsLeft;
   final Uint8List? imageBytes;
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class RatingScreen extends StatefulWidget {
-  final String buddyName;
-  const RatingScreen({super.key, this.buddyName = "Yuki"});
+  final Trip? trip;
+  const RatingScreen({super.key, this.trip});
 
   @override
   State<RatingScreen> createState() => _RatingScreenState();
@@ -19,8 +20,34 @@ class _RatingScreenState extends State<RatingScreen> {
     super.dispose();
   }
 
+  void _submitRating() {
+    if (_rating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a star rating")),
+      );
+      return;
+    }
+
+    if (widget.trip != null) {
+      // Logic: Update the rating. 
+      // For simplicity, we are setting the rating to the new value.
+      setState(() {
+        widget.trip!.rating = _rating.toDouble().toStringAsFixed(1);
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Review submitted successfully!")),
+    );
+    
+    // Return to the previous screen
+    Navigator.pop(context, true); 
+  }
+
   @override
   Widget build(BuildContext context) {
+    String name = widget.trip?.hostName ?? "Yuki";
+    
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -47,7 +74,7 @@ class _RatingScreenState extends State<RatingScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              "Rate ${widget.buddyName} and your other travel buddies to build community trust scores.",
+              "Rate $name and your other travel buddies to build community trust scores.",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -120,12 +147,7 @@ class _RatingScreenState extends State<RatingScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  // Handle submission logic
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Review submitted successfully!")),
-                  );
-                },
+                onPressed: _submitRating,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

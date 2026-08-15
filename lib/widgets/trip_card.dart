@@ -171,10 +171,17 @@ class _TripCardState extends State<TripCard> {
                  _actionButton(
                      Icons.star_border,
                      Colors.grey.shade700,
-                     () => Navigator.push(
+                     () async {
+                       final updated = await Navigator.push(
                          context,
                          MaterialPageRoute(
-                             builder: (_) => const RatingScreen()))),
+                           builder: (_) => RatingScreen(trip: widget.trip),
+                         ),
+                       );
+                       if (updated == true && mounted) {
+                         setState(() {}); // Refresh this specific card
+                       }
+                     }),
                  if (isOwner && widget.onDelete != null) ...[
                    const SizedBox(width: 8),
                    _actionButton(

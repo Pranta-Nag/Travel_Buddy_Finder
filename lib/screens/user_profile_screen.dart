@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/screens/bookmarks_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class UserProfileScreen extends StatelessWidget {
@@ -121,9 +122,19 @@ class UserProfileScreen extends StatelessWidget {
                 spacing: 10,
                 runSpacing: 10,
                 children: [
-                  _buildQuickActionItem(Icons.bookmark_border_rounded, "Bookmark"),
-                  _buildQuickActionItem(Icons.fact_check_outlined, "Trip Approvals"),
-                  _buildQuickActionItem(Icons.directions_walk_rounded, "My Trips"),
+                  _buildQuickActionItem(
+                    Icons.bookmark_border_rounded,
+                    "Bookmark",
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const BookmarksScreen(),
+                      ),
+                    ),
+                  ),
+                  _buildQuickActionItem(
+                      Icons.fact_check_outlined, "Trip Approvals"),
+                  _buildQuickActionItem(
+                      Icons.directions_walk_rounded, "My Trips"),
                 ],
               ),
             ),
@@ -269,7 +280,8 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionItem(IconData icon, String label, {VoidCallback? onTap}) {
+  Widget _buildQuickActionItem(IconData icon, String label,
+      {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(12),

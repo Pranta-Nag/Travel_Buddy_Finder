@@ -4,27 +4,61 @@ import 'package:travel_buddy_finder/utils/app_colors.dart';
 InputDecoration inputDecoration({
   String? hint,
   Widget? suffixIcon,
+  Widget? prefixIcon,
 }) {
+  OutlineInputBorder border(Color color, {double width = 1}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide(
+        color: color,
+        width: width,
+      ),
+    );
+  }
+
   return InputDecoration(
     hintText: hint,
+    prefixIcon: prefixIcon,
     suffixIcon: suffixIcon,
+
     filled: true,
     fillColor: AppColors.fieldColor,
+
+    hintStyle: TextStyle(
+      color: AppColors.greyText.withValues(alpha: 0.65),
+      fontSize: 14,
+    ),
+
+    prefixIconColor: AppColors.greyText,
+
     contentPadding: const EdgeInsets.symmetric(
       horizontal: 16,
-      vertical: 14,
+      vertical: 15,
     ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderColor),
+
+    border: border(AppColors.borderColor),
+
+    enabledBorder: border(
+      AppColors.borderColor,
     ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.borderColor),
+
+    focusedBorder: border(
+      AppColors.primary,
+      width: 1.5,
     ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.primary),
+
+    errorBorder: border(
+      Colors.redAccent,
+    ),
+
+    focusedErrorBorder: border(
+      Colors.redAccent,
+      width: 1.5,
+    ),
+
+    errorStyle: const TextStyle(
+      fontSize: 11.5,
+      height: 1.3,
     ),
   );
 }

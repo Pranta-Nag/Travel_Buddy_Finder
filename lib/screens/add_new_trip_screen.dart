@@ -388,6 +388,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
             'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
         avatarUrl:
             'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        category: _selectedCategory ?? 'Adventure',
         seatsLeft: 2,
         imageBytes: _coverImageBytes,
       );

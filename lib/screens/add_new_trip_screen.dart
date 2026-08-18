@@ -1,4 +1,4 @@
-import 'dart:typed_data'; 
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -15,10 +15,10 @@ class AddNewTripScreen extends StatefulWidget {
   @override
   State<AddNewTripScreen> createState() => _AddNewTripScreenState();
 }
+
 class _AddNewTripScreenState extends State<AddNewTripScreen> {
   String? _selectedCategory;
   final ImagePicker _picker = ImagePicker();
-
   Uint8List? _coverImageBytes;
 
   final TextEditingController _tripNameController = TextEditingController();
@@ -46,284 +46,399 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Scaffold(
       body: ScreenBackground(
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    "CREATE NEW PUBLIC TRIP",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  const Text(
-                    "TRIP TITLE",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _tripNameController,
-                    decoration: inputDecoration(
-                      hint: "e.g. Summer Kyoto Temples Discovery",
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? "Enter trip title"
-                        : null,
-                  ),
-
-                  const SizedBox(height: 16),
-                  const Text(
-                    "DESTINATION CITY",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _destinationController,
-                    decoration: inputDecoration(
-                      hint: "e.g. Bali, Indonesia",
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? "Enter destination"
-                        : null,
-                  ),
-
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "START DATE",
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _startDateController,
-                              readOnly: true,
-                              onTap: () => _selectDate(_startDateController),
-                              decoration: inputDecoration(hint: "Select date"),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? "Select start date"
-                                      : null,
-                            ),
-                          ],
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Trip Details'),
+                        const SizedBox(height: 16),
+                        _buildLabel('Trip Title'),
+                        TextFormField(
+                          controller: _tripNameController,
+                          decoration: inputDecoration(
+                            hint: 'e.g. Summer Kyoto Temples Discovery',
+                            prefixIcon: const Icon(Icons.title),
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                                  ? 'Enter trip title'
+                                  : null,
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "END DATE",
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _endDateController,
-                              readOnly: true,
-                              onTap: () => _selectDate(_endDateController),
-                              decoration: inputDecoration(hint: "Select date"),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? "Select end date"
-                                      : null,
-                            ),
-                          ],
+
+                        const SizedBox(height: 16),
+                        _buildLabel('Destination City'),
+                        TextFormField(
+                          controller: _destinationController,
+                          decoration: inputDecoration(
+                            hint: 'e.g. Bali, Indonesia',
+                            prefixIcon: const Icon(Icons.location_on_rounded),
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                                  ? 'Enter destination'
+                                  : null,
                         ),
-                      ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 20),
+                        _buildSectionTitle('Schedule & Budget'),
+                        const SizedBox(height: 16),
+                        Row(
                           children: [
-                            const Text(
-                              "BUDGET",
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _budgetController,
-                              keyboardType: TextInputType.number,
-                              decoration: inputDecoration(
-                                hint: "\$1,200",
-                              ),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                      ? "Enter budget"
-                                      : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "CATEGORY",
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              value: _selectedCategory,
-                              decoration: inputDecoration(
-                                hint: "Adventure",
-                              ),
-                              isExpanded: true,
-                              items: AppLists.categories
-                                  .map(
-                                    (category) => DropdownMenuItem(
-                                      value: category,
-                                      child: Text(category),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedCategory = value;
-                                });
-                              },
-                              validator: (value) =>
-                                  value == null ? "Select category" : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-                  const Text(
-                    "DESCRIPTION & PACE",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextFormField(
-                    controller: _descriptionController,
-                    maxLines: 4,
-                    decoration: inputDecoration(
-                      hint:
-                          "Details about itinerary and partner expectations...",
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? "Enter description"
-                        : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  InkWell(
-                    onTap: _pickCoverImage,
-                    borderRadius: BorderRadius.circular(12),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        height: 170,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: _coverImageBytes != null
-                            ? Image.memory(
-                                _coverImageBytes!,
-                                fit: BoxFit.cover,
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.add_a_photo,
-                                    size: 40,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Upload Cover Photo',
-                                    style: TextStyle(color: Colors.grey[600]),
+                                  _buildLabel('Start Date'),
+                                  TextFormField(
+                                    controller: _startDateController,
+                                    readOnly: true,
+                                    onTap: () => _selectDate(_startDateController),
+                                    decoration: inputDecoration(
+                                      hint: 'Select date',
+                                      prefixIcon: const Icon(Icons.calendar_today_rounded),
+                                    ),
+                                    validator: (value) =>
+                                        value == null || value.isEmpty
+                                            ? 'Select start date'
+                                            : null,
                                   ),
                                 ],
                               ),
-                      ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('End Date'),
+                                  TextFormField(
+                                    controller: _endDateController,
+                                    readOnly: true,
+                                    onTap: () => _selectDate(_endDateController),
+                                    decoration: inputDecoration(
+                                      hint: 'Select date',
+                                      prefixIcon: const Icon(Icons.calendar_today_rounded),
+                                    ),
+                                    validator: (value) =>
+                                        value == null || value.isEmpty
+                                            ? 'Select end date'
+                                            : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('Budget'),
+                                  TextFormField(
+                                    controller: _budgetController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: inputDecoration(
+                                      hint: '\$1,200',
+                                      prefixIcon: const Icon(Icons.account_balance_wallet_rounded),
+                                    ),
+                                    validator: (value) =>
+                                        value == null || value.isEmpty
+                                            ? 'Enter budget'
+                                            : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('Category'),
+                                  DropdownButtonFormField<String>(
+                                    value: _selectedCategory,
+                                    decoration: inputDecoration(
+                                      hint: 'Adventure',
+                                      prefixIcon: const Icon(Icons.category_rounded),
+                                    ),
+                                    isExpanded: true,
+                                    items: AppLists.categories
+                                        .map(
+                                          (category) => DropdownMenuItem(
+                                            value: category,
+                                            child: Text(category),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedCategory = value;
+                                      });
+                                    },
+                                    validator: (value) =>
+                                        value == null ? 'Select category' : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+                        _buildSectionTitle('More Details'),
+                        const SizedBox(height: 16),
+                        _buildLabel('Description & Pace'),
+                        TextFormField(
+                          controller: _descriptionController,
+                          maxLines: 4,
+                          decoration: inputDecoration(
+                            hint: 'Details about itinerary and partner expectations...',
+                            prefixIcon: const Icon(Icons.description_rounded),
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                                  ? 'Enter description'
+                                  : null,
+                        ),
+
+                        const SizedBox(height: 20),
+                        _buildLabel('Cover Photo'),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: _pickCoverImage,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            height: 180,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: AppColors.fieldColor,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.borderColor.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: _coverImageBytes != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.memory(
+                                      _coverImageBytes!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withValues(alpha: 0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.add_a_photo_rounded,
+                                          size: 32,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Upload Cover Photo',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.greyText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Tap to select from gallery',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.greyText.withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+                        _buildActionButtons(),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Cancel"),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              AppColors.buttonColor,
-                            ),
-                          ),
-                          onPressed: _submitTrip,
-                          child: const Text(
-                            "Publish Trip",
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      ),
-                    ],
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(
+                Icons.arrow_back_ios_rounded,
+                color: AppColors.greyText,
+                size: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Create New Trip',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
-                ],
+                ),
+                Text(
+                  'Share your journey with fellow travelers',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.greyText.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.circle,
+            size: 6,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey.shade700,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              side: BorderSide(color: Colors.grey.shade300),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
         ),
-      ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _submitTrip,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.buttonColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Publish Trip',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

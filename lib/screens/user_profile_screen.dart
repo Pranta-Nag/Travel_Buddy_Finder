@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/bookmarks_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
 class UserProfileScreen extends StatelessWidget {
   final String name;
@@ -20,151 +21,152 @@ class UserProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-        child: Column(
-          children: [
-            // Profile Info Section
-            Column(
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundImage: NetworkImage(avatarUrl),
-                  backgroundColor: Colors.grey.shade200,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+      body: ScreenBackground(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          child: Column(
+            children: [
+              // Profile Info Section
+              Column(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage: NetworkImage(avatarUrl),
+                    backgroundColor: Colors.grey.shade200,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "$username • $level",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            // Stats Card
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildStatItem("12", "COMPLETED TRIPS"),
-                  _buildDivider(),
-                  _buildStatItem("342", "FOLLOWERS"),
-                  _buildDivider(),
-                  _buildStatItem("4.9", "AVG RATING"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Travel Interests Section
-            _buildSection(
-              title: "TRAVEL INTERESTS",
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _buildInterestChip("Solo Travel"),
-                  _buildInterestChip("Beach Volley"),
-                  _buildInterestChip("Photography"),
-                  _buildInterestChip("Backpacking"),
-                  _buildInterestChip("Zen Temples"),
-                  _buildInterestChip("Gourmet Eating"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Achievements Section
-            _buildSection(
-              title: "ACHIEVEMENTS / BADGES",
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _buildBadgeItem("🏅", "Wanderlust"),
-                  _buildBadgeItem("🔥", "5-Streak"),
-                  _buildBadgeItem("🛡️", "ID Verified"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Quick Actions Section
-            _buildSection(
-              title: "QUICK ACTIONS",
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _buildQuickActionItem(
-                    Icons.bookmark_border_rounded,
-                    "Bookmark",
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const BookmarksScreen(),
-                      ),
+                  const SizedBox(height: 16),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                  _buildQuickActionItem(
-                      Icons.fact_check_outlined, "Trip Approvals"),
-                  _buildQuickActionItem(
-                      Icons.directions_walk_rounded, "My Trips"),
+                  const SizedBox(height: 4),
+                  Text(
+                    "$username • $level",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 30),
-
-            // Manage Account Settings Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF111827),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
+              const SizedBox(height: 30),
+        
+              // Stats Card
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  "Manage Account Settings",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatItem("12", "COMPLETED TRIPS"),
+                    _buildDivider(),
+                    _buildStatItem("342", "FOLLOWERS"),
+                    _buildDivider(),
+                    _buildStatItem("4.9", "AVG RATING"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+        
+              // Travel Interests Section
+              _buildSection(
+                title: "TRAVEL INTERESTS",
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _buildInterestChip("Solo Travel"),
+                    _buildInterestChip("Beach Volley"),
+                    _buildInterestChip("Photography"),
+                    _buildInterestChip("Backpacking"),
+                    _buildInterestChip("Zen Temples"),
+                    _buildInterestChip("Gourmet Eating"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+        
+              // Achievements Section
+              _buildSection(
+                title: "ACHIEVEMENTS / BADGES",
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _buildBadgeItem("🏅", "Wanderlust"),
+                    _buildBadgeItem("🔥", "5-Streak"),
+                    _buildBadgeItem("🛡️", "ID Verified"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+        
+              // Quick Actions Section
+              _buildSection(
+                title: "QUICK ACTIONS",
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _buildQuickActionItem(
+                      Icons.bookmark_border_rounded,
+                      "Bookmark",
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BookmarksScreen(),
+                        ),
+                      ),
+                    ),
+                    _buildQuickActionItem(
+                        Icons.fact_check_outlined, "Trip Approvals"),
+                    _buildQuickActionItem(
+                        Icons.directions_walk_rounded, "My Trips"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+        
+              // Manage Account Settings Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF111827),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "Manage Account Settings",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

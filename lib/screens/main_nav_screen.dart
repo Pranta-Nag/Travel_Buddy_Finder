@@ -284,60 +284,95 @@ class _MainNavScreenState extends State<MainNavScreen> {
     );
   }
 
-  Widget _buildTripGrid() {
-    final crossAxisCount = MediaQuery.of(context).size.width < 600 ? 2 : 4;
-    final filteredTrips = _selectedCategory == 'All'
-        ? tripList
-        : tripList.where((t) => t.category == _selectedCategory).toList();
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: filteredTrips.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        mainAxisExtent: 360,
-      ),
-      itemBuilder: (context, index) {
-        final trip = filteredTrips[index];
-        return ValueListenableBuilder<List<dynamic>>(
-          valueListenable: BookmarkStore.savedTrips,
-          builder: (context, savedTrips, _) => TripCard(
+ Widget _buildTripGrid() {
+  final screenWidth = MediaQuery.of(context).size.width;
+
+  // Responsive grid
+  final crossAxisCount = screenWidth < 600
+      ? 1
+      : screenWidth < 1000
+          ? 2
+          : 4;
+
+  // Mobile card needs more height because
+  // action buttons are arranged in separate rows.
+  final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
+
+  final filteredTrips = _selectedCategory == 'All'
+      ? tripList
+      : tripList
+          .where((t) => t.category == _selectedCategory)
+          .toList();
+
+  return GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: filteredTrips.length,
+    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: crossAxisCount,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      mainAxisExtent: cardHeight,
+    ),
+    itemBuilder: (context, index) {
+      final trip = filteredTrips[index];
+
+      return ValueListenableBuilder<List<dynamic>>(
+        valueListenable: BookmarkStore.savedTrips,
+        builder: (context, savedTrips, _) {
+          return TripCard(
             trip: trip,
-            isBookmarked: savedTrips.any((item) => item.id == trip.id),
-            onBookmarkToggle: () => BookmarkStore.toggle(trip),
+            isBookmarked:
+                savedTrips.any((item) => item.id == trip.id),
+
+            onBookmarkToggle: () {
+              BookmarkStore.toggle(trip);
+            },
+
             onDelete: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Delete Trip'),
-                  content: Text('Are you sure you want to delete "${trip.title}"?'),
+                  content: Text(
+                    'Are you sure you want to delete "${trip.title}"?',
+                  ),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context, false),
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                      },
                       child: const Text('Cancel'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      onPressed: () {
+                        Navigator.pop(context, true);
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
                       child: const Text('Delete'),
                     ),
                   ],
                 ),
               );
+
               if (confirmed == true) {
                 setState(() {
-                  tripList.removeWhere((t) => t.id == trip.id);
+                  tripList.removeWhere(
+                    (t) => t.id == trip.id,
+                  );
+
                   BookmarkStore.remove(trip.id);
                 });
               }
             },
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
 
   Widget _buildNavItem({
     required IconData icon,

@@ -29,7 +29,7 @@ InputDecoration inputDecoration({
       fontSize: 14,
     ),
 
-    prefixIconColor: AppColors.greyText,
+    prefixIconColor: AppColors.primary,
 
     contentPadding: const EdgeInsets.symmetric(
       horizontal: 16,

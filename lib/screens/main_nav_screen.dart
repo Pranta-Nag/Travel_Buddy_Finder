@@ -4,6 +4,7 @@ import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/utils/bookmark_store.dart';
+import 'package:travel_buddy_finder/widgets/screen_background.dart';
 import 'package:travel_buddy_finder/widgets/trip_card.dart';
 
 class MainNavScreen extends StatefulWidget {
@@ -27,10 +28,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
+      body: ScreenBackground(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: screens,
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Container(
@@ -155,7 +157,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade900,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -269,7 +271,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             minimumSize: const Size(0, 0),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Text(
+          child:const Text(
             'See All',
             style: TextStyle(
               fontSize: 12,

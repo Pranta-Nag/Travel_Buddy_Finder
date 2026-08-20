@@ -15,6 +15,8 @@ List<Trip> tripList = [
     avatarUrl:
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
     category: 'Cultural',
+    genderPreference: 'Any (Everyone is welcome)',
+    transportationMethods: ['Flight', 'Public Bus'],
   ),
   Trip(
     id: 'bali',
@@ -29,6 +31,8 @@ List<Trip> tripList = [
     avatarUrl:
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
     category: 'Beach',
+    genderPreference: 'Female Only',
+    transportationMethods: ['Road Trip / Carpool'],
   ),
   Trip(
     id: 'santorini',
@@ -43,6 +47,8 @@ List<Trip> tripList = [
     avatarUrl:
         'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
     category: 'Romantic',
+    genderPreference: 'Any (Everyone is welcome)',
+    transportationMethods: ['Sailing Boat'],
   ),
   Trip(
     id: 'trey-canyon',
@@ -56,6 +62,8 @@ List<Trip> tripList = [
     avatarUrl:
         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBe9VHBu8WvoWi8MGdDYhqdUPnfD_sFiNrrA0LWuxPvA&s=10',
     category: 'Adventure',
+    genderPreference: 'Male Only',
+    transportationMethods: ['Road Trip / Carpool'],
   ),
   Trip(
     id: 'paris',
@@ -69,5 +77,7 @@ List<Trip> tripList = [
     avatarUrl:
         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEt-6oY9sE8pUZV39-OyDto05yFN0fDmqSFHbZZAh1Rw&s=10',
     category: 'Cultural',
+    genderPreference: 'Any (Everyone is welcome)',
+    transportationMethods: ['Flight', 'Bullet Train'],
   ),
 ];

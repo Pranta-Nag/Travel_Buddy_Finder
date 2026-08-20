@@ -25,7 +25,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
       _buildHomeTab(),
       const ExploreScreen(),
       _ChatTab(),
-      const UserProfileScreen(),
+      UserProfileScreen(),
     ];
 
     return Scaffold(

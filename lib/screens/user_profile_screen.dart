@@ -1,13 +1,17 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/bookmarks_screen.dart';
+import 'package:travel_buddy_finder/screens/manage_account_settings_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
-class UserProfileScreen extends StatelessWidget {
+class UserProfileScreen extends StatefulWidget {
   final String name;
   final String username;
   final String level;
   final String avatarUrl;
+  final Uint8List? avatarBytes;
+  final bool isCurrentUser;
 
   const UserProfileScreen({
     super.key,
@@ -16,7 +20,44 @@ class UserProfileScreen extends StatelessWidget {
     this.level = "Level 4 Travel Guru",
     this.avatarUrl =
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80",
+    this.avatarBytes,
+    this.isCurrentUser = true,
   });
+
+  @override
+  State<UserProfileScreen> createState() => _UserProfileScreenState();
+}
+
+class _UserProfileScreenState extends State<UserProfileScreen> {
+  late String _name;
+  late String _username;
+  late String _avatarUrl;
+  Uint8List? _avatarBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = widget.name;
+    _username = widget.username;
+    _avatarUrl = widget.avatarUrl;
+    _avatarBytes = widget.avatarBytes;
+  }
+
+  void _updateProfile(Map<String, dynamic> data) {
+    setState(() {
+      _name = data['name'] as String;
+      _username = data['username'] as String;
+      _avatarUrl = data['avatarUrl'] as String;
+      _avatarBytes = data['avatarBytes'] as Uint8List?;
+    });
+  }
+
+  ImageProvider _getAvatarImage() {
+    if (_avatarBytes != null) {
+      return MemoryImage(_avatarBytes!);
+    }
+    return NetworkImage(_avatarUrl);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +67,16 @@ class UserProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
           child: Column(
             children: [
-              // Profile Info Section
               Column(
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundImage: NetworkImage(avatarUrl),
+                    backgroundImage: _getAvatarImage(),
                     backgroundColor: Colors.grey.shade200,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    name,
+                    _name,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -45,7 +85,7 @@ class UserProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "$username • $level",
+                    "$_username • ${widget.level}",
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade500,
@@ -55,8 +95,7 @@ class UserProfileScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 30),
-        
-              // Stats Card
+         
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
@@ -82,8 +121,7 @@ class UserProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-        
-              // Travel Interests Section
+         
               _buildSection(
                 title: "TRAVEL INTERESTS",
                 child: Wrap(
@@ -100,8 +138,7 @@ class UserProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-        
-              // Achievements Section
+         
               _buildSection(
                 title: "ACHIEVEMENTS / BADGES",
                 child: Wrap(
@@ -115,8 +152,7 @@ class UserProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-        
-              // Quick Actions Section
+         
               _buildSection(
                 title: "QUICK ACTIONS",
                 child: Wrap(
@@ -140,31 +176,48 @@ class UserProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-        
-              // Manage Account Settings Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF111827),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+          
+              if (widget.isCurrentUser) ...[
+                const SizedBox(height: 0),
+          
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ManageAccountSettingsScreen(
+                            name: _name,
+                            username: _username,
+                            avatarUrl: _avatarUrl,
+                            avatarBytes: _avatarBytes,
+                            onProfileUpdated: _updateProfile,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF111827),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Manage Account Settings",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: const Text(
+                      "Manage Account Settings",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
+              ] else
+                const SizedBox(height: 0),
             ],
           ),
         ),
@@ -257,9 +310,9 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildBadgeItem(String icon, String label) {
+  Widget _buildBadgeItem(String icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(12),

@@ -72,9 +72,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const Text(
                     "Advanced Search Filters",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
+                      color: AppColors.primary,
                     ),
                   ),
                   Icon(Icons.tune, color: AppColors.buttonColor),
@@ -188,7 +188,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       });
                     },
                     selectedColor: AppColors.buttonColor,
-                    backgroundColor: AppColors.fieldColor,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                     checkmarkColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),

@@ -526,6 +526,7 @@ class _TripCardState extends State<TripCard> {
           name: widget.trip.hostName,
           username: widget.trip.username,
           avatarUrl: widget.trip.avatarUrl,
+          isCurrentUser: false,
         ),
       ),
     );

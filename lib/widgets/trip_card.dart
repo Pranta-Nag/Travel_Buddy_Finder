@@ -4,6 +4,7 @@ import 'package:travel_buddy_finder/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/screens/edit_trip_screen.dart';
 import 'package:travel_buddy_finder/screens/rating_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
+import 'package:travel_buddy_finder/screens/view_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class TripCard extends StatefulWidget {
@@ -405,7 +406,14 @@ class _TripCardState extends State<TripCard> {
                         child: SizedBox(
                           height: 34,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ViewScreen(trip: widget.trip),
+                                ),
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor:

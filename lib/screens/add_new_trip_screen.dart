@@ -504,6 +504,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
         avatarUrl:
             'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
         category: _selectedCategory ?? 'Adventure',
+        description: _descriptionController.text.trim(),
         seatsLeft: 2,
         imageBytes: _coverImageBytes,
       );

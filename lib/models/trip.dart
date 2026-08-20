@@ -9,7 +9,8 @@ class Trip {
       username,
       imageUrl,
       avatarUrl,
-      category;
+      category,
+      description;
   String rating;
   final int seatsLeft;
   final Uint8List? imageBytes;
@@ -27,6 +28,7 @@ class Trip {
     required this.imageUrl,
     required this.avatarUrl,
     required this.category,
+    required this.description,
     this.seatsLeft = 2,
     this.imageBytes,
     this.genderPreference,

@@ -15,6 +15,7 @@ List<Trip> tripList = [
     avatarUrl:
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
     category: 'Cultural',
+    description: 'Experience the breathtaking beauty of Kyoto in autumn. We will visit ancient shrines, participate in a traditional tea ceremony, and enjoy the vibrant fall colors.',
     genderPreference: 'Any (Everyone is welcome)',
     transportationMethods: ['Flight', 'Public Bus'],
   ),
@@ -31,6 +32,7 @@ List<Trip> tripList = [
     avatarUrl:
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
     category: 'Beach',
+    description: 'Relax on the pristine beaches of Bali and embark on an unforgettable sunrise hike to Mount Batur. Perfect for nature lovers and beach enthusiasts.',
     genderPreference: 'Female Only',
     transportationMethods: ['Road Trip / Carpool'],
   ),
@@ -47,6 +49,7 @@ List<Trip> tripList = [
     avatarUrl:
         'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
     category: 'Romantic',
+    description: 'Enjoy a romantic escape to the stunning island of Santorini. Famous for its white-washed buildings, blue domes, and spectacular sunsets.',
     genderPreference: 'Any (Everyone is welcome)',
     transportationMethods: ['Sailing Boat'],
   ),
@@ -62,6 +65,7 @@ List<Trip> tripList = [
     avatarUrl:
         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBe9VHBu8WvoWi8MGdDYhqdUPnfD_sFiNrrA0LWuxPvA&s=10',
     category: 'Adventure',
+    description: 'Explore the rugged beauty of Trey Canyon. Ideal for hiking, rock climbing, and stargazing under the vast Utah sky.',
     genderPreference: 'Male Only',
     transportationMethods: ['Road Trip / Carpool'],
   ),
@@ -77,6 +81,7 @@ List<Trip> tripList = [
     avatarUrl:
         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEt-6oY9sE8pUZV39-OyDto05yFN0fDmqSFHbZZAh1Rw&s=10',
     category: 'Cultural',
+    description: 'Discover the charm of the City of Light. From the Eiffel Tower to the Louvre, experience the art, culture, and cuisine of Paris.',
     genderPreference: 'Any (Everyone is welcome)',
     transportationMethods: ['Flight', 'Bullet Train'],
   ),

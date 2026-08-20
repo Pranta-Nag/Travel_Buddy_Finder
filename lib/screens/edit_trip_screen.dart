@@ -38,7 +38,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
     _startDateController = TextEditingController(text: "15 Oct 2024"); // Dummy values as Trip model doesn't have these yet
     _endDateController = TextEditingController(text: "20 Oct 2024");
     _budgetController = TextEditingController(text: widget.trip.price.replaceAll('\$', ''));
-    _descriptionController = TextEditingController(text: "Join me for an amazing adventure!");
+    _descriptionController = TextEditingController(text: widget.trip.description);
     _coverImageBytes = widget.trip.imageBytes;
   }
 

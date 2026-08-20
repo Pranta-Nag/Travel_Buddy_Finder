@@ -1,6 +1,21 @@
 import 'dart:typed_data';
 
 class Trip {
+  final String id,
+      title,
+      location,
+      price,
+      hostName,
+      username,
+      imageUrl,
+      avatarUrl,
+      category;
+  String rating;
+  final int seatsLeft;
+  final Uint8List? imageBytes;
+  final String? genderPreference;
+  final List<String>? transportationMethods;
+
   Trip({
     required this.id,
     required this.title,
@@ -14,18 +29,7 @@ class Trip {
     required this.category,
     this.seatsLeft = 2,
     this.imageBytes,
+    this.genderPreference,
+    this.transportationMethods,
   });
-
-  final String id,
-      title,
-      location,
-      price,
-      hostName,
-      username,
-      imageUrl,
-      avatarUrl,
-      category;
-  String rating;
-  final int seatsLeft;
-  final Uint8List? imageBytes;
 }

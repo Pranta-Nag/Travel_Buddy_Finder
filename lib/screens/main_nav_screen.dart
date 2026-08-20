@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/screens/explore_screen.dart';
 import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
@@ -22,7 +23,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
   Widget build(BuildContext context) {
     final screens = <Widget>[
       _buildHomeTab(),
-      _ExploreTab(),
+      const ExploreScreen(),
       _ChatTab(),
       const UserProfileScreen(),
     ];
@@ -431,15 +432,6 @@ class _CategoryPill extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _ExploreTab extends StatelessWidget {
-  const _ExploreTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("Explore Screen"));
   }
 }
 

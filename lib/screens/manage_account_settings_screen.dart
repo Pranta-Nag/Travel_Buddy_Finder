@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/screens/change_password_screen.dart';
 import 'package:travel_buddy_finder/screens/edit_profile_screen.dart';
 import 'package:travel_buddy_finder/screens/login_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
@@ -69,7 +70,14 @@ class ManageAccountSettingsScreen extends StatelessWidget {
               icon: Icons.lock_outline_rounded,
               title: 'Change Password',
               subtitle: 'Update your password',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordScreen(),
+                  ),
+                );
+              },
             ),
             _buildTile(
               context,
@@ -215,7 +223,9 @@ class ManageAccountSettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: ListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         leading: Container(
@@ -251,6 +261,7 @@ class ManageAccountSettingsScreen extends StatelessWidget {
           color: Colors.grey.shade400,
           size: 20,
         ),
+      ),
       ),
     );
   }

@@ -181,13 +181,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                         ? MemoryImage(_avatarBytes!)
                                         : NetworkImage(widget.avatarUrl)
                                             as ImageProvider,
-                                    child: _avatarBytes == null
-                                        ? const Icon(
-                                            Icons.person_outlined,
-                                            size: 38,
-                                            color: AppColors.greyText,
-                                          )
-                                        : null,
+                                    onBackgroundImageError: (_, __) {},
                                   ),
                                 ),
                                 Positioned(

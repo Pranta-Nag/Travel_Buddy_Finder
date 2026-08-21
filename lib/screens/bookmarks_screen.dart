@@ -38,7 +38,7 @@ class BookmarksScreen extends StatelessWidget {
                       color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.bookmark_border_rounded,
                       size: 48,
                       color: AppColors.primary,
@@ -67,7 +67,13 @@ class BookmarksScreen extends StatelessWidget {
             );
           }
 
-          final crossAxisCount = MediaQuery.of(context).size.width < 600 ? 2 : 4;
+          final screenWidth = MediaQuery.of(context).size.width;
+          final crossAxisCount = screenWidth < 600
+              ? 1
+              : screenWidth < 1000
+                  ? 2
+                  : 4;
+          final cardHeight = screenWidth < 600 ? 420.0 : 370.0;
 
           return GridView.builder(
             padding: const EdgeInsets.all(16),
@@ -75,7 +81,7 @@ class BookmarksScreen extends StatelessWidget {
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.72,
+              mainAxisExtent: cardHeight,
             ),
             itemCount: trips.length,
             itemBuilder: (context, index) {

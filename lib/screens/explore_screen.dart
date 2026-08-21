@@ -293,7 +293,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: trip.imageBytes != null
                     ? Image.memory(trip.imageBytes!, fit: BoxFit.cover, width: double.infinity)
-                    : Image.network(trip.imageUrl, fit: BoxFit.cover, width: double.infinity),
+                    : Image.network(
+                        trip.imageUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade200,
+                            child: Center(
+                              child: Icon(
+                                Icons.image_not_supported_outlined,
+                                color: Colors.grey.shade400,
+                                size: 30,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ),
             Expanded(

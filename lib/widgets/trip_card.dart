@@ -31,8 +31,7 @@ class _TripCardState extends State<TripCard> {
   @override
   Widget build(BuildContext context) {
     final bool isOwner =
-        widget.trip.hostName == 'You' &&
-        widget.trip.username == '@you';
+        widget.trip.username == '@you' || widget.trip.username == '@yeasin';
 
     return Card(
       margin: EdgeInsets.zero,
@@ -51,29 +50,32 @@ class _TripCardState extends State<TripCard> {
               SizedBox(
                 height: 150,
                 width: double.infinity,
-                child: widget.trip.imageBytes != null
-                    ? Image.memory(
-                        widget.trip.imageBytes!,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.network(
-                        widget.trip.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (
-                          context,
-                          error,
-                          stackTrace,
-                        ) {
-                          return Container(
-                            color: Colors.grey.shade200,
-                            child: Icon(
-                              Icons.image_not_supported_outlined,
-                              color: Colors.grey.shade500,
-                              size: 40,
-                            ),
-                          );
-                        },
-                      ),
+                child: Hero(
+                  tag: 'card-trip-image-${widget.trip.id}',
+                  child: widget.trip.imageBytes != null
+                      ? Image.memory(
+                          widget.trip.imageBytes!,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          widget.trip.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (
+                            context,
+                            error,
+                            stackTrace,
+                          ) {
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: Icon(
+                                Icons.image_not_supported_outlined,
+                                color: Colors.grey.shade500,
+                                size: 40,
+                              ),
+                            );
+                          },
+                        ),
+                ),
               ),
 
               // Edit button
@@ -412,7 +414,10 @@ class _TripCardState extends State<TripCard> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ViewScreen(trip: widget.trip),
+                                  builder: (context) => ViewScreen(
+                                    trip: widget.trip,
+                                    heroTag: 'card-trip-image-${widget.trip.id}',
+                                  ),
                                 ),
                               );
                             },

@@ -41,7 +41,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void _applyFilters() {
     setState(() {
       _filteredTrips = tripList.where((trip) {
-        final price = double.tryParse(trip.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+        final priceStr = trip.price.replaceAll(RegExp(r'[^\d.]'), '');
+        final price = double.tryParse(priceStr) ?? 0.0;
         final withinBudget = price <= _budgetCap;
         
         final matchesGender = _selectedGender == "Any (Everyone is welcome)" || 
@@ -73,9 +74,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const Text(
                     "Advanced Search Filters",
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
                   Icon(Icons.tune, color: AppColors.buttonColor),
@@ -189,11 +190,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       });
                     },
                     selectedColor: AppColors.buttonColor,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    backgroundColor: AppColors.fieldColor,
                     checkmarkColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: Colors.transparent),
+                      side: const BorderSide(color: Colors.transparent),
                     ),
                   );
                 }).toList(),
@@ -268,7 +269,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ViewScreen(trip: trip),
+            builder: (context) => ViewScreen(
+              trip: trip,
+              heroTag: 'explore-trip-image-${trip.id}',
+            ),
           ),
         );
       },
@@ -291,25 +295,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
               flex: 5,
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: trip.imageBytes != null
-                    ? Image.memory(trip.imageBytes!, fit: BoxFit.cover, width: double.infinity)
-                    : Image.network(
-                        trip.imageUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey.shade200,
-                            child: Center(
-                              child: Icon(
-                                Icons.image_not_supported_outlined,
-                                color: Colors.grey.shade400,
-                                size: 30,
+                child: Hero(
+                  tag: 'explore-trip-image-${trip.id}',
+                  child: trip.imageBytes != null
+                      ? Image.memory(trip.imageBytes!, fit: BoxFit.cover, width: double.infinity)
+                      : Image.network(
+                          trip.imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: Colors.grey.shade400,
+                                  size: 30,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
+                ),
               ),
             ),
             Expanded(

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/bookmarks_screen.dart';
 import 'package:travel_buddy_finder/screens/manage_account_settings_screen.dart';
+import 'package:travel_buddy_finder/screens/my_trip_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
@@ -176,6 +177,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       _buildQuickActionItem(
                         Icons.directions_walk_rounded,
                         "My Trips",
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const MyTripScreen(),
+                          ),
+                        ),
                       ),
                     ],
                   ),

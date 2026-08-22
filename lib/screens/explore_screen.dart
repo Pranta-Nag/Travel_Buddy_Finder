@@ -1,8 +1,17 @@
+
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
-import 'package:travel_buddy_finder/screens/view_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
+
+import 'explore/explore_active_filters.dart';
+import 'explore/explore_category_bar.dart';
+import 'explore/explore_empty_state.dart';
+import 'explore/explore_filter.dart';
+import 'explore/explore_filter_sheet.dart';
+import 'explore/explore_header.dart';
+import 'explore/explore_results_bar.dart';
+import 'explore/explore_trip_card.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -12,363 +21,317 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  double _budgetCap = 2500;
-  String _selectedGender = "Any (Everyone is welcome)";
+  final TextEditingController _searchController =
+      TextEditingController();
+
+  double _budgetCap = ExploreFilterData.maxBudget;
+
+  String _selectedGender = ExploreFilterData.anyGender;
+
+  String _selectedCategory = ExploreFilterData.allCategory;
+
   final List<String> _selectedTransportations = [];
 
-  List<Trip> _filteredTrips = [];
+  SortOption _sortOption = SortOption.recommended;
 
-  final List<String> _genders = [
-    "Any (Everyone is welcome)",
-    "Male Only",
-    "Female Only",
-  ];
-
-  final List<String> _transportationMethods = [
-    "Flight",
-    "Bullet Train",
-    "Road Trip / Carpool",
-    "Public Bus",
-    "Sailing Boat"
-  ];
+  bool _isGridView = true;
 
   @override
-  void initState() {
-    super.initState();
-    _filteredTrips = tripList;
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  void _applyFilters() {
-    setState(() {
-      _filteredTrips = tripList.where((trip) {
-        final priceStr = trip.price.replaceAll(RegExp(r'[^\d.]'), '');
-        final price = double.tryParse(priceStr) ?? 0.0;
-        final withinBudget = price <= _budgetCap;
-        
-        final matchesGender = _selectedGender == "Any (Everyone is welcome)" || 
-                             trip.genderPreference == _selectedGender;
-        
-        final matchesTransport = _selectedTransportations.isEmpty || 
-                                (trip.transportationMethods != null && 
-                                 _selectedTransportations.any((t) => trip.transportationMethods!.contains(t)));
+  double _price(String value) {
+    return double.tryParse(
+          value.replaceAll(RegExp(r'[^\d.]'), ''),
+        ) ??
+        0;
+  }
 
-        return withinBudget && matchesGender && matchesTransport;
-      }).toList();
+  List<Trip> get _filteredTrips {
+    final query =
+        _searchController.text.trim().toLowerCase();
+
+    final result = tripList.where((trip) {
+      final matchesSearch =
+          query.isEmpty ||
+          trip.title.toLowerCase().contains(query) ||
+          trip.location.toLowerCase().contains(query) ||
+          trip.description.toLowerCase().contains(query) ||
+          trip.hostName.toLowerCase().contains(query);
+
+      final matchesBudget =
+          _price(trip.price) <= _budgetCap;
+
+      final matchesGender =
+          _selectedGender == ExploreFilterData.anyGender ||
+          trip.genderPreference == _selectedGender;
+
+      final matchesCategory =
+          _selectedCategory == ExploreFilterData.allCategory ||
+          trip.category.toLowerCase() ==
+              _selectedCategory.toLowerCase();
+
+      final matchesTransport =
+          _selectedTransportations.isEmpty ||
+          (trip.transportationMethods != null &&
+              _selectedTransportations.any(
+                (item) => trip.transportationMethods!.contains(item),
+              ));
+
+      return matchesSearch &&
+          matchesBudget &&
+          matchesGender &&
+          matchesCategory &&
+          matchesTransport;
+    }).toList();
+
+    _sortTrips(result);
+
+    return result;
+  }
+
+  void _sortTrips(List<Trip> trips) {
+    switch (_sortOption) {
+      case SortOption.priceLowToHigh:
+        trips.sort(
+          (a, b) => _price(a.price).compareTo(
+            _price(b.price),
+          ),
+        );
+        break;
+
+      case SortOption.priceHighToLow:
+        trips.sort(
+          (a, b) => _price(b.price).compareTo(
+            _price(a.price),
+          ),
+        );
+        break;
+
+      case SortOption.highestRated:
+        trips.sort((a, b) {
+          final ratingA =
+              double.tryParse(a.rating) ?? 0;
+
+          final ratingB =
+              double.tryParse(b.rating) ?? 0;
+
+          return ratingB.compareTo(ratingA);
+        });
+        break;
+
+      case SortOption.recommended:
+        break;
+    }
+  }
+
+  int get _activeFilterCount {
+    int count = 0;
+
+    if (_budgetCap < ExploreFilterData.maxBudget) {
+      count++;
+    }
+
+    if (_selectedGender != ExploreFilterData.anyGender) {
+      count++;
+    }
+
+    count += _selectedTransportations.length;
+
+    if (_selectedCategory != ExploreFilterData.allCategory) {
+      count++;
+    }
+
+    if (_sortOption != SortOption.recommended) {
+      count++;
+    }
+
+    return count;
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _searchController.clear();
+
+      _budgetCap = ExploreFilterData.maxBudget;
+
+      _selectedGender = ExploreFilterData.anyGender;
+
+      _selectedCategory = ExploreFilterData.allCategory;
+
+      _selectedTransportations.clear();
+
+      _sortOption = SortOption.recommended;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Filters reset successfully"),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _openFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return ExploreFilterSheet(
+          initialBudget: _budgetCap,
+          initialGender: _selectedGender,
+          initialTransportations: _selectedTransportations,
+          initialCategory: _selectedCategory,
+          initialSort: _sortOption,
+          onApply: (
+            budget,
+            gender,
+            transportations,
+            category,
+            sort,
+          ) {
+            setState(() {
+              _budgetCap = budget;
+              _selectedGender = gender;
+
+              _selectedTransportations
+                ..clear()
+                ..addAll(transportations);
+
+              _selectedCategory = category;
+              _sortOption = sort;
+            });
+          },
+        );
+      },
+    );
+  }
+
+  void _selectCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Advanced Search Filters",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  Icon(Icons.tune, color: AppColors.buttonColor),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // Budget Cap
-              const Text(
-                "BUDGET CAP RANGE",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.disabled,
-                ),
-              ),
-              Slider(
-                value: _budgetCap,
-                min: 200,
-                max: 5000,
-                divisions: 48,
-                activeColor: AppColors.primary,
-                inactiveColor: AppColors.primary.withValues(alpha: 0.2),
-                onChanged: (double value) {
-                  setState(() {
-                    _budgetCap = value;
-                  });
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('\$200', style: TextStyle(color: AppColors.greyText, fontSize: 12)),
-                  Text('\$${_budgetCap.round().toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]},")}', 
-                       style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
-                  const Text('\$5,000', style: TextStyle(color: AppColors.greyText, fontSize: 12)),
-                ],
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // Gender Preference
-              const Text(
-                "GENDER PREFERENCE",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.disabled,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.fieldColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedGender,
-                    isExpanded: true,
-                    items: _genders.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedGender = newValue!;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // Transportation Method
-              const Text(
-                "TRANSPORTATION METHOD",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.disabled,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 0,
-                children: _transportationMethods.map((method) {
-                  final isSelected = _selectedTransportations.contains(method);
-                  return FilterChip(
-                    label: Text(
-                      method,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isSelected ? Colors.white : AppColors.greyText,
-                      ),
-                    ),
-                    selected: isSelected,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedTransportations.add(method);
-                        } else {
-                          _selectedTransportations.remove(method);
-                        }
-                      });
-                    },
-                    selectedColor: AppColors.buttonColor,
-                    backgroundColor: AppColors.fieldColor,
-                    checkmarkColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: const BorderSide(color: Colors.transparent),
-                    ),
-                  );
-                }).toList(),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Apply Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _applyFilters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.buttonColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Apply Advanced Filters",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Search Results
-              const Text(
-                "SEARCH RESULTS",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.disabled,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              _filteredTrips.isEmpty
-                  ? const Center(child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text("No trips found matching your criteria."),
-                    ))
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        mainAxisExtent: 200,
-                      ),
-                      itemCount: _filteredTrips.length,
-                      itemBuilder: (context, index) {
-                        return _buildTripCard(_filteredTrips[index]);
-                      },
-                    ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+    final trips = _filteredTrips;
 
-  Widget _buildTripCard(Trip trip) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ViewScreen(
-              trip: trip,
-              heroTag: 'explore-trip-image-${trip.id}',
-            ),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            ExploreHeader(
+              totalTrips: tripList.length,
+              activeFilterCount: _activeFilterCount,
+              searchController: _searchController,
+              onFilterTap: _openFilterSheet,
+              onSearchChanged: () {
+                setState(() {});
+              },
+            ),
+
             Expanded(
-              flex: 5,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Hero(
-                  tag: 'explore-trip-image-${trip.id}',
-                  child: trip.imageBytes != null
-                      ? Image.memory(trip.imageBytes!, fit: BoxFit.cover, width: double.infinity)
-                      : Image.network(
-                          trip.imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey.shade200,
-                              child: Center(
-                                child: Icon(
-                                  Icons.image_not_supported_outlined,
-                                  color: Colors.grey.shade400,
-                                  size: 30,
-                                ),
-                              ),
-                            );
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () async {
+                  setState(() {});
+                },
+                child: CustomScrollView(
+                  physics:
+                      const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: 14,
+                          bottom: 8,
+                        ),
+                        child: ExploreCategoryBar(
+                          selectedCategory: _selectedCategory,
+                          onCategorySelected: _selectCategory,
+                        ),
+                      ),
+                    ),
+
+                    if (_activeFilterCount > 0)
+                      SliverToBoxAdapter(
+                        child: ExploreActiveFilters(
+                          category: _selectedCategory,
+                          budget: _budgetCap,
+                          gender: _selectedGender,
+                          transportations:
+                              _selectedTransportations,
+                          sorted: _sortOption !=
+                              SortOption.recommended,
+                          onClearAll: _resetFilters,
+                          onRemoveCategory: () {
+                            setState(() {
+                              _selectedCategory =
+                                  ExploreFilterData.allCategory;
+                            });
+                          },
+                          onRemoveBudget: () {
+                            setState(() {
+                              _budgetCap =
+                                  ExploreFilterData.maxBudget;
+                            });
+                          },
+                          onRemoveGender: () {
+                            setState(() {
+                              _selectedGender =
+                                  ExploreFilterData.anyGender;
+                            });
+                          },
+                          onRemoveTransport: (item) {
+                            setState(() {
+                              _selectedTransportations.remove(item);
+                            });
+                          },
+                          onRemoveSort: () {
+                            setState(() {
+                              _sortOption =
+                                  SortOption.recommended;
+                            });
                           },
                         ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      trip.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+
+                    SliverToBoxAdapter(
+                      child: ExploreResultsBar(
+                        resultCount: trips.length,
+                        isGridView: _isGridView,
+                        onGridTap: () {
+                          setState(() {
+                            _isGridView = true;
+                          });
+                        },
+                        onListTap: () {
+                          setState(() {
+                            _isGridView = false;
+                          });
+                        },
+                      ),
                     ),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 10, color: AppColors.greyText),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            trip.location,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.greyText, fontSize: 10),
-                          ),
+
+                    if (trips.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: ExploreEmptyState(
+                          onReset: _resetFilters,
                         ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          trip.price,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.orange, size: 12),
-                            const SizedBox(width: 2),
-                            Text(
-                              trip.rating,
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
+                      )
+                    else if (_isGridView)
+                      _buildGrid(trips)
+                    else
+                      _buildList(trips),
+
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 80),
                     ),
                   ],
                 ),
@@ -379,4 +342,73 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
     );
   }
+
+  Widget _buildGrid(List<Trip> trips) {
+    final width = MediaQuery.of(context).size.width;
+
+    // Mobile/Tablet = 2 cards
+    // Web/Desktop = 3 cards
+    final int columns = width < 900 ? 2 : 3;
+
+    final double cardHeight = width < 600
+        ? 280.0
+        : 260.0;
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 8,
+      ),
+      sliver: SliverGrid(
+        gridDelegate:
+            SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 16,
+          mainAxisExtent: cardHeight,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            return ExploreTripCard(
+              key: ValueKey(
+                'explore-grid-${trips[index].id}',
+              ),
+              trip: trips[index],
+              gridView: true,
+            );
+          },
+          childCount: trips.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList(List<Trip> trips) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 8,
+      ),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                bottom: 16,
+              ),
+              child: ExploreTripCard(
+                key: ValueKey(
+                  'explore-list-${trips[index].id}',
+                ),
+                trip: trips[index],
+                gridView: false,
+              ),
+            );
+          },
+          childCount: trips.length,
+        ),
+      ),
+    );
+  }
 }
+

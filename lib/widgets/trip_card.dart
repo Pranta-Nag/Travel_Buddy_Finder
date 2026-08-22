@@ -14,12 +14,14 @@ class TripCard extends StatefulWidget {
     required this.isBookmarked,
     this.onBookmarkToggle,
     this.onDelete,
+    this.showJoinButton = true,
   });
 
   final Trip trip;
   final bool isBookmarked;
   final VoidCallback? onBookmarkToggle;
   final VoidCallback? onDelete;
+  final bool showJoinButton;
 
   @override
   State<TripCard> createState() => _TripCardState();
@@ -374,38 +376,35 @@ class _TripCardState extends State<TripCard> {
 
                   Row(
                     children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 34,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.zero,
-                              elevation: 0,
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(8),
+                      if (widget.showJoinButton) ...[
+                        Expanded(
+                          child: SizedBox(
+                            height: 34,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.zero,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                            ),
-                            child: const Text(
-                              'Join Trip',
-                              maxLines: 1,
-                              overflow:
-                                  TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                              child: const Text(
+                                'Join Trip',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-
-                      const SizedBox(width: 6),
-
+                        const SizedBox(width: 6),
+                      ],
                       Expanded(
                         child: SizedBox(
                           height: 34,
@@ -416,31 +415,28 @@ class _TripCardState extends State<TripCard> {
                                 MaterialPageRoute(
                                   builder: (context) => ViewScreen(
                                     trip: widget.trip,
-                                    heroTag: 'card-trip-image-${widget.trip.id}',
+                                    heroTag:
+                                        'card-trip-image-${widget.trip.id}',
                                   ),
                                 ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor:
-                                  Colors.grey.shade700,
+                              foregroundColor: Colors.grey.shade700,
                               padding: EdgeInsets.zero,
                               elevation: 0,
                               side: BorderSide(
                                 color: Colors.grey.shade300,
                               ),
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             child: const Text(
                               'View Trip',
                               maxLines: 1,
-                              overflow:
-                                  TextOverflow.ellipsis,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,

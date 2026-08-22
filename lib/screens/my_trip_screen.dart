@@ -64,6 +64,7 @@ class _MyTripScreenState extends State<MyTripScreen> {
                     trip: trip,
                     isBookmarked: savedTrips.any((item) => item.id == trip.id),
                     onBookmarkToggle: () => BookmarkStore.toggle(trip),
+                    showJoinButton: false,
                     onDelete: () async {
                       final confirmed = await showDialog<bool>(
                         context: context,

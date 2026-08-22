@@ -6,7 +6,8 @@ import 'package:travel_buddy_finder/utils/app_colors.dart';
 
 class ViewScreen extends StatefulWidget {
   final Trip trip;
-  const ViewScreen({super.key, required this.trip});
+  final String heroTag;
+  const ViewScreen({super.key, required this.trip, required this.heroTag});
 
   @override
   State<ViewScreen> createState() => _ViewScreenState();
@@ -190,7 +191,7 @@ class _ViewScreenState extends State<ViewScreen> {
                 fit: StackFit.expand,
                 children: [
                   Hero(
-                    tag: 'trip-image-${trip.id}',
+                    tag: widget.heroTag,
                     child: trip.imageBytes != null
                         ? Image.memory(trip.imageBytes!, fit: BoxFit.cover)
                         : Image.network(

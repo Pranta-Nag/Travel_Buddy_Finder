@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/bookmarks_screen.dart';
 import 'package:travel_buddy_finder/screens/manage_account_settings_screen.dart';
+import 'package:travel_buddy_finder/screens/my_trip_screen.dart';
 import 'package:travel_buddy_finder/utils/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
@@ -19,7 +20,7 @@ class UserProfileScreen extends StatefulWidget {
     this.username = "@yeasin",
     this.level = "Level 4 Travel Guru",
     this.avatarUrl =
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80",
+        "https://i.postimg.cc/W4FfXNcG/profile.jpg",
     this.avatarBytes,
     this.isCurrentUser = true,
   });
@@ -241,6 +242,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       _buildQuickActionItem(
                         Icons.directions_walk_rounded,
                         "My Trips",
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const MyTripScreen(),
+                          ),
+                        ),
                       ),
                     ],
                   ),

@@ -54,7 +54,7 @@ List<Trip> tripList = [
     transportationMethods: ['Sailing Boat'],
   ),
   Trip(
-    id: 'trey-canyon',
+    id: 'Md Yeasin khan',
     title: 'Trey Canyon National Park',
     location: 'Moab, Utah',
     price: '\$300',
@@ -84,5 +84,21 @@ List<Trip> tripList = [
     description: 'Discover the charm of the City of Light. From the Eiffel Tower to the Louvre, experience the art, culture, and cuisine of Paris.',
     genderPreference: 'Any (Everyone is welcome)',
     transportationMethods: ['Flight', 'Bullet Train'],
+  ),
+  Trip(
+    id: 'Kaptai',
+    title: 'Kaptai Trip',
+    location: 'kaptai, Rangamati',
+    price: '\$1000',
+    rating: '4.5',
+    hostName: 'Md Yeasin khan',
+    username: '@yeasin',
+    imageUrl: 'https://i.postimg.cc/XNsqRVbL/kptai-fi.jpg',
+    avatarUrl:
+    'https://i.postimg.cc/W4FfXNcG/profile.jpg',
+    category: 'Adventure',
+    description: 'Explore the view of Kaptai. From the kaptai lake to the hills, experience the art, culture, and cuisine of kaptai.',
+    genderPreference: 'Any (Everyone is welcome)',
+    transportationMethods: ['Boat', 'Bus'],
   ),
 ];

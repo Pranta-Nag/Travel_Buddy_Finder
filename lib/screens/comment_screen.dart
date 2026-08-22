@@ -198,10 +198,11 @@ class _CommentScreenState extends State<CommentScreen> {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 20,
-            backgroundImage: NetworkImage("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"),
-            backgroundColor: Colors.grey,
+            backgroundImage: const NetworkImage("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"),
+            backgroundColor: Colors.grey.shade200,
+            onBackgroundImageError: (_, __) {},
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -302,17 +303,8 @@ class _CommentCard extends StatelessWidget {
             child: CircleAvatar(
               radius: 22,
               backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+              onBackgroundImageError: avatarUrl != null ? (_, __) {} : null,
               backgroundColor: AppColors.primary.withOpacity(0.15),
-              child: avatarUrl == null
-                  ? Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : "U",
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    )
-                  : null,
             ),
           ),
           const SizedBox(width: 12),

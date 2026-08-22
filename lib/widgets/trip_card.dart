@@ -200,9 +200,11 @@ class _TripCardState extends State<TripCard> {
                         onTap: () => _openProfile(context),
                         child: CircleAvatar(
                           radius: 14,
+                          backgroundColor: AppColors.fieldColor,
                           backgroundImage: NetworkImage(
                             widget.trip.avatarUrl,
                           ),
+                          onBackgroundImageError: (_, __) {},
                         ),
                       ),
 

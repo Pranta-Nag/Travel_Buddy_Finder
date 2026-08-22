@@ -103,7 +103,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -153,28 +153,33 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
               const SizedBox(height: 20),
          
-              _buildSection(
-                title: "QUICK ACTIONS",
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _buildQuickActionItem(
-                      Icons.bookmark_border_rounded,
-                      "Bookmark",
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const BookmarksScreen(),
+              if (widget.isCurrentUser)
+                _buildSection(
+                  title: "QUICK ACTIONS",
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _buildQuickActionItem(
+                        Icons.bookmark_border_rounded,
+                        "Bookmark",
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const BookmarksScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                    _buildQuickActionItem(
-                        Icons.fact_check_outlined, "Trip Approvals"),
-                    _buildQuickActionItem(
-                        Icons.directions_walk_rounded, "My Trips"),
-                  ],
+                      _buildQuickActionItem(
+                        Icons.fact_check_outlined,
+                        "Trip Approvals",
+                      ),
+                      _buildQuickActionItem(
+                        Icons.directions_walk_rounded,
+                        "My Trips",
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               const SizedBox(height: 30),
           
               if (widget.isCurrentUser) ...[
@@ -267,7 +272,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -296,7 +301,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
@@ -312,7 +317,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildBadgeItem(String icon, String label) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(12),

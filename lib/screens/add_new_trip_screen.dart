@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
-import 'package:travel_buddy_finder/models/trip_data.dart';
+import 'package:travel_buddy_finder/stores/trip_store.dart';
 import 'package:travel_buddy_finder/widgets/explore/explore_filter.dart';
 import 'package:travel_buddy_finder/config/app_colors.dart';
 import 'package:travel_buddy_finder/config/app_lists.dart';
@@ -452,7 +452,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
       imageBytes: _coverImageBytes,
     );
 
-    tripList.add(newTrip);
+    TripStore.add(newTrip);
     if (!mounted) return;
     Navigator.pop(context);
     _showMessage(

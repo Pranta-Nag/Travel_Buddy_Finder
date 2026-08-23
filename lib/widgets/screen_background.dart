@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:travel_buddy_finder/utils/asset_path.dart';
+import 'package:travel_buddy_finder/config/asset_path.dart';
 
 class ScreenBackground extends StatelessWidget {
   final Widget child;

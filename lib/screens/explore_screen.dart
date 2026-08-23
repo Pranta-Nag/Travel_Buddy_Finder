@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
 
-import 'explore/explore_active_filters.dart';
-import 'explore/explore_category_bar.dart';
-import 'explore/explore_empty_state.dart';
-import 'explore/explore_filter.dart';
-import 'explore/explore_filter_sheet.dart';
-import 'explore/explore_header.dart';
-import 'explore/explore_results_bar.dart';
-import 'explore/explore_trip_card.dart';
+import '../widgets/explore/explore_active_filters.dart';
+import '../widgets/explore/explore_category_bar.dart';
+import '../widgets/explore/explore_empty_state.dart';
+import '../widgets/explore/explore_filter.dart';
+import '../widgets/explore/explore_filter_sheet.dart';
+import '../widgets/explore/explore_header.dart';
+import '../widgets/explore/explore_results_bar.dart';
+import '../widgets/explore/explore_trip_card.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});

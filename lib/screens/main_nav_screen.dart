@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/explore_screen.dart';
 import 'package:travel_buddy_finder/screens/add_new_trip_screen.dart';
+import 'package:travel_buddy_finder/screens/notifications_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
+import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
-import 'package:travel_buddy_finder/utils/bookmark_store.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/stores/bookmark_store.dart';
+import 'package:travel_buddy_finder/stores/current_user.dart';
+import 'package:travel_buddy_finder/stores/notification_store.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 import 'package:travel_buddy_finder/widgets/trip_card.dart';
 
@@ -18,6 +22,33 @@ class MainNavScreen extends StatefulWidget {
 class _MainNavScreenState extends State<MainNavScreen> {
   int _currentIndex = 0;
   String _selectedCategory = 'All';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  String get _searchQuery => _searchController.text.trim().toLowerCase();
+
+  List<Trip> get _filteredTrips {
+    final query = _searchQuery;
+    final byCategory = _selectedCategory == 'All'
+        ? tripList
+        : tripList.where((t) => t.category == _selectedCategory);
+    if (query.isEmpty) return byCategory.toList();
+    return byCategory.where((t) {
+      final title = t.title.toLowerCase();
+      final location = t.location.toLowerCase();
+      final host = t.hostName.toLowerCase();
+      final description = t.description.toLowerCase();
+      return title.contains(query) ||
+          location.contains(query) ||
+          host.contains(query) ||
+          description.contains(query);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +106,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
           ),
         ),
       ),
-
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -165,19 +195,54 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.notifications_none_outlined,
-                    color: Colors.grey.shade800,
-                    size: 22,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.notifications_none_outlined,
+                        color: Colors.grey.shade800,
+                        size: 22,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  onPressed: () {},
-                ),
+                  ValueListenableBuilder<int>(
+                    valueListenable: NotificationStore.unreadCountNotifier(
+                      CurrentUser.username,
+                    ),
+                    builder: (context, count, _) {
+                      if (count == 0) return const SizedBox.shrink();
+                      return Positioned(
+                        top: 2,
+                        right: 2,
+                        child: CircleAvatar(
+                          radius: 8,
+                          backgroundColor: AppColors.error,
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -210,27 +275,49 @@ class _MainNavScreenState extends State<MainNavScreen> {
         ],
       ),
       child: TextField(
+        controller: _searchController,
+        onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           hintText: 'Search destinations...',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
-          suffixIcon: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.tune_rounded, color: Colors.white, size: 16),
-          ),
+          prefixIcon:
+              Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+          suffixIcon: _searchQuery.isEmpty
+              ? Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child:
+                      Icon(Icons.tune_rounded, color: Colors.white, size: 16),
+                )
+              : IconButton(
+                  icon: Icon(Icons.close_rounded,
+                      color: Colors.grey.shade500, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
   }
 
   Widget _buildCategories() {
-    final categories = ['All', 'Adventure', 'Beach', 'Cultural', 'Family', 'Romantic', 'Wildlife'];
+    final categories = [
+      'All',
+      'Adventure',
+      'Beach',
+      'Cultural',
+      'Family',
+      'Romantic',
+      'Wildlife'
+    ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -272,7 +359,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             minimumSize: const Size(0, 0),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child:const Text(
+          child: const Text(
             'See All',
             style: TextStyle(
               fontSize: 12,
@@ -285,95 +372,124 @@ class _MainNavScreenState extends State<MainNavScreen> {
     );
   }
 
- Widget _buildTripGrid() {
-  final screenWidth = MediaQuery.of(context).size.width;
+  Widget _buildTripGrid() {
+    final screenWidth = MediaQuery.of(context).size.width;
 
-  // Responsive grid
-  final crossAxisCount = screenWidth < 600
-      ? 1
-      : screenWidth < 1000
-          ? 2
-          : 4;
+    // Responsive grid
+    final crossAxisCount = screenWidth < 600
+        ? 1
+        : screenWidth < 1000
+            ? 2
+            : 4;
 
-  // Mobile card needs more height because
-  // action buttons are arranged in separate rows.
-  final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
+    // Mobile card needs more height because
+    // action buttons are arranged in separate rows.
+    final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
 
-  final filteredTrips = _selectedCategory == 'All'
-      ? tripList
-      : tripList
-          .where((t) => t.category == _selectedCategory)
-          .toList();
+    final filteredTrips = _filteredTrips;
 
-  return GridView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    itemCount: filteredTrips.length,
-    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: crossAxisCount,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      mainAxisExtent: cardHeight,
-    ),
-    itemBuilder: (context, index) {
-      final trip = filteredTrips[index];
-
-      return ValueListenableBuilder<List<dynamic>>(
-        valueListenable: BookmarkStore.savedTrips,
-        builder: (context, savedTrips, _) {
-          return TripCard(
-            trip: trip,
-            isBookmarked:
-                savedTrips.any((item) => item.id == trip.id),
-
-            onBookmarkToggle: () {
-              BookmarkStore.toggle(trip);
-            },
-
-            onDelete: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Delete Trip'),
-                  content: Text(
-                    'Are you sure you want to delete "${trip.title}"?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context, false);
-                      },
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context, true);
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
-                      child: const Text('Delete'),
-                    ),
-                  ],
+    if (filteredTrips.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search_rounded,
+                size: 44,
+                color: Colors.grey.shade300,
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'No trips found',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700,
                 ),
-              );
-
-              if (confirmed == true) {
-                setState(() {
-                  tripList.removeWhere(
-                    (t) => t.id == trip.id,
-                  );
-
-                  BookmarkStore.remove(trip.id);
-                });
-              }
-            },
-          );
-        },
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Try adjusting your search or category filter.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
-    },
-  );
-}
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: filteredTrips.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: cardHeight,
+      ),
+      itemBuilder: (context, index) {
+        final trip = filteredTrips[index];
+
+        return ValueListenableBuilder<List<dynamic>>(
+          valueListenable: BookmarkStore.savedTrips,
+          builder: (context, savedTrips, _) {
+            return TripCard(
+              trip: trip,
+              isBookmarked: savedTrips.any((item) => item.id == trip.id),
+              onBookmarkToggle: () {
+                BookmarkStore.toggle(trip);
+              },
+              onDelete: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Trip'),
+                    content: Text(
+                      'Are you sure you want to delete "${trip.title}"?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context, false);
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  setState(() {
+                    tripList.removeWhere(
+                      (t) => t.id == trip.id,
+                    );
+
+                    BookmarkStore.remove(trip.id);
+                  });
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildNavItem({
     required IconData icon,

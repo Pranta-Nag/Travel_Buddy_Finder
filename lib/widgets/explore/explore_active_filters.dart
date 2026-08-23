@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
 
 class ExploreActiveFilters extends StatelessWidget {
   final String category;

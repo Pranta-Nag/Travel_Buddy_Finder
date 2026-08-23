@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/screens/view_screen.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
-import 'package:travel_buddy_finder/utils/bookmark_store.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/stores/bookmark_store.dart';
 import 'explore_filter.dart';
 
 class ExploreTripCard extends StatelessWidget {

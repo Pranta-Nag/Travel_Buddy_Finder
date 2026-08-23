@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:travel_buddy_finder/models/trip_data.dart';
 import 'package:travel_buddy_finder/config/app_colors.dart';
-import 'package:travel_buddy_finder/widgets/trip_card.dart';
 import 'package:travel_buddy_finder/stores/bookmark_store.dart';
+import 'package:travel_buddy_finder/stores/trip_store.dart';
+import 'package:travel_buddy_finder/widgets/trip_card.dart';
 
 class MyTripScreen extends StatefulWidget {
   const MyTripScreen({super.key});
@@ -21,7 +21,7 @@ class _MyTripScreenState extends State<MyTripScreen> {
     final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
 
     // Filtering trips created by the user
-    final myTrips = tripList.where((trip) => 
+    final myTrips = TripStore.trips.where((trip) => 
       trip.username == '@yeasin' || trip.username == '@you'
     ).toList();
 
@@ -85,7 +85,7 @@ class _MyTripScreenState extends State<MyTripScreen> {
                       );
                       if (confirmed == true) {
                         setState(() {
-                          tripList.removeWhere((t) => t.id == trip.id);
+                          TripStore.remove(trip.id);
                           BookmarkStore.remove(trip.id);
                         });
                       }

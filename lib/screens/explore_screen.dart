@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
 import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/stores/trip_store.dart';
+import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
 import '../widgets/explore/explore_active_filters.dart';
 import '../widgets/explore/explore_category_bar.dart';
@@ -35,12 +37,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   SortOption _sortOption = SortOption.recommended;
 
   bool _isGridView = true;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
 
   double _price(String value) {
     return double.tryParse(
@@ -217,131 +213,152 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    TripStore.tripListNotifier.addListener(_onTripListChanged);
+  }
+
+  @override
+  void dispose() {
+    TripStore.tripListNotifier.removeListener(_onTripListChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onTripListChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final trips = _filteredTrips;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            ExploreHeader(
-              totalTrips: tripList.length,
-              activeFilterCount: _activeFilterCount,
-              searchController: _searchController,
-              onFilterTap: _openFilterSheet,
-              onSearchChanged: () {
-                setState(() {});
-              },
-            ),
-
-            Expanded(
-              child: RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: () async {
+     // backgroundColor: const Color(0xFFF8FAFC),
+      body: ScreenBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              ExploreHeader(
+                totalTrips: tripList.length,
+                activeFilterCount: _activeFilterCount,
+                searchController: _searchController,
+                onFilterTap: _openFilterSheet,
+                onSearchChanged: () {
                   setState(() {});
                 },
-                child: CustomScrollView(
-                  physics:
-                      const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 14,
-                          bottom: 8,
-                        ),
-                        child: ExploreCategoryBar(
-                          selectedCategory: _selectedCategory,
-                          onCategorySelected: _selectCategory,
-                        ),
-                      ),
-                    ),
-
-                    if (_activeFilterCount > 0)
-                      SliverToBoxAdapter(
-                        child: ExploreActiveFilters(
-                          category: _selectedCategory,
-                          budget: _budgetCap,
-                          gender: _selectedGender,
-                          transportations:
-                              _selectedTransportations,
-                          sorted: _sortOption !=
-                              SortOption.recommended,
-                          onClearAll: _resetFilters,
-                          onRemoveCategory: () {
-                            setState(() {
-                              _selectedCategory =
-                                  ExploreFilterData.allCategory;
-                            });
-                          },
-                          onRemoveBudget: () {
-                            setState(() {
-                              _budgetCap =
-                                  ExploreFilterData.maxBudget;
-                            });
-                          },
-                          onRemoveGender: () {
-                            setState(() {
-                              _selectedGender =
-                                  ExploreFilterData.anyGender;
-                            });
-                          },
-                          onRemoveTransport: (item) {
-                            setState(() {
-                              _selectedTransportations.remove(item);
-                            });
-                          },
-                          onRemoveSort: () {
-                            setState(() {
-                              _sortOption =
-                                  SortOption.recommended;
-                            });
-                          },
-                        ),
-                      ),
-
-                    SliverToBoxAdapter(
-                      child: ExploreResultsBar(
-                        resultCount: trips.length,
-                        isGridView: _isGridView,
-                        onGridTap: () {
-                          setState(() {
-                            _isGridView = true;
-                          });
-                        },
-                        onListTap: () {
-                          setState(() {
-                            _isGridView = false;
-                          });
-                        },
-                      ),
-                    ),
-
-                    if (trips.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: ExploreEmptyState(
-                          onReset: _resetFilters,
-                        ),
-                      )
-                    else if (_isGridView)
-                      _buildGrid(trips)
-                    else
-                      _buildList(trips),
-
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 80),
-                    ),
-                  ],
-                ),
               ),
+        
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () async {
+                    setState(() {});
+                  },
+                  child: CustomScrollView(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            top: 14,
+                            bottom: 8,
+                          ),
+                          child: ExploreCategoryBar(
+                            selectedCategory: _selectedCategory,
+                            onCategorySelected: _selectCategory,
+                          ),
+                        ),
+                      ),
+        
+                      if (_activeFilterCount > 0)
+                        SliverToBoxAdapter(
+                          child: ExploreActiveFilters(
+                            category: _selectedCategory,
+                            budget: _budgetCap,
+                            gender: _selectedGender,
+                            transportations:
+                                _selectedTransportations,
+                            sorted: _sortOption !=
+                                SortOption.recommended,
+                            onClearAll: _resetFilters,
+                            onRemoveCategory: () {
+                              setState(() {
+                                _selectedCategory =
+                                    ExploreFilterData.allCategory;
+                              });
+                            },
+                            onRemoveBudget: () {
+                              setState(() {
+                                _budgetCap =
+                                    ExploreFilterData.maxBudget;
+                              });
+                            },
+                            onRemoveGender: () {
+                              setState(() {
+                                _selectedGender =
+                                    ExploreFilterData.anyGender;
+                              });
+                            },
+                            onRemoveTransport: (item) {
+                              setState(() {
+                                _selectedTransportations.remove(item);
+                              });
+                            },
+                            onRemoveSort: () {
+                              setState(() {
+                                _sortOption =
+                                    SortOption.recommended;
+                              });
+                            },
+                          ),
+                        ),
+        
+                      SliverToBoxAdapter(
+                        child: ExploreResultsBar(
+                          resultCount: trips.length,
+                          isGridView: _isGridView,
+                          onGridTap: () {
+                            setState(() {
+                              _isGridView = true;
+                            });
+                          },
+                          onListTap: () {
+                            setState(() {
+                              _isGridView = false;
+                            });
+                          },
+                        ),
+                      ),
+        
+                      if (trips.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: ExploreEmptyState(
+                            onReset: _resetFilters,
+                          ),
+                        )
+                      else if (_isGridView)
+                        _buildGrid(trips)
+                      else
+                        _buildList(trips),
+        
+                       const SliverToBoxAdapter(
+                         child: SizedBox(height: 80),
+                       ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
       ),
-    );
-  }
+      );
+    }
 
   Widget _buildGrid(List<Trip> trips) {
     final width = MediaQuery.of(context).size.width;

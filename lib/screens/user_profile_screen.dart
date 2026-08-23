@@ -1,10 +1,14 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/models/trip_request.dart';
 import 'package:travel_buddy_finder/screens/bookmarks_screen.dart';
 import 'package:travel_buddy_finder/screens/manage_account_settings_screen.dart';
 import 'package:travel_buddy_finder/screens/my_trip_screen.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/stores/current_user.dart';
+import 'package:travel_buddy_finder/stores/trip_request_store.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/widgets/trip_request/approvals_drawer.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String name;
@@ -19,8 +23,7 @@ class UserProfileScreen extends StatefulWidget {
     this.name = "Md Yeasin",
     this.username = "@yeasin",
     this.level = "Level 4 Travel Guru",
-    this.avatarUrl =
-        "https://i.postimg.cc/W4FfXNcG/profile.jpg",
+    this.avatarUrl = "https://i.postimg.cc/W4FfXNcG/profile.jpg",
     this.avatarBytes,
     this.isCurrentUser = true,
   });
@@ -65,6 +68,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final canGoBack = !widget.isCurrentUser || Navigator.canPop(context);
 
     return Scaffold(
+      endDrawer: widget.isCurrentUser ? const ApprovalsDrawer() : null,
       body: ScreenBackground(
         child: SafeArea(
           child: SingleChildScrollView(
@@ -88,7 +92,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1F2937)),
+                          icon: const Icon(Icons.arrow_back_rounded,
+                              color: Color(0xFF1F2937)),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
@@ -113,11 +118,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.share_outlined, color: Color(0xFF1F2937), size: 20),
+                          icon: const Icon(Icons.share_outlined,
+                              color: Color(0xFF1F2937), size: 20),
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text("Profile link copied to clipboard!"),
+                                content:
+                                    Text("Profile link copied to clipboard!"),
                                 duration: Duration(seconds: 1),
                                 behavior: SnackBarBehavior.floating,
                               ),
@@ -131,7 +138,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ] else ...[
                   const SizedBox(height: 20),
                 ],
-
                 Column(
                   children: [
                     CircleAvatar(
@@ -161,213 +167,221 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 30),
-         
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildStatItem("12", "COMPLETED TRIPS"),
+                      _buildDivider(),
+                      _buildStatItem("342", "FOLLOWERS"),
+                      _buildDivider(),
+                      _buildStatItem("4.9", "AVG RATING"),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStatItem("12", "COMPLETED TRIPS"),
-                    _buildDivider(),
-                    _buildStatItem("342", "FOLLOWERS"),
-                    _buildDivider(),
-                    _buildStatItem("4.9", "AVG RATING"),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-         
-              _buildSection(
-                title: "TRAVEL INTERESTS",
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _buildInterestChip("Solo Travel"),
-                    _buildInterestChip("Beach Volley"),
-                    _buildInterestChip("Photography"),
-                    _buildInterestChip("Backpacking"),
-                    _buildInterestChip("Zen Temples"),
-                    _buildInterestChip("Gourmet Eating"),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-         
-              _buildSection(
-                title: "ACHIEVEMENTS / BADGES",
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _buildBadgeItem("🏅", "Wanderlust"),
-                    _buildBadgeItem("🔥", "5-Streak"),
-                    _buildBadgeItem("🛡️", "ID Verified"),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-         
-              if (widget.isCurrentUser)
+                const SizedBox(height: 20),
                 _buildSection(
-                  title: "QUICK ACTIONS",
+                  title: "TRAVEL INTERESTS",
                   child: Wrap(
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      _buildQuickActionItem(
-                        Icons.bookmark_border_rounded,
-                        "Bookmark",
-                        onTap: () => Navigator.of(context).push(
+                      _buildInterestChip("Solo Travel"),
+                      _buildInterestChip("Beach Volley"),
+                      _buildInterestChip("Photography"),
+                      _buildInterestChip("Backpacking"),
+                      _buildInterestChip("Zen Temples"),
+                      _buildInterestChip("Gourmet Eating"),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildSection(
+                  title: "ACHIEVEMENTS / BADGES",
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _buildBadgeItem("🏅", "Wanderlust"),
+                      _buildBadgeItem("🔥", "5-Streak"),
+                      _buildBadgeItem("🛡️", "ID Verified"),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (widget.isCurrentUser)
+                  _buildSection(
+                    title: "QUICK ACTIONS",
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _buildQuickActionItem(
+                          Icons.bookmark_border_rounded,
+                          "Bookmark",
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const BookmarksScreen(),
+                            ),
+                          ),
+                        ),
+                        ValueListenableBuilder<List<TripRequest>>(
+                          valueListenable: TripRequestStore.requests,
+                          builder: (context, requests, _) {
+                            final pending =
+                                TripRequestStore.pendingCountForHost(
+                                    CurrentUser.username);
+                            return _buildQuickActionItem(
+                              Icons.fact_check_outlined,
+                              "Trip Approvals",
+                              onTap: () => Scaffold.of(context).openEndDrawer(),
+                              badgeCount: pending,
+                            );
+                          },
+                        ),
+                        _buildQuickActionItem(
+                          Icons.directions_walk_rounded,
+                          "My Trips",
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MyTripScreen(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 30),
+                if (widget.isCurrentUser) ...[
+                  const SizedBox(height: 0),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
                           MaterialPageRoute(
-                            builder: (_) => const BookmarksScreen(),
+                            builder: (_) => ManageAccountSettingsScreen(
+                              name: _name,
+                              username: _username,
+                              avatarUrl: _avatarUrl,
+                              avatarBytes: _avatarBytes,
+                              onProfileUpdated: _updateProfile,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF111827),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        "Manage Account Settings",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text("Chat with $_name coming soon!"),
+                                  duration: const Duration(seconds: 2),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.chat_bubble_outline_rounded,
+                                color: Colors.white, size: 18),
+                            label: const Text(
+                              "Message",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
                           ),
                         ),
                       ),
-                      _buildQuickActionItem(
-                        Icons.fact_check_outlined,
-                        "Trip Approvals",
-                      ),
-                      _buildQuickActionItem(
-                        Icons.directions_walk_rounded,
-                        "My Trips",
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const MyTripScreen(),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Followed $_name!"),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.person_add_outlined,
+                              size: 18, color: AppColors.primary),
+                          label: const Text(
+                            "Follow",
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                                color: AppColors.primary, width: 1.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              const SizedBox(height: 30),
-          
-              if (widget.isCurrentUser) ...[
-                const SizedBox(height: 0),
-          
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ManageAccountSettingsScreen(
-                            name: _name,
-                            username: _username,
-                            avatarUrl: _avatarUrl,
-                            avatarBytes: _avatarBytes,
-                            onProfileUpdated: _updateProfile,
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF111827),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      "Manage Account Settings",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 52,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Chat with $_name coming soon!"),
-                                duration: const Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
-                          label: const Text(
-                            "Message",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      height: 52,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Followed $_name!"),
-                              duration: const Duration(seconds: 1),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.person_add_outlined, size: 18, color: AppColors.primary),
-                        label: const Text(
-                          "Follow",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary, width: 1.5),
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildStatItem(String value, String label) {
     return Column(
@@ -480,7 +494,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Widget _buildQuickActionItem(IconData icon, String label,
-      {VoidCallback? onTap}) {
+      {VoidCallback? onTap, int? badgeCount}) {
+    final showBadge = badgeCount != null && badgeCount > 0;
     return InkWell(
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(12),
@@ -507,6 +522,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 color: Color(0xFF4B5563),
               ),
             ),
+            if (showBadge) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

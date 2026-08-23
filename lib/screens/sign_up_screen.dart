@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/screens/login_screen.dart';
 import 'package:travel_buddy_finder/screens/main_nav_screen.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
-import '../utils/app_colors.dart';
-import '../utils/app_lists.dart';
-import '../utils/validators.dart';
+import '../config/app_colors.dart';
+import '../config/app_lists.dart';
+import '../config/validators.dart';
 import '../widgets/screen_background.dart';
 
 class SignUpScreen extends StatefulWidget {

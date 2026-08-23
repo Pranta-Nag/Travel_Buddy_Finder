@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
-import 'package:travel_buddy_finder/utils/app_lists.dart';
+import 'package:travel_buddy_finder/widgets/explore/explore_filter.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_lists.dart';
 import 'package:travel_buddy_finder/widgets/add_trip/trip_action_buttons.dart';
 import 'package:travel_buddy_finder/widgets/add_trip/trip_field_label.dart';
 import 'package:travel_buddy_finder/widgets/add_trip/trip_header.dart';
@@ -33,6 +35,9 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
   final _endDateController = TextEditingController();
   final _budgetController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _seatsController = TextEditingController();
+
+  final List<String> _selectedTransportations = [];
 
   @override
   void dispose() {
@@ -42,6 +47,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     _endDateController.dispose();
     _budgetController.dispose();
     _descriptionController.dispose();
+    _seatsController.dispose();
 
     super.dispose();
   }
@@ -56,37 +62,44 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
               TripHeader(
                 onBack: () => Navigator.pop(context),
               ),
-
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
-                    vertical: 8,
+                    vertical: 16,
                   ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTripDetailsSection(),
-                        const SizedBox(height: 20),
-
-                        _buildScheduleSection(),
-                        const SizedBox(height: 20),
-
-                        _buildMoreDetailsSection(),
-                        const SizedBox(height: 20),
-
-                        _buildCoverPhotoSection(),
-                        const SizedBox(height: 28),
-
-                        TripActionButtons(
-                          onCancel: () => Navigator.pop(context),
-                          onPublish: _submitTrip,
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 6,
+                    shadowColor: Colors.black.withValues(alpha: 0.08),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTripDetailsSection(),
+                            const SizedBox(height: 20),
+                            _buildScheduleSection(),
+                            const SizedBox(height: 20),
+                            _buildMoreDetailsSection(),
+                            const SizedBox(height: 20),
+                            _buildTransportAndSeatsSection(),
+                            const SizedBox(height: 20),
+                            _buildCoverPhotoSection(),
+                            const SizedBox(height: 28),
+                            TripActionButtons(
+                              onCancel: () => Navigator.pop(context),
+                              onPublish: _submitTrip,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                         ),
-
-                        const SizedBox(height: 16),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -105,7 +118,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
         const TripSectionTitle(title: 'Trip Details'),
         const SizedBox(height: 16),
         const TripFieldLabel(text: 'Trip Title'),
-
         TextFormField(
           controller: _tripNameController,
           decoration: inputDecoration(
@@ -119,10 +131,8 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
             return null;
           },
         ),
-
         const SizedBox(height: 16),
         const TripFieldLabel(text: 'Destination City'),
-
         TextFormField(
           controller: _destinationController,
           decoration: inputDecoration(
@@ -187,7 +197,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TripFieldLabel(text: label),
-
         TextFormField(
           controller: controller,
           readOnly: true,
@@ -299,6 +308,73 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     );
   }
 
+  Widget _buildTransportAndSeatsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TripSectionTitle(title: 'Transport & Seats'),
+        const SizedBox(height: 16),
+        const TripFieldLabel(text: 'Transportation Methods'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: ExploreFilterData.transportationMethods.map((method) {
+            final isSelected = _selectedTransportations.contains(method);
+            return ChoiceChip(
+              label: Text(
+                method,
+                style: TextStyle(
+                  color: isSelected ? AppColors.primary : Colors.grey.shade700,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (bool selected) {
+                setState(() {
+                  if (selected) {
+                    _selectedTransportations.add(method);
+                  } else {
+                    _selectedTransportations.remove(method);
+                  }
+                });
+              },
+              backgroundColor: Colors.grey.shade100,
+              selectedColor: AppColors.primary.withValues(alpha: 0.12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(
+                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+        const TripFieldLabel(text: 'Available Seats'),
+        TextFormField(
+          controller: _seatsController,
+          keyboardType: TextInputType.number,
+          decoration: inputDecoration(
+            hint: 'e.g. 4',
+            prefixIcon: const Icon(Icons.event_seat_rounded),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Enter number of seats';
+            }
+            final count = int.tryParse(value.trim());
+            if (count == null || count <= 0) {
+              return 'Enter a valid number of seats';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildCoverPhotoSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +406,6 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     ).format(pickedDate);
   }
 
-
   Future<void> _pickCoverImage() async {
     final image = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -354,16 +429,12 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
   }
 
   void _submitTrip() {
-    final isFormValid =
-        _formKey.currentState?.validate() ?? false;
+    final isFormValid = _formKey.currentState?.validate() ?? false;
     if (!isFormValid) return;
     if (!_validateExtraFields()) return;
 
     final newTrip = Trip(
-      id: DateTime.now()
-          .millisecondsSinceEpoch
-          .toString(),
-
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _tripNameController.text.trim(),
       location: _destinationController.text.trim(),
       price: '\$${_budgetController.text.trim()}',
@@ -374,15 +445,15 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
           'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
       avatarUrl:
           'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-      category:
-          _selectedCategory ?? 'Adventure',
-      description:
-          _descriptionController.text.trim(),
-      seatsLeft: 2,
+      category: _selectedCategory ?? 'Adventure',
+      description: _descriptionController.text.trim(),
+      seatsLeft: int.tryParse(_seatsController.text.trim()) ?? 2,
+      transportationMethods: _selectedTransportations,
       imageBytes: _coverImageBytes,
     );
 
     tripList.add(newTrip);
+    if (!mounted) return;
     Navigator.pop(context);
     _showMessage(
       'Trip published successfully!',

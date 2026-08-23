@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
 
 class TripImagePicker extends StatelessWidget {
   final Uint8List? imageBytes;

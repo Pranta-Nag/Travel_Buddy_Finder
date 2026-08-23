@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
+import 'package:travel_buddy_finder/models/trip_request.dart';
 import 'package:travel_buddy_finder/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/stores/current_user.dart';
+import 'package:travel_buddy_finder/stores/trip_request_store.dart';
 
 class ViewScreen extends StatefulWidget {
   final Trip trip;
@@ -74,25 +77,42 @@ class _ViewScreenState extends State<ViewScreen> {
   }
 
   void _joinTrip() {
+    final trip = widget.trip;
+    final request = TripRequest(
+      id: '${trip.id}_${CurrentUser.username}_${DateTime.now().millisecondsSinceEpoch}',
+      trip: trip,
+      requesterName: CurrentUser.name,
+      requesterUsername: CurrentUser.username,
+      requesterAvatarUrl: CurrentUser.avatarUrl,
+      hostName: trip.hostName,
+      hostUsername: trip.username,
+    );
+
+    TripRequestStore.add(request);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 28),
+            Icon(Icons.check_circle_rounded,
+                color: AppColors.primary, size: 28),
             SizedBox(width: 10),
             Text("Join Request Sent!"),
           ],
         ),
         content: Text(
-          "Your request to join '${widget.trip.title}' with ${widget.trip.hostName} has been submitted successfully.",
-          style: const TextStyle(color: AppColors.greyText, fontSize: 14, height: 1.4),
+          "Your request to join '${trip.title}' with ${trip.hostName} has been submitted successfully.",
+          style: const TextStyle(
+              color: AppColors.greyText, fontSize: 14, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Close", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+            child: const Text("Close",
+                style: TextStyle(
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -101,11 +121,14 @@ class _ViewScreenState extends State<ViewScreen> {
 
   IconData _getTransportationIcon(String method) {
     final m = method.toLowerCase();
-    if (m.contains('flight') || m.contains('plane')) return Icons.flight_takeoff_rounded;
+    if (m.contains('flight') || m.contains('plane'))
+      return Icons.flight_takeoff_rounded;
     if (m.contains('train') || m.contains('bullet')) return Icons.train_rounded;
     if (m.contains('bus')) return Icons.directions_bus_rounded;
-    if (m.contains('car') || m.contains('carpool') || m.contains('road')) return Icons.directions_car_rounded;
-    if (m.contains('boat') || m.contains('sail') || m.contains('ferry')) return Icons.directions_boat_rounded;
+    if (m.contains('car') || m.contains('carpool') || m.contains('road'))
+      return Icons.directions_car_rounded;
+    if (m.contains('boat') || m.contains('sail') || m.contains('ferry'))
+      return Icons.directions_boat_rounded;
     return Icons.commute_rounded;
   }
 
@@ -136,19 +159,23 @@ class _ViewScreenState extends State<ViewScreen> {
               child: CircleAvatar(
                 backgroundColor: Colors.white.withValues(alpha: 0.9),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87, size: 20),
+                  icon: const Icon(Icons.arrow_back_rounded,
+                      color: Colors.black87, size: 20),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
             ),
             actions: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                 child: CircleAvatar(
                   backgroundColor: Colors.white.withValues(alpha: 0.9),
                   child: IconButton(
                     icon: Icon(
-                      _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                      _isBookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_outline_rounded,
                       color: _isBookmarked ? AppColors.primary : Colors.black87,
                       size: 20,
                     ),
@@ -158,7 +185,9 @@ class _ViewScreenState extends State<ViewScreen> {
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(_isBookmarked ? "Trip added to bookmarks" : "Trip removed from bookmarks"),
+                          content: Text(_isBookmarked
+                              ? "Trip added to bookmarks"
+                              : "Trip removed from bookmarks"),
                           duration: const Duration(seconds: 1),
                           behavior: SnackBarBehavior.floating,
                         ),
@@ -168,11 +197,13 @@ class _ViewScreenState extends State<ViewScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 12.0, left: 4.0),
+                padding: const EdgeInsets.only(
+                    top: 8.0, bottom: 8.0, right: 12.0, left: 4.0),
                 child: CircleAvatar(
                   backgroundColor: Colors.white.withValues(alpha: 0.9),
                   child: IconButton(
-                    icon: const Icon(Icons.share_outlined, color: Colors.black87, size: 20),
+                    icon: const Icon(Icons.share_outlined,
+                        color: Colors.black87, size: 20),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -235,7 +266,8 @@ class _ViewScreenState extends State<ViewScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(20),
@@ -250,7 +282,8 @@ class _ViewScreenState extends State<ViewScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.category_rounded, color: Colors.white, size: 14),
+                              const Icon(Icons.category_rounded,
+                                  color: Colors.white, size: 14),
                               const SizedBox(width: 6),
                               Text(
                                 trip.category,
@@ -264,7 +297,8 @@ class _ViewScreenState extends State<ViewScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(20),
@@ -279,7 +313,8 @@ class _ViewScreenState extends State<ViewScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.event_seat_rounded, color: Colors.orange, size: 14),
+                              const Icon(Icons.event_seat_rounded,
+                                  color: Colors.orange, size: 14),
                               const SizedBox(width: 5),
                               Text(
                                 "${trip.seatsLeft} Spots Left",
@@ -324,7 +359,8 @@ class _ViewScreenState extends State<ViewScreen> {
                       ),
                       const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(12),
@@ -333,7 +369,8 @@ class _ViewScreenState extends State<ViewScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star_rounded, color: Color(0xFFD97706), size: 18),
+                            const Icon(Icons.star_rounded,
+                                color: Color(0xFFD97706), size: 18),
                             const SizedBox(width: 4),
                             Text(
                               trip.rating,
@@ -353,7 +390,8 @@ class _ViewScreenState extends State<ViewScreen> {
                   // Location Tag
                   Row(
                     children: [
-                      const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 18),
+                      const Icon(Icons.location_on_rounded,
+                          color: AppColors.primary, size: 18),
                       const SizedBox(width: 6),
                       Text(
                         trip.location,
@@ -460,9 +498,11 @@ class _ViewScreenState extends State<ViewScreen> {
                                     ),
                                     const SizedBox(width: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(alpha: 0.1),
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Text(
@@ -492,18 +532,27 @@ class _ViewScreenState extends State<ViewScreen> {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Chat with ${trip.hostName} coming soon!"),
+                                content: Text(
+                                    "Chat with ${trip.hostName} coming soon!"),
                                 duration: const Duration(seconds: 2),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           },
-                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 14, color: AppColors.primary),
-                          label: const Text("Chat", style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                          icon: const Icon(Icons.chat_bubble_outline_rounded,
+                              size: 14, color: AppColors.primary),
+                          label: const Text("Chat",
+                              style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold)),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.primary, width: 1.2),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            side: const BorderSide(
+                                color: AppColors.primary, width: 1.2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ],
@@ -575,7 +624,8 @@ class _ViewScreenState extends State<ViewScreen> {
                   const SizedBox(height: 24),
 
                   // Transportation Methods (if present)
-                  if (trip.transportationMethods != null && trip.transportationMethods!.isNotEmpty) ...[
+                  if (trip.transportationMethods != null &&
+                      trip.transportationMethods!.isNotEmpty) ...[
                     const Text(
                       "Transportation",
                       style: TextStyle(
@@ -590,7 +640,8 @@ class _ViewScreenState extends State<ViewScreen> {
                       runSpacing: 10,
                       children: trip.transportationMethods!.map((method) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(14),
@@ -674,7 +725,8 @@ class _ViewScreenState extends State<ViewScreen> {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
@@ -710,7 +762,8 @@ class _ViewScreenState extends State<ViewScreen> {
                               ),
                             ),
                             SizedBox(width: 4),
-                            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
+                            Icon(Icons.arrow_forward_ios_rounded,
+                                size: 12, color: AppColors.primary),
                           ],
                         ),
                       ),
@@ -720,7 +773,8 @@ class _ViewScreenState extends State<ViewScreen> {
 
                   // Comment Input Field
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -750,7 +804,8 @@ class _ViewScreenState extends State<ViewScreen> {
                             textCapitalization: TextCapitalization.sentences,
                             decoration: const InputDecoration(
                               hintText: "Ask host a question...",
-                              hintStyle: TextStyle(fontSize: 13, color: AppColors.greyText),
+                              hintStyle: TextStyle(
+                                  fontSize: 13, color: AppColors.greyText),
                               border: InputBorder.none,
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(vertical: 8),
@@ -760,7 +815,8 @@ class _ViewScreenState extends State<ViewScreen> {
                         ),
                         IconButton(
                           onPressed: _addComment,
-                          icon: const Icon(Icons.send_rounded, color: AppColors.primary, size: 20),
+                          icon: const Icon(Icons.send_rounded,
+                              color: AppColors.primary, size: 20),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
@@ -806,7 +862,8 @@ class _ViewScreenState extends State<ViewScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         item["name"]!,
@@ -904,35 +961,37 @@ class _ViewScreenState extends State<ViewScreen> {
                 ],
               ),
               const SizedBox(width: 20),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _joinTrip,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    elevation: 2,
-                    shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              if (!CurrentUser.isCurrentUser(trip.username))
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _joinTrip,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 2,
+                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Join Trip Now",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded,
+                            color: Colors.white, size: 18),
+                      ],
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Join Trip Now",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                    ],
-                  ),
                 ),
-              ),
             ],
           ),
         ),

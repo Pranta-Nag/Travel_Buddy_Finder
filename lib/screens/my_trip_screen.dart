@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip_data.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/trip_card.dart';
-import 'package:travel_buddy_finder/utils/bookmark_store.dart';
+import 'package:travel_buddy_finder/stores/bookmark_store.dart';
 
 class MyTripScreen extends StatefulWidget {
   const MyTripScreen({super.key});

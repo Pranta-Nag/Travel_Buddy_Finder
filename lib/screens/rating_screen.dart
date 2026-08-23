@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/rating/rating_quick_tags.dart';
 import 'package:travel_buddy_finder/widgets/rating/rating_review_box.dart';
 import 'package:travel_buddy_finder/widgets/rating/rating_stars_card.dart';

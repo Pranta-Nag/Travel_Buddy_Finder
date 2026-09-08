@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
-import 'package:travel_buddy_finder/utils/app_lists.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_lists.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 

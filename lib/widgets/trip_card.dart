@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
+import 'package:travel_buddy_finder/models/trip_request.dart';
 import 'package:travel_buddy_finder/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/screens/edit_trip_screen.dart';
 import 'package:travel_buddy_finder/screens/rating_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/screens/view_screen.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/stores/current_user.dart';
+import 'package:travel_buddy_finder/stores/trip_request_store.dart';
 
 class TripCard extends StatefulWidget {
   const TripCard({
@@ -14,14 +17,12 @@ class TripCard extends StatefulWidget {
     required this.isBookmarked,
     this.onBookmarkToggle,
     this.onDelete,
-    this.showJoinButton = true,
   });
 
   final Trip trip;
   final bool isBookmarked;
   final VoidCallback? onBookmarkToggle;
   final VoidCallback? onDelete;
-  final bool showJoinButton;
 
   @override
   State<TripCard> createState() => _TripCardState();
@@ -29,6 +30,7 @@ class TripCard extends StatefulWidget {
 
 class _TripCardState extends State<TripCard> {
   bool _isLiked = false;
+  bool _hasRequested = false;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,6 @@ class _TripCardState extends State<TripCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Stack(
             children: [
               SizedBox(
@@ -89,8 +90,7 @@ class _TripCardState extends State<TripCard> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            EditTripScreen(
+                        builder: (context) => EditTripScreen(
                           trip: widget.trip,
                         ),
                       ),
@@ -148,18 +148,15 @@ class _TripCardState extends State<TripCard> {
               ),
             ],
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title + Rating
                   Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
@@ -172,9 +169,7 @@ class _TripCardState extends State<TripCard> {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 8),
-
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -216,28 +211,23 @@ class _TripCardState extends State<TripCard> {
 
                       Expanded(
                         child: GestureDetector(
-                          onTap: () =>
-                              _openProfile(context),
+                          onTap: () => _openProfile(context),
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'By ${widget.trip.hostName}',
                                 maxLines: 1,
-                                overflow:
-                                    TextOverflow.ellipsis,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontWeight:
-                                      FontWeight.w600,
+                                  fontWeight: FontWeight.w600,
                                   fontSize: 13,
                                 ),
                               ),
                               Text(
                                 widget.trip.username,
                                 maxLines: 1,
-                                overflow:
-                                    TextOverflow.ellipsis,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 11,
@@ -248,28 +238,24 @@ class _TripCardState extends State<TripCard> {
                         ),
                       ),
 
-                     // const SizedBox(width: 10),
-                     const Spacer(),
+                      // const SizedBox(width: 10),
+                      const Spacer(),
 
                       // Seats
                       Flexible(
                         child: Container(
-                          padding:
-                              const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 7,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange.shade50,
-                            borderRadius:
-                                BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          
                           child: Text(
                             '${widget.trip.seatsLeft} seats left',
                             maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.orange,
                               fontSize: 9,
@@ -281,26 +267,21 @@ class _TripCardState extends State<TripCard> {
                     ],
                   ),
 
-                 const Spacer(),
-                //const SizedBox(height: 10),
+                  const Spacer(),
+                  //const SizedBox(height: 10),
 
                   Row(
                     children: [
                       _actionButton(
-                        _isLiked
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        _isLiked
-                            ? Colors.red
-                            : Colors.grey.shade700,
+                        _isLiked ? Icons.favorite : Icons.favorite_border,
+                        _isLiked ? Colors.red : Colors.grey.shade700,
                         () {
                           setState(() {
                             _isLiked = !_isLiked;
                           });
 
                           if (_isLiked) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
+                            ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   'You liked ${widget.trip.title}',
@@ -310,23 +291,18 @@ class _TripCardState extends State<TripCard> {
                           }
                         },
                       ),
-
                       const SizedBox(width: 5),
-
                       _actionButton(
                         Icons.chat_bubble_outline,
                         Colors.grey.shade700,
                         () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                const CommentScreen(),
+                            builder: (_) => const CommentScreen(),
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 5),
-
                       _actionButton(
                         widget.isBookmarked
                             ? Icons.bookmark
@@ -336,15 +312,12 @@ class _TripCardState extends State<TripCard> {
                             : Colors.grey.shade700,
                         widget.onBookmarkToggle ?? () {},
                       ),
-
                       const SizedBox(width: 5),
-
                       _actionButton(
                         Icons.star_border,
                         Colors.grey.shade700,
                         () async {
-                          final updated =
-                              await Navigator.push(
+                          final updated = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => RatingScreen(
@@ -353,15 +326,12 @@ class _TripCardState extends State<TripCard> {
                             ),
                           );
 
-                          if (updated == true &&
-                              mounted) {
+                          if (updated == true && mounted) {
                             setState(() {});
                           }
                         },
                       ),
-
-                      if (isOwner &&
-                          widget.onDelete != null) ...[
+                      if (isOwner && widget.onDelete != null) ...[
                         const SizedBox(width: 5),
                         _actionButton(
                           Icons.delete_outline,
@@ -376,14 +346,16 @@ class _TripCardState extends State<TripCard> {
 
                   Row(
                     children: [
-                      if (widget.showJoinButton) ...[
+                      if (!isOwner) ...[
                         Expanded(
                           child: SizedBox(
                             height: 34,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: _hasRequested ? null : _joinTrip,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
+                                backgroundColor: _hasRequested
+                                    ? Colors.green.shade600
+                                    : Colors.blue,
                                 foregroundColor: Colors.white,
                                 padding: EdgeInsets.zero,
                                 elevation: 0,
@@ -391,11 +363,11 @@ class _TripCardState extends State<TripCard> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: const Text(
-                                'Join Trip',
+                              child: Text(
+                                _hasRequested ? 'Requested' : 'Join Trip',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -455,7 +427,6 @@ class _TripCardState extends State<TripCard> {
       ),
     );
   }
-
 
   Widget _pill(
     IconData? icon,
@@ -525,6 +496,31 @@ class _TripCardState extends State<TripCard> {
           onPressed: onPressed,
           icon: Icon(icon),
         ),
+      ),
+    );
+  }
+
+  void _joinTrip() {
+    final trip = widget.trip;
+    final request = TripRequest(
+      id: '${trip.id}_${CurrentUser.username}_${DateTime.now().millisecondsSinceEpoch}',
+      trip: trip,
+      requesterName: CurrentUser.name,
+      requesterUsername: CurrentUser.username,
+      requesterAvatarUrl: CurrentUser.avatarUrl,
+      hostName: trip.hostName,
+      hostUsername: trip.username,
+    );
+
+    TripRequestStore.add(request);
+
+    setState(() => _hasRequested = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Join request sent to ${trip.hostName}!'),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

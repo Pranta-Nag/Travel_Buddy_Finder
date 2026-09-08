@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/change_password_screen.dart';
 import 'package:travel_buddy_finder/screens/edit_profile_screen.dart';
 import 'package:travel_buddy_finder/screens/login_screen.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
 class ManageAccountSettingsScreen extends StatelessWidget {

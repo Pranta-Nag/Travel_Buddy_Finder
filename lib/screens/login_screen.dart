@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/screens/forgot_pass_screen.dart';
 import 'package:travel_buddy_finder/screens/main_nav_screen.dart';
 import 'package:travel_buddy_finder/screens/sign_up_screen.dart';
-import 'package:travel_buddy_finder/utils/app_colors.dart';
-import 'package:travel_buddy_finder/utils/validators.dart';
+import 'package:travel_buddy_finder/config/app_colors.dart';
+import 'package:travel_buddy_finder/config/validators.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
 class LoginScreen extends StatefulWidget {

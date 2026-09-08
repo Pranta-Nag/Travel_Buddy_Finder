@@ -21,8 +21,8 @@ class _MyTripScreenState extends State<MyTripScreen> {
     final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
 
     // Filtering trips created by the user
-    final myTrips = TripStore.trips.where((trip) => 
-      trip.username == '@yeasin' || trip.username == '@you'
+    final myTrips = TripStore.trips.where((trip) =>
+    trip.username == '@yeasin' || trip.username == '@you'
     ).toList();
 
     return Scaffold(
@@ -42,59 +42,58 @@ class _MyTripScreenState extends State<MyTripScreen> {
       ),
       body: myTrips.isEmpty
           ? const Center(
-              child: Text(
-                "You haven't created any trips yet.",
-                style: TextStyle(color: AppColors.greyText),
-              ),
-            )
+        child: Text(
+          "You haven't created any trips yet.",
+          style: TextStyle(color: AppColors.greyText),
+        ),
+      )
           : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: myTrips.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                mainAxisExtent: cardHeight,
-              ),
-              itemBuilder: (context, index) {
-                final trip = myTrips[index];
-                return ValueListenableBuilder<List<dynamic>>(
-                  valueListenable: BookmarkStore.savedTrips,
-                  builder: (context, savedTrips, _) => TripCard(
-                    trip: trip,
-                    isBookmarked: savedTrips.any((item) => item.id == trip.id),
-                    onBookmarkToggle: () => BookmarkStore.toggle(trip),
-                    showJoinButton: false,
-                    onDelete: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Trip'),
-                          content: Text('Are you sure you want to delete "${trip.title}"?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: TextButton.styleFrom(foregroundColor: Colors.red),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirmed == true) {
-                        setState(() {
-                          TripStore.remove(trip.id);
-                          BookmarkStore.remove(trip.id);
-                        });
-                      }
-                    },
+        padding: const EdgeInsets.all(16),
+        itemCount: myTrips.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          mainAxisExtent: cardHeight,
+        ),
+        itemBuilder: (context, index) {
+          final trip = myTrips[index];
+          return ValueListenableBuilder<List<dynamic>>(
+            valueListenable: BookmarkStore.savedTrips,
+            builder: (context, savedTrips, _) => TripCard(
+              trip: trip,
+              isBookmarked: savedTrips.any((item) => item.id == trip.id),
+              onBookmarkToggle: () => BookmarkStore.toggle(trip),
+              onDelete: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Trip'),
+                    content: Text('Are you sure you want to delete "${trip.title}"?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: const Text('Delete'),
+                      ),
+                    ],
                   ),
                 );
+                if (confirmed == true) {
+                  setState(() {
+                    TripStore.remove(trip.id);
+                    BookmarkStore.remove(trip.id);
+                  });
+                }
               },
             ),
+          );
+        },
+      ),
     );
   }
 }

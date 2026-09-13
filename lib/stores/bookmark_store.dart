@@ -13,6 +13,15 @@ class BookmarkStore {
     savedTrips.value = trips;
   }
 
+  static void update(Trip updatedTrip) {
+    final trips = List<Trip>.from(savedTrips.value);
+    final index = trips.indexWhere((item) => item.id == updatedTrip.id);
+    if (index >= 0) {
+      trips[index] = updatedTrip;
+      savedTrips.value = trips;
+    }
+  }
+
   static void remove(String tripId) {
     savedTrips.value =
         savedTrips.value.where((trip) => trip.id != tripId).toList();

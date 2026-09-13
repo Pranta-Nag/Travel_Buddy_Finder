@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/config/app_colors.dart';
 import 'package:travel_buddy_finder/config/app_lists.dart';
+import 'package:travel_buddy_finder/stores/trip_store.dart';
 import 'package:travel_buddy_finder/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/widgets/screen_background.dart';
 
@@ -35,10 +36,13 @@ class _EditTripScreenState extends State<EditTripScreen> {
     super.initState();
     _tripNameController = TextEditingController(text: widget.trip.title);
     _destinationController = TextEditingController(text: widget.trip.location);
-    _startDateController = TextEditingController(text: "15 Oct 2024"); // Dummy values as Trip model doesn't have these yet
+    _startDateController = TextEditingController(text: "15 Oct 2024");
     _endDateController = TextEditingController(text: "20 Oct 2024");
     _budgetController = TextEditingController(text: widget.trip.price.replaceAll('\$', ''));
     _descriptionController = TextEditingController(text: widget.trip.description);
+    _selectedCategory = AppLists.categories.contains(widget.trip.category)
+        ? widget.trip.category
+        : (AppLists.categories.isNotEmpty ? AppLists.categories.first : null);
     _coverImageBytes = widget.trip.imageBytes;
   }
 
@@ -170,7 +174,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
                           children: [
                             _buildLabel("CATEGORY"),
                             DropdownButtonFormField<String>(
-                              value: _selectedCategory,
+                              initialValue: _selectedCategory,
                               decoration: inputDecoration(hint: "Category"),
                               items: AppLists.categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                               onChanged: (v) => setState(() => _selectedCategory = v),
@@ -207,14 +211,30 @@ class _EditTripScreenState extends State<EditTripScreen> {
                               borderRadius: BorderRadius.circular(12),
                               child: Image.memory(_coverImageBytes!, fit: BoxFit.cover),
                             )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_a_photo, color: Colors.grey[400], size: 32),
-                                const SizedBox(height: 8),
-                                Text("Update Photo", style: TextStyle(color: Colors.grey[500])),
-                              ],
-                            ),
+                          : (widget.trip.imageUrl.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    widget.trip.imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.add_a_photo, color: Colors.grey[400], size: 32),
+                                        const SizedBox(height: 8),
+                                        Text("Update Photo", style: TextStyle(color: Colors.grey[500])),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo, color: Colors.grey[400], size: 32),
+                                    const SizedBox(height: 8),
+                                    Text("Update Photo", style: TextStyle(color: Colors.grey[500])),
+                                  ],
+                                )),
                     ),
                   ),
 
@@ -223,10 +243,32 @@ class _EditTripScreenState extends State<EditTripScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {
-                             // Handle delete
-                             Navigator.pop(context);
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Trip Deleted")));
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Trip'),
+                                content: Text('Are you sure you want to delete "${widget.trip.title}"?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true && context.mounted) {
+                              TripStore.remove(widget.trip.id);
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Trip Deleted")),
+                              );
+                            }
                           },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red,
@@ -242,9 +284,21 @@ class _EditTripScreenState extends State<EditTripScreen> {
                         child: ElevatedButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              // Handle update
+                              final rawBudget = _budgetController.text.trim().replaceAll('\$', '');
+                              final priceString = rawBudget.isNotEmpty ? '\$$rawBudget' : widget.trip.price;
+                              final updatedTrip = widget.trip.copyWith(
+                                title: _tripNameController.text.trim(),
+                                location: _destinationController.text.trim(),
+                                price: priceString,
+                                category: _selectedCategory ?? widget.trip.category,
+                                description: _descriptionController.text.trim(),
+                                imageBytes: _coverImageBytes,
+                              );
+                              TripStore.update(updatedTrip);
                               Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Trip Updated")));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Trip Updated Successfully")),
+                              );
                             }
                           },
                           style: ElevatedButton.styleFrom(

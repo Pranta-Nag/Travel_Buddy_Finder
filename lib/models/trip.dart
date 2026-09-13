@@ -34,4 +34,41 @@ class Trip {
     this.genderPreference,
     this.transportationMethods,
   });
+
+  Trip copyWith({
+    String? id,
+    String? title,
+    String? location,
+    String? price,
+    String? rating,
+    String? hostName,
+    String? username,
+    String? imageUrl,
+    String? avatarUrl,
+    String? category,
+    String? description,
+    int? seatsLeft,
+    Uint8List? imageBytes,
+    String? genderPreference,
+    List<String>? transportationMethods,
+  }) {
+    return Trip(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      location: location ?? this.location,
+      price: price ?? this.price,
+      rating: rating ?? this.rating,
+      hostName: hostName ?? this.hostName,
+      username: username ?? this.username,
+      imageUrl: imageUrl ?? this.imageUrl,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      seatsLeft: seatsLeft ?? this.seatsLeft,
+      imageBytes: imageBytes ?? this.imageBytes,
+      genderPreference: genderPreference ?? this.genderPreference,
+      transportationMethods:
+          transportationMethods ?? this.transportationMethods,
+    );
+  }
 }

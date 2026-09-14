@@ -61,39 +61,40 @@ class _ExploreFilterSheetState extends State<ExploreFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * .82,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(28),
       ),
-      child: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 20,
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * .82,
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                children: [
+                  _buildSortSection(),
+                  const SizedBox(height: 28),
+                  _buildBudgetSection(),
+                  const SizedBox(height: 28),
+                  _buildCategorySection(),
+                  const SizedBox(height: 28),
+                  _buildGenderSection(),
+                  const SizedBox(height: 28),
+                  _buildTransportationSection(),
+                  const SizedBox(height: 20),
+                ],
               ),
-              children: [
-                _buildSortSection(),
-                const SizedBox(height: 28),
-                _buildBudgetSection(),
-                const SizedBox(height: 28),
-                _buildCategorySection(),
-                const SizedBox(height: 28),
-                _buildGenderSection(),
-                const SizedBox(height: 28),
-                _buildTransportationSection(),
-                const SizedBox(height: 20),
-              ],
             ),
-          ),
-          _buildBottomButtons(),
-        ],
+            _buildBottomButtons(),
+          ],
+        ),
       ),
     );
   }
@@ -377,7 +378,7 @@ class _ExploreFilterSheetState extends State<ExploreFilterSheet> {
           });
         },
         borderRadius: BorderRadius.circular(12),
-        child: Container(
+        child: Ink(
           padding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,

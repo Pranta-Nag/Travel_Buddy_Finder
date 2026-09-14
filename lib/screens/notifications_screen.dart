@@ -135,63 +135,68 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 onDismissed: (_) {
                   NotificationStore.remove(notification.id);
                 },
-                child: ListTile(
-                  leading: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: Icon(
-                      _iconFor(notification),
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  title: Text(
-                    notification.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: notification.read
-                          ? FontWeight.normal
-                          : FontWeight.bold,
-                      fontSize: 13,
-                      color: const Color(0xFF1E293B),
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 2),
-                      Text(
-                        notification.body,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Colors.grey.shade600,
-                        ),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  clipBehavior: Clip.antiAlias,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      child: Icon(
+                        _iconFor(notification),
+                        size: 18,
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        DateFormat('MMM d, h:mm a')
-                            .format(notification.createdAt),
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: Colors.grey.shade400,
-                        ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    title: Text(
+                      notification.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: notification.read
+                            ? FontWeight.normal
+                            : FontWeight.bold,
+                        fontSize: 13,
+                        color: const Color(0xFF1E293B),
                       ),
-                    ],
-                  ),
-                  trailing: notification.read
-                      ? null
-                      : const Icon(
-                          Icons.brightness_1_rounded,
-                          size: 10,
-                          color: AppColors.primary,
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 2),
+                        Text(
+                          notification.body,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
-                  onTap: () {
-                    NotificationStore.markRead(notification.id);
-                  },
+                        const SizedBox(height: 2),
+                        Text(
+                          DateFormat('MMM d, h:mm a')
+                              .format(notification.createdAt),
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: notification.read
+                        ? null
+                        : const Icon(
+                            Icons.brightness_1_rounded,
+                            size: 10,
+                            color: AppColors.primary,
+                          ),
+                    onTap: () {
+                      NotificationStore.markRead(notification.id);
+                    },
+                  ),
                 ),
               );
             },

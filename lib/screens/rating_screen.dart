@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
+import 'package:travel_buddy_finder/models/review.dart';
+import 'package:travel_buddy_finder/stores/current_user.dart';
+import 'package:travel_buddy_finder/stores/review_store.dart';
 import 'package:travel_buddy_finder/config/app_colors.dart';
 import 'package:travel_buddy_finder/widgets/rating/rating_quick_tags.dart';
 import 'package:travel_buddy_finder/widgets/rating/rating_review_box.dart';
@@ -91,11 +94,30 @@ class _RatingScreenState extends State<RatingScreen> {
       );
       return;
     }
+
+    final tripId = widget.trip?.id ?? '';
+    final reviewText = _reviewController.text.trim();
+
+    final review = Review(
+      id: 'rev_${DateTime.now().millisecondsSinceEpoch}',
+      tripId: tripId,
+      userName: CurrentUser.name,
+      userUsername: CurrentUser.username,
+      userAvatarUrl: CurrentUser.avatarUrl,
+      rating: _rating.toDouble(),
+      reviewText: reviewText.isEmpty ? _getRatingLabel(_rating) : reviewText,
+      tags: _selectedTags.toList(),
+      wouldRecommend: _wouldRecommend,
+      createdAt: DateTime.now(),
+    );
+
+    ReviewStore.addReview(review);
+
     // Update trip rating
     if (widget.trip != null) {
       setState(() {
         widget.trip!.rating =
-            _rating.toDouble().toStringAsFixed(1);
+            ReviewStore.getAverageRating(tripId).toStringAsFixed(1);
       });
     }
     _showSuccessDialog();

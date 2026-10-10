@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/models/trip.dart';
 import 'package:travel_buddy_finder/models/trip_request.dart';
+import 'package:travel_buddy_finder/models/review.dart';
+import 'package:travel_buddy_finder/stores/review_store.dart';
+import 'package:travel_buddy_finder/screens/rating_screen.dart';
 import 'package:travel_buddy_finder/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/screens/user_profile_screen.dart';
 import 'package:travel_buddy_finder/config/app_colors.dart';
@@ -709,6 +712,9 @@ class _ViewScreenState extends State<ViewScreen> {
                   ),
                   const SizedBox(height: 28),
 
+                  // Reviews & Ratings Section
+                  _buildReviewsSection(),
+
                   // Community Discussion & Comments Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1061,6 +1067,439 @@ class _ViewScreenState extends State<ViewScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewsSection() {
+    return ValueListenableBuilder<List<Review>>(
+      valueListenable: ReviewStore.reviewsNotifier,
+      builder: (context, allReviews, _) {
+        final tripReviews = ReviewStore.getReviewsForTrip(widget.trip.id);
+        final reviewCount = tripReviews.length;
+        final avgRating = reviewCount > 0
+            ? ReviewStore.getAverageRating(widget.trip.id)
+            : (double.tryParse(widget.trip.rating) ?? 5.0);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      "Reviews & Ratings",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "$reviewCount",
+                        style: const TextStyle(
+                          color: Color(0xFFB45309),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: () async {
+                    final updated = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RatingScreen(trip: widget.trip),
+                      ),
+                    );
+                    if (updated == true && mounted) {
+                      setState(() {});
+                    }
+                  },
+                  icon: const Icon(Icons.rate_review_outlined,
+                      size: 15, color: AppColors.primary),
+                  label: const Text(
+                    "Rate Trip",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Rating Summary Banner
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            avgRating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF78350F),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            "/ 5.0",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: List.generate(5, (index) {
+                          final starFill = index < avgRating.round();
+                          return Icon(
+                            starFill
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            size: 18,
+                            color: const Color(0xFFD97706),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "$reviewCount verified ${reviewCount == 1 ? 'review' : 'reviews'}",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF92400E),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.thumb_up_alt_rounded,
+                          color: Colors.green,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Recommended",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          reviewCount > 0
+                              ? "${((tripReviews.where((r) => r.wouldRecommend).length / reviewCount) * 100).round()}% recommend"
+                              : "100% positive",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.greyText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Review List or Empty Placeholder
+            if (tripReviews.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                    vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.rate_review_outlined,
+                        size: 40, color: Colors.grey.shade400),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "No reviews for this trip yet",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Be the first travel buddy to share your experience!",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.greyText,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final updated = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RatingScreen(trip: widget.trip),
+                          ),
+                        );
+                        if (updated == true && mounted) {
+                          setState(() {});
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                      ),
+                      icon: const Icon(Icons.star_rounded, size: 16),
+                      label: const Text(
+                        "Write First Review",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: tripReviews.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final review = tripReviews[index];
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: AppColors.fieldColor,
+                              backgroundImage: NetworkImage(review.userAvatarUrl),
+                              onBackgroundImageError: (_, __) {},
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        review.userName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      Text(
+                                        review.timeAgo,
+                                        style: const TextStyle(
+                                          color: AppColors.greyText,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    review.userUsername,
+                                    style: const TextStyle(
+                                      color: AppColors.greyText,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Stars row and recommendation badge
+                        Row(
+                          children: [
+                            Row(
+                              children: List.generate(5, (starIdx) {
+                                final isFull = starIdx < review.rating.round();
+                                return Icon(
+                                  isFull
+                                      ? Icons.star_rounded
+                                      : Icons.star_outline_rounded,
+                                  size: 16,
+                                  color: Colors.amber.shade700,
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              review.rating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: Color(0xFF78350F),
+                              ),
+                            ),
+                            const Spacer(),
+                            if (review.wouldRecommend)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: const Color(0xFFA7F3D0)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded,
+                                        size: 11,
+                                        color: Color(0xFF059669)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "Recommends",
+                                      style: TextStyle(
+                                        color: Color(0xFF059669),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        if (review.reviewText.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            review.reviewText,
+                            style: const TextStyle(
+                              color: Color(0xFF334155),
+                              fontSize: 13,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+
+                        // Quick Tags Pills
+                        if (review.tags.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: review.tags.map((tag) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+            const SizedBox(height: 28),
+          ],
+        );
+      },
     );
   }
 }

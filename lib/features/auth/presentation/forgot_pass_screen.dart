@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:travel_buddy_finder/features/navigation/presentation/main_nav_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/utils/validators.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/features/auth/presentation/reset_password_screen.dart';
 
 class ForgotPassScreen extends StatefulWidget {
   const ForgotPassScreen({super.key});
@@ -50,12 +50,11 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
     }
 
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => const MainNavScreen(),
+        builder: (_) => const ResetPasswordScreen(),
       ),
-      (route) => false,
     );
   }
 

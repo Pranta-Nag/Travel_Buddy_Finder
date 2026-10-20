@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/features/bookmarks/presentation/bookmarks_screen.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
@@ -56,16 +58,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     });
   }
 
-  ImageProvider _getAvatarImage() {
+  ImageProvider _getAvatarImage(String url) {
     if (_avatarBytes != null) {
       return MemoryImage(_avatarBytes!);
     }
-    return NetworkImage(_avatarUrl);
+    if (url.isNotEmpty && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return NetworkImage(url);
+    }
+    return const NetworkImage("https://i.postimg.cc/W4FfXNcG/profile.jpg");
   }
 
   @override
   Widget build(BuildContext context) {
     final canGoBack = !widget.isCurrentUser || Navigator.canPop(context);
+
+    final authUser = widget.isCurrentUser ? context.watch<AuthProvider>().currentUser : null;
+    final displayName = authUser != null && authUser.fullName.isNotEmpty ? authUser.fullName : _name;
+    final displayUsername = authUser != null && authUser.username.isNotEmpty
+        ? '@${authUser.username.replaceAll('@', '')}'
+        : _username;
+    final displayAvatar = authUser != null && authUser.avatarUrl.isNotEmpty ? authUser.avatarUrl : _avatarUrl;
 
     return Scaffold(
       endDrawer: widget.isCurrentUser ? const ApprovalsDrawer() : null,
@@ -142,13 +154,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 60,
-                      backgroundImage: _getAvatarImage(),
+                      backgroundImage: _getAvatarImage(displayAvatar),
                       backgroundColor: Colors.grey.shade200,
                       onBackgroundImageError: (_, __) {},
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _name,
+                      displayName,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -157,7 +169,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "$_username • ${widget.level}",
+                      "$displayUsername • ${authUser?.level ?? widget.level}",
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade500,
@@ -187,7 +199,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       _buildDivider(),
                       _buildStatItem("342", "FOLLOWERS"),
                       _buildDivider(),
-                      _buildStatItem("4.9", "AVG RATING"),
+                      _buildStatItem(authUser?.rating ?? "4.9", "AVG RATING"),
                     ],
                   ),
                 ),
@@ -275,9 +287,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => ManageAccountSettingsScreen(
-                              name: _name,
-                              username: _username,
-                              avatarUrl: _avatarUrl,
+                              name: displayName,
+                              username: displayUsername,
+                              avatarUrl: displayAvatar,
                               avatarBytes: _avatarBytes,
                               onProfileUpdated: _updateProfile,
                             ),
@@ -312,7 +324,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content:
-                                      Text("Chat with $_name coming soon!"),
+                                      Text("Chat with $displayName coming soon!"),
                                   duration: const Duration(seconds: 2),
                                   behavior: SnackBarBehavior.floating,
                                 ),
@@ -345,7 +357,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Followed $_name!"),
+                                content: Text("Followed $displayName!"),
                                 duration: const Duration(seconds: 1),
                                 behavior: SnackBarBehavior.floating,
                               ),

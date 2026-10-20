@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/utils/validators.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/reset_password_screen.dart';
 
 class ForgotPassScreen extends StatefulWidget {
@@ -28,38 +30,72 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
     super.dispose();
   }
 
-  void _sendOtp() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _sendOtp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final result = await authProvider.sendOtp(_emailController.text.trim());
+
+    if (!mounted) return;
+
+    if (result.success) {
       setState(() {
         otpSent = true;
       });
-
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("OTP sent successfully")),
+        SnackBar(content: Text(result.message)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
 
-  void _verifyOtp() {
-    if (_otpController.text.trim().length != 6) {
+  Future<void> _verifyOtp() async {
+    final otp = _otpController.text.trim();
+    if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Enter valid 6 digit OTP")),
       );
       return;
     }
 
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ResetPasswordScreen(),
-      ),
+    final authProvider = context.read<AuthProvider>();
+    final result = await authProvider.verifyOtp(
+      email: _emailController.text.trim(),
+      otp: otp,
     );
+
+    if (!mounted) return;
+
+    if (result.success) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResetPasswordScreen(
+            email: _emailController.text.trim(),
+            otp: otp,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
     return Scaffold(
       body: ScreenBackground(
         child: SafeArea(
@@ -101,18 +137,29 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
                         height: 45,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              )),
-                          onPressed: _sendOtp,
-                          child: const Text(
-                            "Send OTP",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                            backgroundColor: AppColors.primary,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
+                          onPressed: isLoading ? null : _sendOtp,
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "Send OTP",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ],
@@ -134,11 +181,23 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _verifyOtp,
+                          onPressed: isLoading ? null : _verifyOtp,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.success,
                           ),
-                          child: const Text("Verify OTP",style: TextStyle(color: AppColors.fieldColor)),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "Verify OTP",
+                                  style: TextStyle(color: AppColors.fieldColor),
+                                ),
                         ),
                       ),
                     ],

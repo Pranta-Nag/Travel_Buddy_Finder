@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/login_screen.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/main_nav_screen.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
@@ -84,7 +86,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (pickedDate == null || !mounted) return;
 
-    _dobController.text = DateFormat("dd MMM yyyy").format(pickedDate);
+    _dobController.text = DateFormat("yyyy-MM-dd").format(pickedDate);
     setState(() {});
   }
 
@@ -105,11 +107,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: AppColors.success),
-        ),
-        duration: const Duration(seconds: 5),
+        content: Text(message),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -138,17 +138,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return true;
   }
 
-  void _signUp() {
+  Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_validateExtraFields()) return;
 
-    _showMessage("Registration Successful 🎉");
+    final authProvider = context.read<AuthProvider>();
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const MainNavScreen()),
-      (route) => false,
+    final result = await authProvider.register(
+      fullName: _fullNameController.text.trim(),
+      username: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      gender: _selectedGender ?? 'Other',
+      country: _selectedCountry ?? 'Bangladesh',
+      dob: _dobController.text.trim(),
+      profilePicBytes: _profileImageBytes,
+      nidPicBytes: _nidImageBytes,
     );
+
+    if (!mounted) return;
+
+    if (result.success) {
+      _showMessage("Registration Successful 🎉");
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavScreen()),
+        (route) => false,
+      );
+    } else {
+      _showMessage(result.message);
+    }
   }
 
   Widget fieldLabel(String title) {
@@ -179,6 +198,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
       body: ScreenBackground(
@@ -263,7 +283,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               height: 96,
                                             ),
                                           )
-                                        : Icon(
+                                        : const Icon(
                                             Icons.person_outlined,
                                             size: 44,
                                             color: AppColors.greyText,
@@ -370,7 +390,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     fieldLabel("Gender"),
                                     DropdownButtonFormField<String>(
                                       isExpanded: true,
-                                      value: _selectedGender,
+                                      initialValue: _selectedGender,
                                       decoration: inputDecoration(
                                         prefixIcon: const Icon(Icons.wc_rounded),
                                       ),
@@ -398,7 +418,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   children: [
                                     fieldLabel("Country"),
                                     DropdownButtonFormField<String>(
-                                      value: _selectedCountry,
+                                      initialValue: _selectedCountry,
                                       isExpanded: true,
                                       decoration: inputDecoration(
                                         prefixIcon: const Icon(Icons.public_rounded),
@@ -576,25 +596,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           SizedBox(
                             height: 54,
                             child: ElevatedButton(
-                              onPressed: _signUp,
+                              onPressed: isLoading ? null : _signUp,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
                                 elevation: 2,
                                 shadowColor:
-                                    AppColors.primary.withOpacity(0.25),
+                                    AppColors.primary.withValues(alpha: 0.25),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              child: const Text(
-                                "Continue Registration",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Continue Registration",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
                             ),
                           ),
 
@@ -628,7 +659,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: Text(
+                                child: const Text(
                                   "Login",
                                   style: TextStyle(
                                     color: AppColors.primary,

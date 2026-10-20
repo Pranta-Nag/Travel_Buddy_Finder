@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/explore_screen.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
-import 'package:travel_buddy_finder/features/trips/presentation/widgets/chat_tab.dart';
+import 'package:travel_buddy_finder/features/chat/presentation/screens/chat_inbox_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/home/home_tab.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/widgets/main_bottom_nav_bar.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/widgets/main_fab.dart';
@@ -30,7 +30,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
           children: const [
             HomeTab(),
             ExploreScreen(),
-            ChatTab(),
+            ChatInboxScreen(),
             UserProfileScreen(),
           ],
         ),

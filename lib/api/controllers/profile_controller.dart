@@ -47,23 +47,17 @@ class ProfileController {
     List<int>? profilePicBytes,
   }) async {
     try {
-      final Map<String, dynamic> fields = {
-        'full_name': fullName,
-        'gender': gender,
-        'country': country,
-        'dob': dob,
+      final Map<String, String> fields = {
+        'full_name': fullName.trim(),
+        'gender': gender.trim(),
+        'country': country.trim(),
+        'dob': dob.trim(),
       };
-
-      if (profilePicBytes != null && profilePicBytes.isNotEmpty) {
-        final rawBase64 = base64Encode(profilePicBytes);
-        fields['profile_pic'] = 'data:image/jpeg;base64,$rawBase64';
-        fields['profile_pic_base64'] = rawBase64;
-      }
 
       var response = profilePicBytes != null && profilePicBytes.isNotEmpty
           ? await ApiClient.multipartPost(
               AppUrl.updateProfile,
-              fields: fields.map((k, v) => MapEntry(k, v.toString())),
+              fields: fields,
               filesBytes: {'profile_pic': profilePicBytes},
             )
           : await ApiClient.post(

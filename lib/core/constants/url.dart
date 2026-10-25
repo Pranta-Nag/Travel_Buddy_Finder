@@ -33,7 +33,7 @@ class AppUrl {
 
   static String resolveImageUrl(String? path) {
     if (path == null || path.isEmpty) return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) {
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('assets/')) {
       return path;
     }
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;
@@ -43,6 +43,6 @@ class AppUrl {
       return '$baseUrl/$cleanPath';
     }
 
-    return '$baseUrl/$cleanPath';
+    return '$baseUrl/uploads/$cleanPath';
   }
 }

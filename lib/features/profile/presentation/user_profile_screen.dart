@@ -49,11 +49,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _avatarUrl = widget.avatarUrl;
     _avatarBytes = widget.avatarBytes;
 
-    if (widget.isCurrentUser) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isCurrentUser) {
         context.read<ProfileProvider>().fetchMyProfile();
-      });
-    }
+      } else if (widget.username.isNotEmpty) {
+        context.read<ProfileProvider>().fetchUserProfile(widget.username);
+      }
+    });
   }
 
   void _updateProfile(Map<String, dynamic> data) {
@@ -65,26 +67,95 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     });
   }
 
-  ImageProvider _getAvatarImage(String url, String? gender) {
+  Widget _buildAvatarWidget(String avatarUrl, String? gender) {
+    final defaultAsset = (gender ?? '').toLowerCase().contains('fem') ||
+            (gender ?? '').toLowerCase().contains('girl')
+        ? 'assets/images/dummy_girl.png'
+        : 'assets/images/dummy_boy.jpg';
+
+    Widget imageWidget;
     if (_avatarBytes != null) {
-      return MemoryImage(_avatarBytes!);
+      imageWidget = Image.memory(
+        _avatarBytes!,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+      );
+    } else if (avatarUrl.isNotEmpty &&
+        (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'))) {
+      imageWidget = Image.network(
+        avatarUrl,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Image.asset(
+          defaultAsset,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+        ),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 120,
+            height: 120,
+            color: Colors.grey.shade200,
+            child: const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } else if (avatarUrl.startsWith('assets/')) {
+      imageWidget = Image.asset(
+        avatarUrl,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+      );
+    } else {
+      imageWidget = Image.asset(
+        defaultAsset,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+      );
     }
-    if (url.isNotEmpty && (url.startsWith('http://') || url.startsWith('https://'))) {
-      return NetworkImage(url);
-    }
-    final g = (gender ?? '').trim().toLowerCase();
-    if (g == 'female' || g == 'woman' || g == 'girl') {
-      return const AssetImage('assets/images/dummy_girl.png');
-    }
-    return const AssetImage('assets/images/dummy_boy.jpg');
+
+    return Container(
+      width: 124,
+      height: 124,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipOval(child: imageWidget),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final canGoBack = !widget.isCurrentUser || Navigator.canPop(context);
 
-    final profileUser = widget.isCurrentUser ? context.watch<ProfileProvider>().myProfile : null;
-    final authUser = profileUser ?? (widget.isCurrentUser ? context.watch<AuthProvider>().currentUser : null);
+    final profileProvider = context.watch<ProfileProvider>();
+    final authUser = widget.isCurrentUser
+        ? (profileProvider.myProfile ?? context.watch<AuthProvider>().currentUser)
+        : profileProvider.viewedProfile;
+    final isLoading = profileProvider.isLoading;
 
     final displayName = authUser != null && authUser.fullName.isNotEmpty
         ? authUser.fullName
@@ -94,9 +165,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ? '@${authUser.username.replaceAll('@', '')}'
         : (_username.isNotEmpty ? _username : CurrentUser.username);
 
-    final displayAvatar = authUser != null && authUser.avatarUrl.isNotEmpty
-        ? authUser.avatarUrl
-        : _avatarUrl;
+    final displayAvatar = _avatarBytes != null
+        ? ''
+        : (authUser != null && authUser.avatarUrl.isNotEmpty
+            ? authUser.avatarUrl
+            : _avatarUrl);
 
     final displayGender = authUser?.gender;
 
@@ -104,126 +177,142 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       endDrawer: widget.isCurrentUser ? const ApprovalsDrawer() : null,
       body: ScreenBackground(
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              children: [
-                if (canGoBack) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              if (widget.isCurrentUser) {
+                await context.read<ProfileProvider>().fetchMyProfile(silent: true);
+              } else if (widget.username.isNotEmpty) {
+                await context.read<ProfileProvider>().fetchUserProfile(widget.username);
+              }
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                children: [
+                  if (canGoBack) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded,
+                                color: Color(0xFF1F2937)),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_rounded,
-                              color: Color(0xFF1F2937)),
-                          onPressed: () => Navigator.pop(context),
+                        Text(
+                          widget.isCurrentUser ? "My Profile" : "User Profile",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                      Text(
-                        widget.isCurrentUser ? "My Profile" : "User Profile",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.share_outlined,
+                                color: Color(0xFF1F2937), size: 20),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                      Text("Profile link copied to clipboard!"),
+                                  duration: Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    const SizedBox(height: 20),
+                  ],
+                  if (isLoading && authUser == null)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 60),
+                      child: Center(
+                        child: CircularProgressIndicator(
                           color: AppColors.primary,
                         ),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                    )
+                  else ...[
+                    Column(
+                      children: [
+                        _buildAvatarWidget(displayAvatar, displayGender),
+                        const SizedBox(height: 16),
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.share_outlined,
-                              color: Color(0xFF1F2937), size: 20),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text("Profile link copied to clipboard!"),
-                                duration: Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                        const SizedBox(height: 4),
+                        Text(
+                          "$displayUsername • ${authUser?.level ?? widget.level}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ] else ...[
-                  const SizedBox(height: 20),
-                ],
-                Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundImage: _getAvatarImage(displayAvatar, displayGender),
-                      backgroundColor: Colors.grey.shade200,
-                      onBackgroundImageError: (_, __) {},
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      displayName,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                    const SizedBox(height: 30),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "$displayUsername • ${authUser?.level ?? widget.level}",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildStatItem("${authUser?.totalJoinedTrips ?? 0}", "TRIPS JOINED"),
+                          _buildDivider(),
+                          _buildStatItem("${authUser?.totalHostedTrips ?? 0}", "HOSTED TRIPS"),
+                          _buildDivider(),
+                          _buildStatItem(authUser?.rating ?? "5.0", "AVG RATING"),
+                        ],
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 30),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatItem("12", "COMPLETED TRIPS"),
-                      _buildDivider(),
-                      _buildStatItem("342", "FOLLOWERS"),
-                      _buildDivider(),
-                      _buildStatItem(authUser?.rating ?? "4.9", "AVG RATING"),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 20),
                 _buildSection(
                   title: "TRAVEL INTERESTS",
@@ -273,9 +362,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ValueListenableBuilder<List<TripRequest>>(
                           valueListenable: TripRequestStore.requests,
                           builder: (context, requests, _) {
-                            final pending =
+                            final localPending =
                                 TripRequestStore.pendingCountForHost(
-                                    CurrentUser.username);
+                                    authUser?.username ?? CurrentUser.username);
+                            final pending = (authUser?.pendingRequestsCount ?? 0) > 0
+                                ? authUser!.pendingRequestsCount
+                                : localPending;
                             return _buildQuickActionItem(
                               Icons.fact_check_outlined,
                               "Trip Approvals",
@@ -413,8 +505,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatItem(String value, String label) {
     return Column(

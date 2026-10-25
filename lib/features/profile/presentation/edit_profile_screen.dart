@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
 
@@ -41,12 +42,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final authUser = context.read<AuthProvider>().currentUser;
-    _nameController = TextEditingController(text: authUser?.fullName ?? widget.name);
-    _usernameController = TextEditingController(text: authUser?.username ?? widget.username);
-    _countryController = TextEditingController(text: authUser?.country ?? 'Bangladesh');
-    _genderController = TextEditingController(text: authUser?.gender ?? 'Male');
-    _dobController = TextEditingController(text: authUser?.dob ?? '2000-01-01');
+    final profileUser = context.read<ProfileProvider>().myProfile;
+    final authUser = profileUser ?? context.read<AuthProvider>().currentUser;
+    _nameController = TextEditingController(
+        text: authUser?.fullName.isNotEmpty == true ? authUser!.fullName : widget.name);
+    _usernameController = TextEditingController(
+        text: authUser?.username.isNotEmpty == true ? authUser!.username : widget.username);
+    _countryController = TextEditingController(
+        text: authUser?.country?.isNotEmpty == true ? authUser!.country! : 'Bangladesh');
+    _genderController = TextEditingController(
+        text: authUser?.gender?.isNotEmpty == true ? authUser!.gender! : 'Male');
+    _dobController = TextEditingController(
+        text: authUser?.dob?.isNotEmpty == true ? authUser!.dob! : '2000-01-01');
     _avatarBytes = widget.avatarBytes;
   }
 
@@ -88,6 +95,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!mounted) return;
 
     if (result.success) {
+      if (result.user != null) {
+        context.read<AuthProvider>().updateUser(result.user!);
+      }
       final updatedData = <String, dynamic>{
         'name': _nameController.text.trim(),
         'username': _usernameController.text.trim(),
@@ -151,8 +161,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_avatarBytes != null) {
       return MemoryImage(_avatarBytes!);
     }
-    if (url.isNotEmpty && (url.startsWith('http://') || url.startsWith('https://'))) {
-      return NetworkImage(url);
+    final resolved = AppUrl.resolveImageUrl(url);
+    if (resolved.isNotEmpty) {
+      if (resolved.startsWith('http://') || resolved.startsWith('https://')) {
+        return NetworkImage(resolved);
+      }
+      if (resolved.startsWith('assets/')) {
+        return AssetImage(resolved);
+      }
     }
     final g = (gender ?? '').trim().toLowerCase();
     if (g == 'female' || g == 'woman' || g == 'girl') {
@@ -163,6 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profileUser = context.watch<ProfileProvider>().myProfile;
     final isLoading = context.watch<ProfileProvider>().isLoading;
 
     return Scaffold(
@@ -229,7 +246,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     radius: 50,
                                     backgroundColor: Colors.grey.shade200,
                                     backgroundImage: _getAvatarImage(
-                                      widget.avatarUrl,
+                                      profileUser?.avatarUrl.isNotEmpty == true
+                                          ? profileUser!.avatarUrl
+                                          : widget.avatarUrl,
                                       _genderController.text,
                                     ),
                                     onBackgroundImageError: (_, __) {},
@@ -304,13 +323,62 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                         // Gender
                         _fieldLabel("GENDER"),
-                        TextFormField(
-                          controller: _genderController,
-                          textInputAction: TextInputAction.next,
+                        DropdownButtonFormField<String>(
+                          initialValue: ['Male', 'Female', 'Other'].contains(_genderController.text)
+                              ? _genderController.text
+                              : 'Male',
                           decoration: inputDecoration(
-                            hint: "Male / Female / Other",
-                            prefixIcon:
-                                const Icon(Icons.wc_rounded),
+                            hint: "Select Gender",
+                            prefixIcon: const Icon(Icons.wc_rounded),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'Male', child: Text('Male')),
+                            DropdownMenuItem(value: 'Female', child: Text('Female')),
+                            DropdownMenuItem(value: 'Other', child: Text('Other')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _genderController.text = val;
+                              });
+                            }
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Date of Birth
+                        _fieldLabel("DATE OF BIRTH"),
+                        TextFormField(
+                          controller: _dobController,
+                          readOnly: true,
+                          onTap: () async {
+                            final parts = _dobController.text.trim().split('-');
+                            DateTime initialDate = DateTime(2000, 1, 1);
+                            if (parts.length == 3) {
+                              final y = int.tryParse(parts[0]);
+                              final m = int.tryParse(parts[1]);
+                              final d = int.tryParse(parts[2]);
+                              if (y != null && m != null && d != null) {
+                                initialDate = DateTime(y, m, d);
+                              }
+                            }
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: initialDate,
+                              firstDate: DateTime(1930),
+                              lastDate: DateTime.now(),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _dobController.text =
+                                    "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                              });
+                            }
+                          },
+                          decoration: inputDecoration(
+                            hint: "YYYY-MM-DD",
+                            prefixIcon: const Icon(Icons.cake_outlined),
                           ),
                         ),
 

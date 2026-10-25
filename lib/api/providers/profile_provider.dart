@@ -16,14 +16,48 @@ class ProfileProvider with ChangeNotifier {
 
   void _setMyProfile(UserModel? user) {
     if (user != null) {
-      _myProfile = user;
-      CurrentUser.activeUser = user;
+      if (_myProfile != null) {
+        _myProfile = _myProfile!.copyWith(
+          id: user.id != 0 ? user.id : _myProfile!.id,
+          username: user.username.isNotEmpty ? user.username : _myProfile!.username,
+          email: user.email.isNotEmpty ? user.email : _myProfile!.email,
+          fullName: user.fullName.isNotEmpty ? user.fullName : _myProfile!.fullName,
+          gender: user.gender ?? _myProfile!.gender,
+          country: user.country ?? _myProfile!.country,
+          dob: user.dob ?? _myProfile!.dob,
+          profilePic: user.profilePic ?? _myProfile!.profilePic,
+          nidPic: user.nidPic ?? _myProfile!.nidPic,
+          level: user.level.isNotEmpty ? user.level : _myProfile!.level,
+          rating: user.rating.isNotEmpty ? user.rating : _myProfile!.rating,
+          totalHostedTrips: user.totalHostedTrips > 0
+              ? user.totalHostedTrips
+              : _myProfile!.totalHostedTrips,
+          totalJoinedTrips: user.totalJoinedTrips > 0
+              ? user.totalJoinedTrips
+              : _myProfile!.totalJoinedTrips,
+          pendingRequestsCount: user.pendingRequestsCount > 0
+              ? user.pendingRequestsCount
+              : _myProfile!.pendingRequestsCount,
+        );
+      } else {
+        _myProfile = user;
+      }
+      CurrentUser.activeUser = _myProfile;
     }
   }
 
-  Future<void> fetchMyProfile() async {
-    _isLoading = true;
+  void clear() {
+    _myProfile = null;
+    _viewedProfile = null;
+    CurrentUser.activeUser = null;
     notifyListeners();
+  }
+
+  Future<void> fetchMyProfile({bool silent = false}) async {
+    if (!silent && _myProfile == null) {
+      _isLoading = true;
+      notifyListeners();
+    }
 
     final fetched = await _profileController.getMyProfile();
     if (fetched != null) {
@@ -35,10 +69,14 @@ class ProfileProvider with ChangeNotifier {
   }
 
   Future<UserModel?> fetchUserProfile(String username) async {
+    final cleanUsername = username.replaceAll('@', '').trim();
+    if (_viewedProfile?.username != cleanUsername) {
+      _viewedProfile = null;
+    }
     _isLoading = true;
     notifyListeners();
 
-    _viewedProfile = await _profileController.getUserProfile(username);
+    _viewedProfile = await _profileController.getUserProfile(cleanUsername);
 
     _isLoading = false;
     notifyListeners();
@@ -46,7 +84,7 @@ class ProfileProvider with ChangeNotifier {
     return _viewedProfile;
   }
 
-  Future<({bool success, String message})> updateProfile({
+  Future<({bool success, UserModel? user, String message})> updateProfile({
     required String fullName,
     required String gender,
     required String country,
@@ -70,6 +108,6 @@ class ProfileProvider with ChangeNotifier {
     }
     notifyListeners();
 
-    return (success: result.success, message: result.message);
+    return (success: result.success, user: _myProfile, message: result.message);
   }
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/api/controllers/auth_controller.dart';
+import 'package:travel_buddy_finder/api/controllers/profile_controller.dart';
 import 'package:travel_buddy_finder/api/models/user_model.dart';
+import 'package:travel_buddy_finder/core/network/api_client.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthController _authController = AuthController();
+  final ProfileController _profileController = ProfileController();
 
   UserModel? _currentUser;
   String? _token;
@@ -18,6 +21,44 @@ class AuthProvider with ChangeNotifier {
   void _setCurrentUser(UserModel? user) {
     _currentUser = user;
     CurrentUser.activeUser = user;
+  }
+
+  void updateUser(UserModel user) {
+    _currentUser = user;
+    CurrentUser.activeUser = user;
+    notifyListeners();
+  }
+
+  Future<bool> tryAutoLogin() async {
+    final savedToken = await ApiClient.getToken();
+    if (savedToken == null || savedToken.isEmpty) {
+      return false;
+    }
+
+    _token = savedToken;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final profile = await _profileController.getMyProfile();
+      _isLoading = false;
+
+      if (profile != null) {
+        _setCurrentUser(profile);
+        notifyListeners();
+        return true;
+      } else {
+        await ApiClient.removeToken();
+        _token = null;
+        _setCurrentUser(null);
+        notifyListeners();
+        return false;
+      }
+    } catch (_) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<({bool success, String message})> login({

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/change_password_screen.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/edit_profile_screen.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/login_screen.dart';
@@ -51,6 +52,9 @@ class _ManageAccountSettingsScreenState
     final screenWidth = MediaQuery.of(context).size.width;
     final isTabletOrDesktop = screenWidth >= 600;
 
+    final authUser = context.watch<ProfileProvider>().myProfile ?? context.watch<AuthProvider>().currentUser;
+    final userEmail = authUser?.email.isNotEmpty == true ? authUser!.email : _email;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -88,9 +92,15 @@ class _ManageAccountSettingsScreenState
                       context,
                       MaterialPageRoute(
                         builder: (_) => EditProfileScreen(
-                          name: widget.name,
-                          username: widget.username,
-                          avatarUrl: widget.avatarUrl,
+                          name: authUser?.fullName.isNotEmpty == true
+                              ? authUser!.fullName
+                              : widget.name,
+                          username: authUser?.username.isNotEmpty == true
+                              ? authUser!.username
+                              : widget.username,
+                          avatarUrl: authUser?.avatarUrl.isNotEmpty == true
+                              ? authUser!.avatarUrl
+                              : widget.avatarUrl,
                           avatarBytes: widget.avatarBytes,
                           onProfileUpdated: widget.onProfileUpdated,
                         ),
@@ -116,7 +126,7 @@ class _ManageAccountSettingsScreenState
                   context,
                   icon: Icons.mail_outline_rounded,
                   title: 'Email Address',
-                  subtitle: _email,
+                  subtitle: userEmail,
                   onTap: () => _showEmailDialog(context),
                 ),
                 const SizedBox(height: 24),
@@ -192,6 +202,7 @@ class _ManageAccountSettingsScreenState
                       if (confirmed == true && context.mounted) {
                         await context.read<AuthProvider>().logout();
                         if (!context.mounted) return;
+                        context.read<ProfileProvider>().clear();
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(

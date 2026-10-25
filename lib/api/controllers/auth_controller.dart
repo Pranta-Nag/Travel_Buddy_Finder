@@ -55,8 +55,14 @@ class AuthController {
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           (data is Map && data['status'] == 'success')) {
         final token = data['token'] ?? data['data']?['token'];
-        final userJson = data['user'] ?? data['data']?['user'];
-        final user = userJson != null ? UserModel.fromJson(userJson) : null;
+        final dynamic userRaw = data['user'] ??
+            data['data']?['user'] ??
+            (data['data'] is Map ? data['data'] : null);
+        final user = userRaw is Map<String, dynamic>
+            ? UserModel.fromJson(userRaw)
+            : (userRaw is Map
+                ? UserModel.fromJson(Map<String, dynamic>.from(userRaw))
+                : null);
         if (token != null) {
           await ApiClient.saveToken(token.toString());
         }
@@ -96,51 +102,35 @@ class AuthController {
     List<int>? nidPicBytes,
   }) async {
     try {
-      final Map<String, dynamic> fields = {
-        'full_name': fullName,
-        'username': username,
-        'email': email,
+      final Map<String, String> fields = {
+        'full_name': fullName.trim(),
+        'username': username.trim(),
+        'email': email.trim(),
         'password': password,
         'gender': gender,
         'country': country,
         'dob': dob,
       };
 
-      if (profilePicBytes != null && profilePicBytes.isNotEmpty) {
-        final rawBase64 = base64Encode(profilePicBytes);
-        fields['profile_pic'] = 'data:image/jpeg;base64,$rawBase64';
-        fields['profile_pic_base64'] = rawBase64;
-      }
+      final hasImages = (profilePicBytes != null && profilePicBytes.isNotEmpty) ||
+          (nidPicBytes != null && nidPicBytes.isNotEmpty);
 
-      if (nidPicBytes != null && nidPicBytes.isNotEmpty) {
-        final rawBase64 = base64Encode(nidPicBytes);
-        fields['nid_pic'] = 'data:image/jpeg;base64,$rawBase64';
-        fields['nid_pic_base64'] = rawBase64;
-      }
-
-      var response = await ApiClient.post(
-        AppUrl.registration,
-        body: fields,
-        isJson: true,
-      );
-
-      // Fallback to multipart post if 400 or 404 is returned
-      if ((response.statusCode == 400 || response.statusCode == 404) &&
-          (profilePicBytes != null || nidPicBytes != null)) {
-        final files = <String, List<int>>{};
-        if (profilePicBytes != null) files['profile_pic'] = profilePicBytes;
-        if (nidPicBytes != null) files['nid_pic'] = nidPicBytes;
-
-        final stringMapFields = fields.map((k, v) => MapEntry(k, v.toString()));
-        final multiResponse = await ApiClient.multipartPost(
-          AppUrl.registration,
-          fields: stringMapFields,
-          filesBytes: files,
-        );
-        if (multiResponse.statusCode == 200 || multiResponse.statusCode == 201) {
-          response = multiResponse;
-        }
-      }
+      var response = hasImages
+          ? await ApiClient.multipartPost(
+              AppUrl.registration,
+              fields: fields,
+              filesBytes: {
+                if (profilePicBytes != null && profilePicBytes.isNotEmpty)
+                  'profile_pic': profilePicBytes,
+                if (nidPicBytes != null && nidPicBytes.isNotEmpty)
+                  'nid_pic': nidPicBytes,
+              },
+            )
+          : await ApiClient.post(
+              AppUrl.registration,
+              body: fields,
+              isJson: true,
+            );
 
       if (response.body.isEmpty) {
         return (
@@ -172,8 +162,15 @@ class AuthController {
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           (data is Map && data['status'] == 'success')) {
         final token = data['token'] ?? data['data']?['token'];
-        final userJson = data['user'] ?? data['data']?['user'];
-        final user = userJson != null ? UserModel.fromJson(userJson) : null;
+        final dynamic userRaw = data['user'] ??
+            data['data']?['user'] ??
+            (data['data'] is Map ? data['data'] : null);
+        final user = userRaw is Map<String, dynamic>
+            ? UserModel.fromJson(userRaw)
+            : (userRaw is Map
+                ? UserModel.fromJson(Map<String, dynamic>.from(userRaw))
+                : null);
+
         if (token != null) {
           await ApiClient.saveToken(token.toString());
         }

@@ -18,7 +18,7 @@ class _ApprovalsDrawerState extends State<ApprovalsDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    const hostUsername = CurrentUser.username;
+    final hostUsername = CurrentUser.username;
 
     return Drawer(
       child: SafeArea(

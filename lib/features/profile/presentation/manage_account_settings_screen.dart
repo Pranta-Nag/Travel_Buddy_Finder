@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/change_password_screen.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/edit_profile_screen.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/login_screen.dart';

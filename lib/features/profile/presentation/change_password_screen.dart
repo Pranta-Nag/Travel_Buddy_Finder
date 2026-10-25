@@ -4,7 +4,7 @@ import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/utils/validators.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
-import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});

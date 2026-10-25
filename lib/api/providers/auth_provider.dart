@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:travel_buddy_finder/features/auth/data/models/user_model.dart';
-import 'package:travel_buddy_finder/features/auth/data/services/auth_service.dart';
+import 'package:travel_buddy_finder/api/controllers/auth_controller.dart';
+import 'package:travel_buddy_finder/api/models/user_model.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 
 class AuthProvider with ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final AuthController _authController = AuthController();
 
   UserModel? _currentUser;
   String? _token;
@@ -14,6 +15,11 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _token != null && _token!.isNotEmpty;
   bool get isLoading => _isLoading;
 
+  void _setCurrentUser(UserModel? user) {
+    _currentUser = user;
+    CurrentUser.activeUser = user;
+  }
+
   Future<({bool success, String message})> login({
     required String login,
     required String password,
@@ -21,12 +27,12 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.login(login: login, password: password);
+    final result = await _authController.login(login: login, password: password);
 
     _isLoading = false;
     if (result.success) {
       _token = result.token;
-      _currentUser = result.user;
+      _setCurrentUser(result.user);
     }
     notifyListeners();
 
@@ -47,7 +53,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.register(
+    final result = await _authController.register(
       fullName: fullName,
       username: username,
       email: email,
@@ -62,7 +68,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = false;
     if (result.success) {
       _token = result.token;
-      _currentUser = result.user;
+      _setCurrentUser(result.user);
     }
     notifyListeners();
 
@@ -73,7 +79,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.forgotPassword(email);
+    final result = await _authController.forgotPassword(email);
 
     _isLoading = false;
     notifyListeners();
@@ -88,7 +94,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.verifyOtp(email: email, otp: otp);
+    final result = await _authController.verifyOtp(email: email, otp: otp);
 
     _isLoading = false;
     notifyListeners();
@@ -104,7 +110,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.resetPassword(
+    final result = await _authController.resetPassword(
       email: email,
       otp: otp,
       newPassword: newPassword,
@@ -123,7 +129,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.changePassword(
+    final result = await _authController.changePassword(
       currentPassword: currentPassword,
       newPassword: newPassword,
     );
@@ -135,9 +141,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _authService.logout();
+    await _authController.logout();
     _token = null;
-    _currentUser = null;
+    _setCurrentUser(null);
     notifyListeners();
   }
 }

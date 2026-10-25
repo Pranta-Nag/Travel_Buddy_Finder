@@ -1,10 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
+import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/features/bookmarks/presentation/bookmarks_screen.dart';
-import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/my_trip_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
@@ -22,10 +23,10 @@ class UserProfileScreen extends StatefulWidget {
 
   const UserProfileScreen({
     super.key,
-    this.name = "Md Yeasin",
-    this.username = "@yeasin",
-    this.level = "Level 4 Travel Guru",
-    this.avatarUrl = "https://i.postimg.cc/W4FfXNcG/profile.jpg",
+    this.name = "",
+    this.username = "",
+    this.level = "Traveler",
+    this.avatarUrl = "",
     this.avatarBytes,
     this.isCurrentUser = true,
   });
@@ -47,6 +48,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _username = widget.username;
     _avatarUrl = widget.avatarUrl;
     _avatarBytes = widget.avatarBytes;
+
+    if (widget.isCurrentUser) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ProfileProvider>().fetchMyProfile();
+      });
+    }
   }
 
   void _updateProfile(Map<String, dynamic> data) {
@@ -58,26 +65,40 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     });
   }
 
-  ImageProvider _getAvatarImage(String url) {
+  ImageProvider _getAvatarImage(String url, String? gender) {
     if (_avatarBytes != null) {
       return MemoryImage(_avatarBytes!);
     }
     if (url.isNotEmpty && (url.startsWith('http://') || url.startsWith('https://'))) {
       return NetworkImage(url);
     }
-    return const NetworkImage("https://i.postimg.cc/W4FfXNcG/profile.jpg");
+    final g = (gender ?? '').trim().toLowerCase();
+    if (g == 'female' || g == 'woman' || g == 'girl') {
+      return const AssetImage('assets/images/dummy_girl.png');
+    }
+    return const AssetImage('assets/images/dummy_boy.jpg');
   }
 
   @override
   Widget build(BuildContext context) {
     final canGoBack = !widget.isCurrentUser || Navigator.canPop(context);
 
-    final authUser = widget.isCurrentUser ? context.watch<AuthProvider>().currentUser : null;
-    final displayName = authUser != null && authUser.fullName.isNotEmpty ? authUser.fullName : _name;
+    final profileUser = widget.isCurrentUser ? context.watch<ProfileProvider>().myProfile : null;
+    final authUser = profileUser ?? (widget.isCurrentUser ? context.watch<AuthProvider>().currentUser : null);
+
+    final displayName = authUser != null && authUser.fullName.isNotEmpty
+        ? authUser.fullName
+        : (_name.isNotEmpty ? _name : CurrentUser.name);
+
     final displayUsername = authUser != null && authUser.username.isNotEmpty
         ? '@${authUser.username.replaceAll('@', '')}'
-        : _username;
-    final displayAvatar = authUser != null && authUser.avatarUrl.isNotEmpty ? authUser.avatarUrl : _avatarUrl;
+        : (_username.isNotEmpty ? _username : CurrentUser.username);
+
+    final displayAvatar = authUser != null && authUser.avatarUrl.isNotEmpty
+        ? authUser.avatarUrl
+        : _avatarUrl;
+
+    final displayGender = authUser?.gender;
 
     return Scaffold(
       endDrawer: widget.isCurrentUser ? const ApprovalsDrawer() : null,
@@ -154,7 +175,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 60,
-                      backgroundImage: _getAvatarImage(displayAvatar),
+                      backgroundImage: _getAvatarImage(displayAvatar, displayGender),
                       backgroundColor: Colors.grey.shade200,
                       onBackgroundImageError: (_, __) {},
                     ),

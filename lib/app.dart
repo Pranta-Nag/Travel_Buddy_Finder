@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:travel_buddy_finder/screens/splash_screen.dart';
+import 'package:travel_buddy_finder/features/auth/presentation/splash_screen.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -12,7 +12,7 @@ class App extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }

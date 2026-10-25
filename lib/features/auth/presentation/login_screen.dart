@@ -326,60 +326,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 20),
 
-                          // Login Button
-                          SizedBox(
-                            height: 54,
-                            child: ElevatedButton(
-                              onPressed: isLoading ? null : _login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor:
-                                    AppColors.primary.withValues(alpha: 0.65),
-                                elevation: 2,
-                                shadowColor:
-                                    AppColors.primary.withValues(alpha: 0.25),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 200),
-                                child: isLoading
-                                    ? const SizedBox(
-                                        key: ValueKey("loading"),
-                                        height: 22,
-                                        width: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Row(
-                                        key: ValueKey("login"),
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            "Sign In",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.2,
-                                            ),
-                                          ),
-                                          SizedBox(width: 9),
-                                          Icon(
-                                            Icons.arrow_forward_rounded,
-                                            size: 20,
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                            ),
+                          // Animated Login Button
+                          _AnimatedLoginButton(
+                            isLoading: isLoading,
+                            onPressed: _login,
                           ),
 
                           const SizedBox(height: 26),
@@ -474,6 +424,132 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedLoginButton extends StatefulWidget {
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _AnimatedLoginButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  State<_AnimatedLoginButton> createState() => _AnimatedLoginButtonState();
+}
+
+class _AnimatedLoginButtonState extends State<_AnimatedLoginButton>
+    with TickerProviderStateMixin {
+  late AnimationController _pressController;
+  late Animation<double> _scaleAnimation;
+
+  late AnimationController _arrowController;
+  late Animation<double> _arrowSlideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
+    );
+
+    _arrowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+
+    _arrowSlideAnimation = Tween<double>(begin: 0.0, end: 6.0).animate(
+      CurvedAnimation(parent: _arrowController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    _arrowController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _pressController.forward(),
+      onTapUp: (_) => _pressController.reverse(),
+      onTapCancel: () => _pressController.reverse(),
+      onTap: widget.isLoading ? null : widget.onPressed,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          height: 54,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(widget.isLoading ? 27 : 14),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                blurRadius: widget.isLoading ? 8 : 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: widget.isLoading
+                  ? const SizedBox(
+                      key: ValueKey("loading"),
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Row(
+                      key: const ValueKey("button_content"),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Sign In",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        AnimatedBuilder(
+                          animation: _arrowSlideAnimation,
+                          builder: (context, child) {
+                            return Transform.translate(
+                              offset: Offset(_arrowSlideAnimation.value, 0),
+                              child: child,
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.only(left: 8.0),
+                            child: Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),

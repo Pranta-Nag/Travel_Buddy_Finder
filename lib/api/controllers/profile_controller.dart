@@ -60,25 +60,17 @@ class ProfileController {
         fields['profile_pic_base64'] = rawBase64;
       }
 
-      var response = await ApiClient.post(
-        AppUrl.updateProfile,
-        body: fields,
-        isJson: true,
-      );
-
-      // Fallback to multipart post if 400 or 404 is returned
-      if ((response.statusCode == 400 || response.statusCode == 404) &&
-          profilePicBytes != null) {
-        final stringMapFields = fields.map((k, v) => MapEntry(k, v.toString()));
-        final multiResponse = await ApiClient.multipartPost(
-          AppUrl.updateProfile,
-          fields: stringMapFields,
-          filesBytes: {'profile_pic': profilePicBytes},
-        );
-        if (multiResponse.statusCode == 200 || multiResponse.statusCode == 201) {
-          response = multiResponse;
-        }
-      }
+      var response = profilePicBytes != null && profilePicBytes.isNotEmpty
+          ? await ApiClient.multipartPost(
+              AppUrl.updateProfile,
+              fields: fields.map((k, v) => MapEntry(k, v.toString())),
+              filesBytes: {'profile_pic': profilePicBytes},
+            )
+          : await ApiClient.post(
+              AppUrl.updateProfile,
+              body: fields,
+              isJson: true,
+            );
 
       final data = jsonDecode(response.body);
       final String message = (data is Map && data['message'] != null)

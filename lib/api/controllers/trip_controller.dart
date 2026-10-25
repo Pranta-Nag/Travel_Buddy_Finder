@@ -45,7 +45,7 @@ class TripController {
     return [];
   }
 
-  // 3 & 4. POST Create Trip (Text fields & Base64 / Multipart Image)
+  // 3 & 4. POST Create Trip (Text fields & Cover Image)
   Future<({bool success, TripModel? trip, String message})> createTrip({
     required String title,
     required String location,
@@ -110,31 +110,22 @@ class TripController {
         fields['cover_picture_base64'] = rawBase64;
       }
 
-      // First try sending JSON POST with Base64
-      var response = await ApiClient.post(
-        AppUrl.createTrip,
-        body: fields,
-        isJson: true,
-      );
-
-      // If JSON POST failed or returned 400, fallback to multipart upload
-      if ((response.statusCode == 400 || response.statusCode == 404) &&
-          coverPhotoBytes != null) {
-        final files = <String, List<int>>{
-          'cover_picture': coverPhotoBytes,
-          'cover_photo': coverPhotoBytes,
-          'image': coverPhotoBytes,
-        };
-        final stringMapFields = fields.map((k, v) => MapEntry(k, v.toString()));
-        final multiResponse = await ApiClient.multipartPost(
-          AppUrl.createTrip,
-          fields: stringMapFields,
-          filesBytes: files,
-        );
-        if (multiResponse.statusCode == 200 || multiResponse.statusCode == 201) {
-          response = multiResponse;
-        }
-      }
+      // If an image was picked, send Multipart Request first so $_FILES['cover_picture'] is populated
+      var response = coverPhotoBytes != null && coverPhotoBytes.isNotEmpty
+          ? await ApiClient.multipartPost(
+              AppUrl.createTrip,
+              fields: fields.map((k, v) => MapEntry(k, v.toString())),
+              filesBytes: {
+                'cover_picture': coverPhotoBytes,
+                'cover_photo': coverPhotoBytes,
+                'image': coverPhotoBytes,
+              },
+            )
+          : await ApiClient.post(
+              AppUrl.createTrip,
+              body: fields,
+              isJson: true,
+            );
 
       print('Create Trip Status: ${response.statusCode}');
       print('Create Trip Body: ${response.body}');

@@ -401,9 +401,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     );
 
     if (pickedDate == null) return;
-    controller.text = DateFormat(
-      'dd MMM yyyy',
-    ).format(pickedDate);
+    controller.text = DateFormat('yyyy-MM-dd').format(pickedDate);
   }
 
   Future<void> _pickCoverImage() async {

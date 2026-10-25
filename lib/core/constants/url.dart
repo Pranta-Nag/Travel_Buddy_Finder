@@ -38,10 +38,9 @@ class AppUrl {
     }
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;
 
-    // Handle uploads folder location in XAMPP (e.g. htdocs/travel_buddy/uploads vs htdocs/travel_buddy/api/uploads)
-    if (cleanPath.startsWith('uploads/') && baseUrl.endsWith('/api')) {
-      final parentUrl = baseUrl.substring(0, baseUrl.length - 4);
-      return '$parentUrl/$cleanPath';
+    // uploads/ is stored inside api/ folder
+    if (cleanPath.startsWith('uploads/')) {
+      return '$baseUrl/$cleanPath';
     }
 
     return '$baseUrl/$cleanPath';

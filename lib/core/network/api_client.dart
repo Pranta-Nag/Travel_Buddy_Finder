@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:travel_buddy_finder/core/constants/api_constants.dart';
 
@@ -91,10 +92,12 @@ class ApiClient {
 
     if (filesBytes != null) {
       for (final entry in filesBytes.entries) {
+        final String filename = '${entry.key}_${DateTime.now().millisecondsSinceEpoch}.jpg';
         request.files.add(http.MultipartFile.fromBytes(
           entry.key,
           entry.value,
-          filename: '${entry.key}.jpg',
+          filename: filename,
+          contentType: MediaType('image', 'jpeg'),
         ));
       }
     }

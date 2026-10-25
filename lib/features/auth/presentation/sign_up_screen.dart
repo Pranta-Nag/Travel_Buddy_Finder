@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/login_screen.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/main_nav_screen.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';

@@ -89,7 +89,7 @@
 | Layer        | Tech                        |
 |--------------|-----------------------------|
 | Framework    | [Flutter](https://flutter.dev) (Dart SDK ^3.5.3) |
-| Architecture | **Feature-First Architecture** |
+| Architecture | **Feature-First + Centralized API Architecture** |
 | State        | `Provider` (`ChangeNotifier` + `Consumer`) + `ValueNotifier` |
 | Networking   | `http` `^1.2.2` with custom `ApiClient` & Bearer Token |
 | Storage      | `shared_preferences` `^2.3.2` |
@@ -112,7 +112,7 @@ lib/
 │   │   ├── app_colors.dart       # Centralized color palette
 │   │   ├── app_lists.dart        # Option lists (genders, countries, categories)
 │   │   ├── asset_path.dart       # Asset path constants
-│   │   └── url.dart              # Base API URL configuration
+│   │   └── url.dart              # AppUrl containing ALL API Endpoint Constants
 │   ├── network/
 │   │   └── api_client.dart       # Base HTTP client with Bearer Token & multipart
 │   ├── utils/
@@ -120,35 +120,18 @@ lib/
 │   └── widgets/
 │       ├── input_decoration.dart # Shared InputDecoration helper
 │       └── screen_background.dart# Shared background widget
-└── features/                     # Feature-First Modules
-    ├── auth/                     # Authentication & Password Recovery
-    │   ├── data/
-    │   │   ├── models/           # UserModel
-    │   │   ├── services/         # AuthService (REST API calls)
-    │   │   └── providers/        # AuthProvider (State Management)
-    │   └── presentation/         # Auth Screens (Login, SignUp, ForgotPass, ResetPass)
-    ├── navigation/               # App Navigation Shell
-    │   └── presentation/         # MainNavScreen, BottomNavBar, MainFAB
-    ├── profile/                  # User Profile & Settings
-    │   ├── data/                 # CurrentUser store
-    │   └── presentation/         # UserProfileScreen, EditProfile, ChangePassword, ManageSettings
-    ├── trips/                    # Trips Feed, Details, Creation & Reviews
-    │   ├── data/
-    │   │   ├── models/           # Trip, TripData, TripRequest, Review models
-    │   │   └── stores/           # TripStore, TripRequestStore, ReviewStore
-    │   └── presentation/         # Explore, ViewTrip, AddTrip, EditTrip, MyTrips, Rating, Comments screens & widgets
-    ├── bookmarks/                # Saved / Bookmarked Trips
-    │   ├── data/                 # BookmarkStore
-    │   └── presentation/         # BookmarksScreen
-    ├── notifications/            # User Notifications
-    │   ├── data/                 # AppNotification, NotificationStore
-    │   └── presentation/         # NotificationsScreen
-    └── chat/                     # Real-Time Messenger & Chat Engine
-        ├── data/
-        │   ├── models/           # ChatRoomModel, MessageModel
-        │   ├── services/         # ChatService (REST API calls)
-        │   └── providers/        # ChatProvider (Smart Polling Engine)
-        └── presentation/         # ChatInboxScreen & ChatRoomScreen
+├── api/                          # Centralized API Implementation Layer
+│   ├── models/                   # Data Models (UserModel, ChatRoomModel, MessageModel)
+│   ├── controllers/              # API Controllers (AuthController, ChatController)
+│   └── providers/                # State Providers (AuthProvider, ChatProvider)
+└── features/                     # Feature UI & Presentation Layer
+    ├── auth/                     # Auth Presentation Screens (Login, SignUp, ForgotPass, ResetPass)
+    ├── navigation/               # Main Nav Shell, BottomNavBar, MainFAB
+    ├── profile/                  # UserProfileScreen, EditProfile, ChangePassword, ManageSettings
+    ├── trips/                    # Explore, ViewTrip, AddTrip, EditTrip, MyTrips, Rating, Comments
+    ├── bookmarks/                # BookmarksScreen
+    ├── notifications/            # NotificationsScreen
+    └── chat/                     # ChatInboxScreen & ChatRoomScreen
 ```
 
 ---

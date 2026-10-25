@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:travel_buddy_finder/features/chat/data/models/chat_room_model.dart';
-import 'package:travel_buddy_finder/features/chat/data/models/message_model.dart';
-import 'package:travel_buddy_finder/features/chat/data/services/chat_service.dart';
+import 'package:travel_buddy_finder/api/controllers/chat_controller.dart';
+import 'package:travel_buddy_finder/api/models/chat_room_model.dart';
+import 'package:travel_buddy_finder/api/models/message_model.dart';
 
 class ChatProvider with ChangeNotifier {
-  final ChatService _chatService = ChatService();
+  final ChatController _chatController = ChatController();
 
   List<ChatRoomModel> _chatRooms = [];
   List<MessageModel> _messages = [];
@@ -20,7 +20,7 @@ class ChatProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      _chatRooms = await _chatService.getChatRooms();
+      _chatRooms = await _chatController.getChatRooms();
     } catch (e) {
       debugPrint('Error fetching chat rooms: $e');
     } finally {
@@ -35,7 +35,7 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _messages = await _chatService.getMessages(roomId);
+      _messages = await _chatController.getMessages(roomId);
     } catch (e) {
       debugPrint('Error fetching initial messages: $e');
     } finally {
@@ -52,7 +52,7 @@ class ChatProvider with ChangeNotifier {
 
   Future<void> _pollNewMessages(int roomId, int lastId) async {
     try {
-      final newItems = await _chatService.getMessages(roomId, lastId: lastId);
+      final newItems = await _chatController.getMessages(roomId, lastId: lastId);
       if (newItems.isNotEmpty) {
         _messages.addAll(newItems);
         notifyListeners();
@@ -65,7 +65,7 @@ class ChatProvider with ChangeNotifier {
   Future<bool> sendMessage(int roomId, String text) async {
     if (text.trim().isEmpty) return false;
     try {
-      final sentMsg = await _chatService.sendMessage(roomId, text.trim());
+      final sentMsg = await _chatController.sendMessage(roomId, text.trim());
       if (sentMsg != null) {
         _messages.add(sentMsg);
         notifyListeners();

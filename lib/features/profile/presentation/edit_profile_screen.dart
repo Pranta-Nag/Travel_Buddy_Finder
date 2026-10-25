@@ -1,6 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
@@ -28,7 +31,9 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _usernameController;
-  late TextEditingController _avatarUrlController;
+  late TextEditingController _countryController;
+  late TextEditingController _genderController;
+  late TextEditingController _dobController;
   Uint8List? _avatarBytes;
   final ImagePicker _picker = ImagePicker();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -36,9 +41,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.name);
-    _usernameController = TextEditingController(text: widget.username);
-    _avatarUrlController = TextEditingController(text: widget.avatarUrl);
+    final authUser = context.read<AuthProvider>().currentUser;
+    _nameController = TextEditingController(text: authUser?.fullName ?? widget.name);
+    _usernameController = TextEditingController(text: authUser?.username ?? widget.username);
+    _countryController = TextEditingController(text: authUser?.country ?? 'Bangladesh');
+    _genderController = TextEditingController(text: authUser?.gender ?? 'Male');
+    _dobController = TextEditingController(text: authUser?.dob ?? '2000-01-01');
     _avatarBytes = widget.avatarBytes;
   }
 
@@ -46,7 +54,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _usernameController.dispose();
-    _avatarUrlController.dispose();
+    _countryController.dispose();
+    _genderController.dispose();
+    _dobController.dispose();
     super.dispose();
   }
 
@@ -59,20 +69,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final bytes = await image.readAsBytes();
       setState(() {
         _avatarBytes = bytes;
-        _avatarUrlController.clear();
       });
     }
   }
 
-  void _saveProfile() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final profileProvider = context.read<ProfileProvider>();
+    final result = await profileProvider.updateProfile(
+      fullName: _nameController.text.trim(),
+      gender: _genderController.text.trim(),
+      country: _countryController.text.trim(),
+      dob: _dobController.text.trim(),
+      profilePicBytes: _avatarBytes,
+    );
+
+    if (!mounted) return;
+
+    if (result.success) {
       final updatedData = <String, dynamic>{
         'name': _nameController.text.trim(),
         'username': _usernameController.text.trim(),
-        'avatarUrl': _avatarUrlController.text.trim(),
+        'avatarUrl': profileProvider.myProfile?.avatarUrl ?? widget.avatarUrl,
         'avatarBytes': _avatarBytes,
       };
       widget.onProfileUpdated(updatedData);
+
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -82,16 +105,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           backgroundColor: Colors.green.shade600,
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.check_circle_outline, color: Colors.white),
-              SizedBox(width: 10),
+              const Icon(Icons.check_circle_outline, color: Colors.white),
+              const SizedBox(width: 10),
               Text(
-                "Profile updated successfully",
-                style: TextStyle(fontWeight: FontWeight.w600),
+                result.message,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ],
           ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: Colors.redAccent,
+          content: Text(result.message),
         ),
       );
     }
@@ -112,8 +147,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  ImageProvider _getAvatarImage(String url, String? gender) {
+    if (_avatarBytes != null) {
+      return MemoryImage(_avatarBytes!);
+    }
+    if (url.isNotEmpty && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return NetworkImage(url);
+    }
+    final g = (gender ?? '').trim().toLowerCase();
+    if (g == 'female' || g == 'woman' || g == 'girl') {
+      return const AssetImage('assets/images/dummy_girl.png');
+    }
+    return const AssetImage('assets/images/dummy_boy.jpg');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<ProfileProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -177,10 +228,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   child: CircleAvatar(
                                     radius: 50,
                                     backgroundColor: Colors.grey.shade200,
-                                    backgroundImage: _avatarBytes != null
-                                        ? MemoryImage(_avatarBytes!)
-                                        : NetworkImage(widget.avatarUrl)
-                                            as ImageProvider,
+                                    backgroundImage: _getAvatarImage(
+                                      widget.avatarUrl,
+                                      _genderController.text,
+                                    ),
                                     onBackgroundImageError: (_, __) {},
                                   ),
                                 ),
@@ -218,6 +269,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
+
+                        // Full Name
                         _fieldLabel("FULL NAME"),
                         TextFormField(
                           controller: _nameController,
@@ -232,45 +285,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   ? "Enter your name"
                                   : null,
                         ),
+
                         const SizedBox(height: 20),
-                        _fieldLabel("USERNAME"),
+
+                        // Country
+                        _fieldLabel("COUNTRY"),
                         TextFormField(
-                          controller: _usernameController,
+                          controller: _countryController,
                           textInputAction: TextInputAction.next,
                           decoration: inputDecoration(
-                            hint: "@username",
+                            hint: "Country",
                             prefixIcon:
-                                const Icon(Icons.alternate_email_rounded),
+                                const Icon(Icons.public_rounded),
                           ),
-                          validator: (value) =>
-                              value == null || value.isEmpty
-                                  ? "Enter username"
-                                  : null,
                         ),
+
                         const SizedBox(height: 20),
-                        _fieldLabel("AVATAR URL"),
+
+                        // Gender
+                        _fieldLabel("GENDER"),
                         TextFormField(
-                          controller: _avatarUrlController,
-                          textInputAction: TextInputAction.done,
+                          controller: _genderController,
+                          textInputAction: TextInputAction.next,
                           decoration: inputDecoration(
-                            hint: "https://example.com/avatar.jpg",
-                            prefixIcon: const Icon(Icons.link_outlined),
+                            hint: "Male / Female / Other",
+                            prefixIcon:
+                                const Icon(Icons.wc_rounded),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Paste an image URL or use the camera above to upload.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9CA3AF),
-                            height: 1.3,
-                          ),
-                        ),
+
                         const SizedBox(height: 26),
+
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
-                            onPressed: _saveProfile,
+                            onPressed: isLoading ? null : _saveProfile,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
@@ -281,14 +330,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              'Save Changes',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Save Changes',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],

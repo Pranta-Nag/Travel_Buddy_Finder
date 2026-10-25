@@ -21,7 +21,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const username = CurrentUser.username;
+    final username = CurrentUser.username;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),

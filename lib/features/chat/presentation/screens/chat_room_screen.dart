@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
-import 'package:travel_buddy_finder/features/chat/data/providers/chat_provider.dart';
+import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final int roomId;

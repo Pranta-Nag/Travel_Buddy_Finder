@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:travel_buddy_finder/api/models/user_model.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
-import 'package:travel_buddy_finder/features/auth/data/models/user_model.dart';
 
-class AuthService {
+class AuthController {
   Future<({bool success, String? token, UserModel? user, String message})> login({
     required String login,
     required String password,
@@ -15,19 +16,14 @@ class AuthService {
         'password': password,
       };
 
-      // Try JSON POST first
-      var response = await ApiClient.post('/login', body: body, isJson: true);
+      var response = await ApiClient.post(AppUrl.login, body: body, isJson: true);
 
-      // If PHP expects form-data/x-www-form-urlencoded and returned 400 Bad Request, fallback to form-data
       if (response.statusCode == 400) {
-        final formResponse = await ApiClient.post('/login', body: body, isJson: false);
+        final formResponse = await ApiClient.post(AppUrl.login, body: body, isJson: false);
         if (formResponse.statusCode == 200 || formResponse.statusCode == 201) {
           response = formResponse;
         }
       }
-
-      print('Login Response Status: ${response.statusCode}');
-      print('Login Response Body: ${response.body}');
 
       if (response.body.isEmpty) {
         return (
@@ -79,7 +75,6 @@ class AuthService {
         message: message,
       );
     } catch (e) {
-      print('Login Error: $e');
       return (
         success: false,
         token: null,
@@ -101,7 +96,7 @@ class AuthService {
     List<int>? nidPicBytes,
   }) async {
     try {
-      final fields = {
+      final Map<String, dynamic> fields = {
         'full_name': fullName,
         'username': username,
         'email': email,
@@ -111,18 +106,41 @@ class AuthService {
         'dob': dob,
       };
 
-      final files = <String, List<int>>{};
-      if (profilePicBytes != null) files['profile_pic'] = profilePicBytes;
-      if (nidPicBytes != null) files['nid_pic'] = nidPicBytes;
+      if (profilePicBytes != null && profilePicBytes.isNotEmpty) {
+        final rawBase64 = base64Encode(profilePicBytes);
+        fields['profile_pic'] = 'data:image/jpeg;base64,$rawBase64';
+        fields['profile_pic_base64'] = rawBase64;
+      }
 
-      final response = await ApiClient.multipartPost(
-        '/registration',
-        fields: fields,
-        filesBytes: files,
+      if (nidPicBytes != null && nidPicBytes.isNotEmpty) {
+        final rawBase64 = base64Encode(nidPicBytes);
+        fields['nid_pic'] = 'data:image/jpeg;base64,$rawBase64';
+        fields['nid_pic_base64'] = rawBase64;
+      }
+
+      var response = await ApiClient.post(
+        AppUrl.registration,
+        body: fields,
+        isJson: true,
       );
 
-      print('Registration Response Status: ${response.statusCode}');
-      print('Registration Response Body: ${response.body}');
+      // Fallback to multipart post if 400 or 404 is returned
+      if ((response.statusCode == 400 || response.statusCode == 404) &&
+          (profilePicBytes != null || nidPicBytes != null)) {
+        final files = <String, List<int>>{};
+        if (profilePicBytes != null) files['profile_pic'] = profilePicBytes;
+        if (nidPicBytes != null) files['nid_pic'] = nidPicBytes;
+
+        final stringMapFields = fields.map((k, v) => MapEntry(k, v.toString()));
+        final multiResponse = await ApiClient.multipartPost(
+          AppUrl.registration,
+          fields: stringMapFields,
+          filesBytes: files,
+        );
+        if (multiResponse.statusCode == 200 || multiResponse.statusCode == 201) {
+          response = multiResponse;
+        }
+      }
 
       if (response.body.isEmpty) {
         return (
@@ -173,9 +191,7 @@ class AuthService {
         user: null,
         message: message,
       );
-    } catch (e, stack) {
-      print('Registration Error: $e');
-      print('Stacktrace: $stack');
+    } catch (e) {
       return (
         success: false,
         token: null,
@@ -188,7 +204,7 @@ class AuthService {
   Future<({bool success, String message})> forgotPassword(String email) async {
     try {
       final response = await ApiClient.post(
-        '/forgot_password',
+        AppUrl.forgotPassword,
         body: {'email': email.trim()},
       );
       final data = jsonDecode(response.body);
@@ -210,7 +226,7 @@ class AuthService {
   }) async {
     try {
       final response = await ApiClient.post(
-        '/verify_otp',
+        AppUrl.verifyOtp,
         body: {
           'email': email.trim(),
           'otp': otp.trim(),
@@ -235,24 +251,46 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      final response = await ApiClient.post(
-        '/reset_password',
-        body: {
-          'email': email.trim(),
-          'otp': otp.trim(),
-          'new_password': newPassword,
-        },
+      final body = {
+        'email': email.trim(),
+        'otp': otp.trim(),
+        'code': otp.trim(),
+        'token': otp.trim(),
+        'new_password': newPassword,
+        'password': newPassword,
+      };
+
+      var response = await ApiClient.post(
+        AppUrl.resetPassword,
+        body: body,
+        isJson: true,
       );
+
+      if (response.statusCode == 400) {
+        final formResponse = await ApiClient.post(
+          AppUrl.resetPassword,
+          body: body,
+          isJson: false,
+        );
+        if (formResponse.statusCode == 200 || formResponse.statusCode == 201) {
+          response = formResponse;
+        }
+      }
+
       final data = jsonDecode(response.body);
       final message = (data is Map && data['message'] != null)
           ? data['message'].toString()
-          : 'Password reset successfully.';
+          : (data is Map && data['error'] != null)
+              ? data['error'].toString()
+              : 'Password reset result (${response.statusCode})';
+
       return (
-        success: response.statusCode == 200 && data['status'] == 'success',
+        success: (response.statusCode == 200 || response.statusCode == 201) &&
+            (data is Map && data['status'] == 'success'),
         message: message,
       );
     } catch (e) {
-      return (success: false, message: 'Network error resetting password.');
+      return (success: false, message: 'Network error resetting password: $e');
     }
   }
 
@@ -262,7 +300,7 @@ class AuthService {
   }) async {
     try {
       final response = await ApiClient.post(
-        '/change_password',
+        AppUrl.changePassword,
         body: {
           'current_password': currentPassword,
           'new_password': newPassword,
@@ -283,7 +321,7 @@ class AuthService {
 
   Future<void> logout() async {
     try {
-      await ApiClient.post('/logout');
+      await ApiClient.post(AppUrl.logout);
     } catch (_) {}
     await ApiClient.removeToken();
   }

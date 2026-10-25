@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/forgot_pass_screen.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/main_nav_screen.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/sign_up_screen.dart';

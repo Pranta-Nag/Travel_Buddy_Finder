@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'package:travel_buddy_finder/api/models/chat_room_model.dart';
+import 'package:travel_buddy_finder/api/models/message_model.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
-import 'package:travel_buddy_finder/features/chat/data/models/chat_room_model.dart';
-import 'package:travel_buddy_finder/features/chat/data/models/message_model.dart';
 
-class ChatService {
+class ChatController {
   Future<List<ChatRoomModel>> getChatRooms() async {
-    final response = await ApiClient.get('/chat_rooms');
+    final response = await ApiClient.get(AppUrl.chatRooms);
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
       final List list = json['data'] ?? [];
@@ -15,7 +16,7 @@ class ChatService {
   }
 
   Future<int?> startChat(int tripId) async {
-    final response = await ApiClient.post('/start_chat', body: {'trip_id': tripId});
+    final response = await ApiClient.post(AppUrl.startChat, body: {'trip_id': tripId});
     if (response.statusCode == 200 || response.statusCode == 201) {
       final json = jsonDecode(response.body);
       final data = json['data'];
@@ -28,8 +29,8 @@ class ChatService {
 
   Future<List<MessageModel>> getMessages(int roomId, {int? lastId}) async {
     final endpoint = lastId != null && lastId > 0
-        ? '/get_messages?room_id=$roomId&last_id=$lastId'
-        : '/get_messages?room_id=$roomId';
+        ? '${AppUrl.getMessages}?room_id=$roomId&last_id=$lastId'
+        : '${AppUrl.getMessages}?room_id=$roomId';
     final response = await ApiClient.get(endpoint);
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -40,7 +41,7 @@ class ChatService {
   }
 
   Future<MessageModel?> sendMessage(int roomId, String messageText) async {
-    final response = await ApiClient.post('/send_message', body: {
+    final response = await ApiClient.post(AppUrl.sendMessage, body: {
       'room_id': roomId,
       'message_text': messageText,
     });

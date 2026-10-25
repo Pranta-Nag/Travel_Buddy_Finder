@@ -1,4 +1,4 @@
-import 'package:travel_buddy_finder/core/constants/api_constants.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 
 class ChatRoomModel {
   final int roomId;
@@ -29,7 +29,7 @@ class ChatRoomModel {
       tripId: json['trip_id'] is int ? json['trip_id'] : int.parse(json['trip_id'].toString()),
       partnerName: json['partner_name'] ?? json['host_name'] ?? 'Traveler',
       partnerUsername: json['partner_username'] ?? '@user',
-      partnerAvatarUrl: ApiConstants.resolveImageUrl(json['partner_avatar'] ?? json['avatar_url']),
+      partnerAvatarUrl: AppUrl.resolveImageUrl(json['partner_avatar'] ?? json['avatar_url']),
       tripTitle: json['trip_title'] ?? 'Trip',
       lastMessage: json['last_message'] ?? '',
       lastMessageTime: json['last_message_time'] ?? '',

@@ -2,8 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
-import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/explore/explore_filter.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/constants/app_lists.dart';
@@ -428,36 +428,33 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return true;
   }
 
-  void _submitTrip() {
+  Future<void> _submitTrip() async {
     final isFormValid = _formKey.currentState?.validate() ?? false;
     if (!isFormValid) return;
     if (!_validateExtraFields()) return;
 
-    final newTrip = Trip(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    final tripProvider = context.read<TripProvider>();
+    final result = await tripProvider.createTrip(
       title: _tripNameController.text.trim(),
       location: _destinationController.text.trim(),
-      price: '\$${_budgetController.text.trim()}',
-      rating: '0.0',
-      hostName: 'You',
-      username: '@you',
-      imageUrl:
-          'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+      price: double.tryParse(_budgetController.text.trim()) ?? 0.0,
+      startDate: _startDateController.text.trim(),
+      endDate: _endDateController.text.trim(),
       category: _selectedCategory ?? 'Adventure',
       description: _descriptionController.text.trim(),
-      seatsLeft: int.tryParse(_seatsController.text.trim()) ?? 2,
-      transportationMethods: _selectedTransportations,
-      imageBytes: _coverImageBytes,
+      seats: int.tryParse(_seatsController.text.trim()) ?? 4,
+      transports: _selectedTransportations,
+      coverPhotoBytes: _coverImageBytes,
     );
 
-    TripStore.add(newTrip);
     if (!mounted) return;
-    Navigator.pop(context);
-    _showMessage(
-      'Trip published successfully!',
-    );
+
+    if (result.success) {
+      Navigator.pop(context);
+      _showMessage(result.message);
+    } else {
+      _showMessage(result.message);
+    }
   }
 
   void _showMessage(String message) {

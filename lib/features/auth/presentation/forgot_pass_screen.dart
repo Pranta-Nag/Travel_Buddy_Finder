@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/utils/validators.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
-import 'package:travel_buddy_finder/features/auth/data/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/reset_password_screen.dart';
 
 class ForgotPassScreen extends StatefulWidget {
@@ -55,7 +55,7 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
     }
   }
 
-  Future<void> _verifyOtp() async {
+  void _continueToResetPassword() {
     final otp = _otpController.text.trim();
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,32 +64,15 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
       return;
     }
 
-    final authProvider = context.read<AuthProvider>();
-    final result = await authProvider.verifyOtp(
-      email: _emailController.text.trim(),
-      otp: otp,
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResetPasswordScreen(
+          email: _emailController.text.trim(),
+          otp: otp,
+        ),
+      ),
     );
-
-    if (!mounted) return;
-
-    if (result.success) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ResetPasswordScreen(
-            email: _emailController.text.trim(),
-            otp: otp,
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
   }
 
   @override
@@ -181,23 +164,20 @@ class _ForgotPassScreenState extends State<ForgotPassScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : _verifyOtp,
+                          onPressed: _continueToResetPassword,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.success,
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  "Verify OTP",
-                                  style: TextStyle(color: AppColors.fieldColor),
-                                ),
+                          child: const Text(
+                            "Continue to Reset Password",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],

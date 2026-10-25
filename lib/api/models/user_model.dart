@@ -1,4 +1,4 @@
-import 'package:travel_buddy_finder/core/constants/api_constants.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 
 class UserModel {
   final int id;
@@ -27,7 +27,7 @@ class UserModel {
     this.rating = '5.0',
   });
 
-  String get avatarUrl => ApiConstants.resolveImageUrl(profilePic);
+  String get avatarUrl => AppUrl.resolveImageUrl(profilePic);
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(

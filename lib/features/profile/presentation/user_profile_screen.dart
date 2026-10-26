@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
@@ -15,6 +16,7 @@ import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/trip_card.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/trip_request/approvals_drawer.dart';
 
@@ -57,6 +59,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.isCurrentUser) {
         context.read<ProfileProvider>().fetchMyProfile();
+        context.read<TripRequestProvider>().fetchPendingRequests();
       } else if (widget.username.isNotEmpty) {
         context.read<ProfileProvider>().fetchUserProfile(widget.username);
       }
@@ -126,6 +129,29 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         height: 120,
         fit: BoxFit.cover,
       );
+    } else if (avatarUrl.isNotEmpty) {
+      final resolved = AppUrl.resolveImageUrl(avatarUrl);
+      if (resolved.startsWith('http://') || resolved.startsWith('https://')) {
+        imageWidget = Image.network(
+          resolved,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Image.asset(
+            defaultAsset,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+          ),
+        );
+      } else {
+        imageWidget = Image.asset(
+          defaultAsset,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+        );
+      }
     } else {
       imageWidget = Image.asset(
         defaultAsset,
@@ -165,17 +191,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     final displayName = authUser != null && authUser.fullName.isNotEmpty
         ? authUser.fullName
-        : (_name.isNotEmpty ? _name : CurrentUser.name);
+        : (_name.isNotEmpty
+            ? _name
+            : (widget.isCurrentUser ? CurrentUser.name : "Traveler"));
 
     final displayUsername = authUser != null && authUser.username.isNotEmpty
         ? '@${authUser.username.replaceAll('@', '')}'
-        : (_username.isNotEmpty ? _username : CurrentUser.username);
+        : (_username.isNotEmpty
+            ? (_username.startsWith('@') ? _username : '@$_username')
+            : (widget.isCurrentUser ? CurrentUser.username : "@traveler"));
 
     final displayAvatar = _avatarBytes != null
         ? ''
         : (authUser != null && authUser.avatarUrl.isNotEmpty
             ? authUser.avatarUrl
-            : _avatarUrl);
+            : (_avatarUrl.isNotEmpty
+                ? _avatarUrl
+                : (widget.isCurrentUser ? CurrentUser.avatarUrl : 'assets/images/dummy_boy.jpg')));
 
     final displayGender = authUser?.gender;
 
@@ -303,7 +335,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ] else ...[
                     const SizedBox(height: 20),
                   ],
-                  if (isLoading && authUser == null)
+                  if (isLoading && authUser == null && _name.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 60),
                       child: Center(
@@ -635,17 +667,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ValueListenableBuilder<int>(
               valueListenable: TripStore.tripListNotifier,
               builder: (context, _, __) {
+                final screenWidth = MediaQuery.of(context).size.width;
+                final cardHeight = screenWidth < 600 ? 420.0 : 380.0;
                 return Column(
-                  children: trips.map((trip) {
+                  children: trips.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final trip = entry.value;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: ValueListenableBuilder<List<dynamic>>(
-                        valueListenable: BookmarkStore.savedTrips,
-                        builder: (context, savedTrips, _) => TripCard(
-                          trip: trip,
-                          isBookmarked:
-                              savedTrips.any((item) => item.id == trip.id),
-                          onBookmarkToggle: () => BookmarkStore.toggle(trip),
+                      child: SizedBox(
+                        height: cardHeight,
+                        child: ValueListenableBuilder<List<dynamic>>(
+                          valueListenable: BookmarkStore.savedTrips,
+                          builder: (context, savedTrips, _) => TripCard(
+                            trip: trip,
+                            heroTag: 'profile-trip-${trip.id}-$index',
+                            isBookmarked:
+                                savedTrips.any((item) => item.id == trip.id),
+                            onBookmarkToggle: () => BookmarkStore.toggle(trip),
                           onDelete: widget.isCurrentUser
                               ? () async {
                                   final confirmed = await showDialog<bool>(
@@ -682,8 +721,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               : null,
                         ),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  );
+                }).toList(),
                 );
               },
             ),

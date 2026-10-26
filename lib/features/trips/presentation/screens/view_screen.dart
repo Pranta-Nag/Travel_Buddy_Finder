@@ -7,6 +7,8 @@ import 'package:travel_buddy_finder/features/trips/presentation/screens/rating_s
 import 'package:travel_buddy_finder/features/trips/presentation/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 
@@ -79,7 +81,7 @@ class _ViewScreenState extends State<ViewScreen> {
     );
   }
 
-  void _joinTrip() {
+  Future<void> _joinTrip() async {
     final trip = widget.trip;
     final request = TripRequest(
       id: '${trip.id}_${CurrentUser.username}_${DateTime.now().millisecondsSinceEpoch}',
@@ -93,20 +95,31 @@ class _ViewScreenState extends State<ViewScreen> {
 
     TripRequestStore.add(request);
 
+    final result = await context.read<TripRequestProvider>().joinTrip(
+      tripId: trip.id,
+    );
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle_rounded,
-                color: AppColors.primary, size: 28),
-            SizedBox(width: 10),
-            Text("Join Request Sent!"),
+            Icon(
+              result.success ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+              color: result.success ? AppColors.primary : Colors.orange,
+              size: 28,
+            ),
+            const SizedBox(width: 10),
+            Text(result.success ? "Join Request Sent!" : "Request Submitted"),
           ],
         ),
         content: Text(
-          "Your request to join '${trip.title}' with ${trip.hostName} has been submitted successfully.",
+          result.message.isNotEmpty
+              ? result.message
+              : "Your request to join '${trip.title}' with ${trip.hostName} has been submitted successfully.",
           style: const TextStyle(
               color: AppColors.greyText, fontSize: 14, height: 1.4),
         ),
@@ -419,19 +432,23 @@ class _ViewScreenState extends State<ViewScreen> {
                     child: Row(
                       children: [
                         GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: () {
                             final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => UserProfileScreen(
-                                  name: isMe ? CurrentUser.name : trip.hostName,
-                                  username: isMe ? CurrentUser.username : trip.username,
-                                  avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
-                                  isCurrentUser: isMe,
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!context.mounted) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => UserProfileScreen(
+                                    name: isMe ? CurrentUser.name : trip.hostName,
+                                    username: isMe ? CurrentUser.username : trip.username,
+                                    avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                    isCurrentUser: isMe,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            });
                           },
                           child: Stack(
                             children: [
@@ -469,19 +486,23 @@ class _ViewScreenState extends State<ViewScreen> {
                         const SizedBox(width: 14),
                         Expanded(
                           child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => UserProfileScreen(
-                                    name: isMe ? CurrentUser.name : trip.hostName,
-                                    username: isMe ? CurrentUser.username : trip.username,
-                                    avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
-                                    isCurrentUser: isMe,
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!context.mounted) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => UserProfileScreen(
+                                      name: isMe ? CurrentUser.name : trip.hostName,
+                                      username: isMe ? CurrentUser.username : trip.username,
+                                      avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                      isCurrentUser: isMe,
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              });
                             },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

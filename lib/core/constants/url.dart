@@ -29,6 +29,11 @@ class AppUrl {
   static const String createTrip = '/create_trip';
   static const String updateTrip = '/update_trip';
   static const String deleteTrip = '/delete_trip';
+  static const String joinTrip = '/join_trip';
+  static const String acceptRequest = '/accept_request';
+  static const String rejectRequest = '/reject_request';
+  static const String respondRequest = '/respond_request';
+  static const String pendingRequests = '/pending_requests';
 
   // Image URL Resolver
   static String get baseImageUrl => baseUrl;

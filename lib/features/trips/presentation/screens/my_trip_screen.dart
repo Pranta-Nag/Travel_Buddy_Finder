@@ -93,6 +93,7 @@ class _MyTripScreenState extends State<MyTripScreen> {
                       valueListenable: BookmarkStore.savedTrips,
                       builder: (context, savedTrips, _) => TripCard(
                         trip: trip,
+                        heroTag: 'mytrip-trip-${trip.id}-$index',
                         isBookmarked:
                             savedTrips.any((item) => item.id == trip.id),
                         onBookmarkToggle: () => BookmarkStore.toggle(trip),

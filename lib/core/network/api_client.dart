@@ -8,6 +8,7 @@ class ApiClient {
   ApiClient._();
 
   static const String _tokenKey = 'jwt_auth_token';
+  static const Duration _requestTimeout = Duration(seconds: 30);
 
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -41,7 +42,7 @@ class ApiClient {
   static Future<http.Response> get(String endpoint) async {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
     final headers = await _headers();
-    return http.get(uri, headers: headers);
+    return http.get(uri, headers: headers).timeout(_requestTimeout);
   }
 
   static Future<http.Response> post(
@@ -57,7 +58,7 @@ class ApiClient {
         uri,
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
-      );
+      ).timeout(_requestTimeout);
     } else {
       final Map<String, String> formBody = {};
       if (body != null) {
@@ -69,7 +70,7 @@ class ApiClient {
         uri,
         headers: headers,
         body: formBody,
-      );
+      ).timeout(_requestTimeout);
     }
   }
 
@@ -102,7 +103,7 @@ class ApiClient {
       }
     }
 
-    final streamedResponse = await request.send();
-    return http.Response.fromStream(streamedResponse);
+    final streamedResponse = await request.send().timeout(_requestTimeout);
+    return http.Response.fromStream(streamedResponse).timeout(_requestTimeout);
   }
 }

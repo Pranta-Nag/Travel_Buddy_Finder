@@ -68,4 +68,21 @@ class TripRequestStore {
     list[index].status = status;
     requests.value = [...list];
   }
+
+  static void setRequestsFromApi(List<TripRequest> apiRequests) {
+    if (apiRequests.isEmpty) return;
+    final list = List<TripRequest>.from(requests.value);
+    for (final newReq in apiRequests) {
+      final idx = list.indexWhere((r) =>
+          r.id == newReq.id ||
+          (r.trip.id == newReq.trip.id &&
+              r.requesterUsername == newReq.requesterUsername));
+      if (idx >= 0) {
+        list[idx] = newReq;
+      } else {
+        list.add(newReq);
+      }
+    }
+    requests.value = [...list];
+  }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
@@ -17,8 +19,19 @@ class _ApprovalsDrawerState extends State<ApprovalsDrawer> {
   bool _isProcessing = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TripRequestProvider>().fetchPendingRequests();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final hostUsername = CurrentUser.username;
+    final isFetching = context.watch<TripRequestProvider>().isLoading;
 
     return Drawer(
       child: SafeArea(
@@ -30,42 +43,64 @@ class _ApprovalsDrawerState extends State<ApprovalsDrawer> {
                 valueListenable: TripRequestStore.requests,
                 builder: (context, requests, _) {
                   final all = TripRequestStore.allForHost(hostUsername);
-                  if (all.isEmpty) return const _EmptyState();
+                  if (all.isEmpty && isFetching) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (all.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: () =>
+                          context.read<TripRequestProvider>().fetchPendingRequests(),
+                      child: ListView(
+                        children: const [
+                          SizedBox(height: 100),
+                          _EmptyState(),
+                        ],
+                      ),
+                    );
+                  }
 
                   final pending = all.where((r) => r.isPending).toList();
                   final decided = all.where((r) => !r.isPending).toList();
 
-                  return ListView(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    children: [
-                      if (pending.isNotEmpty) ...[
-                        const _SectionHeader('Pending Requests'),
-                        ...pending.map(
-                          (r) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: TripRequestItem(
-                              request: r,
-                              onApprove: _isProcessing
-                                  ? null
-                                  : () => _handleApprove(r),
-                              onReject:
-                                  _isProcessing ? null : () => _handleReject(r),
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        context.read<TripRequestProvider>().fetchPendingRequests(),
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      children: [
+                        if (pending.isNotEmpty) ...[
+                          const _SectionHeader('Pending Requests'),
+                          ...pending.map(
+                            (r) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: TripRequestItem(
+                                request: r,
+                                onApprove: _isProcessing
+                                    ? null
+                                    : () => _handleApprove(r),
+                                onReject: _isProcessing
+                                    ? null
+                                    : () => _handleReject(r),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      if (decided.isNotEmpty) ...[
-                        const _SectionHeader('Your Decisions'),
-                        ...decided.map(
-                          (r) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: TripRequestItem(request: r),
+                          const SizedBox(height: 8),
+                        ],
+                        if (decided.isNotEmpty) ...[
+                          const _SectionHeader('Your Decisions'),
+                          ...decided.map(
+                            (r) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: TripRequestItem(request: r),
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   );
                 },
               ),
@@ -101,23 +136,49 @@ class _ApprovalsDrawerState extends State<ApprovalsDrawer> {
 
   Future<void> _handleApprove(TripRequest request) async {
     setState(() => _isProcessing = true);
+
+    String? apiMessage;
+    try {
+      final res = await context.read<TripRequestProvider>().acceptRequest(
+            requestId: request.id,
+            tripId: request.trip.id,
+          );
+      apiMessage = res.message;
+    } catch (e) {
+      debugPrint('Error approving trip request: $e');
+    }
+
     await _applyDecision(
       request,
       TripRequestStatus.approved,
       title: 'Request Approved',
       body: '${request.hostName} approved your request to join '
           '${request.trip.title}.',
+      feedbackMessage: apiMessage,
     );
   }
 
   Future<void> _handleReject(TripRequest request) async {
     setState(() => _isProcessing = true);
+
+    String? apiMessage;
+    try {
+      final res = await context.read<TripRequestProvider>().rejectRequest(
+            requestId: request.id,
+            tripId: request.trip.id,
+          );
+      apiMessage = res.message;
+    } catch (e) {
+      debugPrint('Error rejecting trip request: $e');
+    }
+
     await _applyDecision(
       request,
       TripRequestStatus.rejected,
       title: 'Request Not Approved',
       body: '${request.hostName} could not approve your request to join '
           '${request.trip.title}.',
+      feedbackMessage: apiMessage,
     );
   }
 
@@ -126,6 +187,7 @@ class _ApprovalsDrawerState extends State<ApprovalsDrawer> {
     TripRequestStatus status, {
     required String title,
     required String body,
+    String? feedbackMessage,
   }) async {
     TripRequestStore.updateStatus(request.id, status);
 
@@ -141,11 +203,12 @@ class _ApprovalsDrawerState extends State<ApprovalsDrawer> {
 
     final action =
         status == TripRequestStatus.approved ? 'approved' : 'rejected';
+    final text = (feedbackMessage != null && feedbackMessage.isNotEmpty)
+        ? feedbackMessage
+        : 'You $action ${request.requesterName}\'s request. They have been notified.';
+
     final snackBar = SnackBar(
-      content: Text(
-        'You $action ${request.requesterName}\'s request. '
-        'They have been notified.',
-      ),
+      content: Text(text),
       backgroundColor:
           status == TripRequestStatus.approved ? Colors.green.shade700 : null,
       behavior: SnackBarBehavior.floating,

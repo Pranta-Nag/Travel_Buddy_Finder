@@ -7,6 +7,8 @@ import 'package:travel_buddy_finder/features/trips/presentation/screens/rating_s
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/view_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 
@@ -17,12 +19,14 @@ class TripCard extends StatefulWidget {
     required this.isBookmarked,
     this.onBookmarkToggle,
     this.onDelete,
+    this.heroTag,
   });
 
   final Trip trip;
   final bool isBookmarked;
   final VoidCallback? onBookmarkToggle;
   final VoidCallback? onDelete;
+  final String? heroTag;
 
   @override
   State<TripCard> createState() => _TripCardState();
@@ -36,6 +40,7 @@ class _TripCardState extends State<TripCard> {
   Widget build(BuildContext context) {
     final bool isOwner =
         widget.trip.username == '@you' || widget.trip.username == '@yeasin';
+    final effectiveHeroTag = widget.heroTag ?? 'card-trip-image-${widget.trip.id}';
 
     return Card(
       margin: EdgeInsets.zero,
@@ -54,7 +59,7 @@ class _TripCardState extends State<TripCard> {
                 height: 150,
                 width: double.infinity,
                 child: Hero(
-                  tag: 'card-trip-image-${widget.trip.id}',
+                  tag: effectiveHeroTag,
                   child: widget.trip.imageBytes != null
                       ? Image.memory(
                           widget.trip.imageBytes!,
@@ -195,69 +200,71 @@ class _TripCardState extends State<TripCard> {
 
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => _openProfile(context),
-                        child: CircleAvatar(
-                          radius: 14,
-                          backgroundColor: AppColors.fieldColor,
-                          backgroundImage: _getAvatarProvider(widget.trip.avatarUrl),
-                          onBackgroundImageError: (_, __) {},
-                        ),
-                      ),
-
-                      const SizedBox(width: 8),
-
                       Expanded(
                         child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: () => _openProfile(context),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'By ${widget.trip.hostName}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: AppColors.fieldColor,
+                                  backgroundImage: _getAvatarProvider(widget.trip.avatarUrl),
+                                  onBackgroundImageError: (_, __) {},
                                 ),
-                              ),
-                              Text(
-                                widget.trip.username,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 11,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'By ${widget.trip.hostName}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      Text(
+                                        widget.trip.username,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-
-                      const Spacer(),
-
+                      const SizedBox(width: 8),
                       // Seats
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '${widget.trip.seatsLeft} seats left',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.orange,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${widget.trip.seatsLeft} seats left',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -383,8 +390,7 @@ class _TripCardState extends State<TripCard> {
                                 MaterialPageRoute(
                                   builder: (context) => ViewScreen(
                                     trip: widget.trip,
-                                    heroTag:
-                                        'card-trip-image-${widget.trip.id}',
+                                    heroTag: effectiveHeroTag,
                                   ),
                                 ),
                               );
@@ -496,8 +502,10 @@ class _TripCardState extends State<TripCard> {
     );
   }
 
-  void _joinTrip() {
+  Future<void> _joinTrip() async {
     final trip = widget.trip;
+    setState(() => _hasRequested = true);
+
     final request = TripRequest(
       id: '${trip.id}_${CurrentUser.username}_${DateTime.now().millisecondsSinceEpoch}',
       trip: trip,
@@ -510,15 +518,25 @@ class _TripCardState extends State<TripCard> {
 
     TripRequestStore.add(request);
 
-    setState(() => _hasRequested = true);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Join request sent to ${trip.hostName}!'),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await context.read<TripRequestProvider>().joinTrip(
+      tripId: trip.id,
     );
+
+    if (mounted) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result.success
+                ? (result.message.isNotEmpty ? result.message : 'Join request sent to ${trip.hostName}!')
+                : (result.message.isNotEmpty ? result.message : 'Join request sent to ${trip.hostName}!'),
+          ),
+          backgroundColor: result.success ? Colors.green.shade700 : null,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   ImageProvider _getAvatarProvider(String rawUrl) {
@@ -547,16 +565,19 @@ class _TripCardState extends State<TripCard> {
       widget.trip.username,
       inputName: widget.trip.hostName,
     );
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UserProfileScreen(
-          name: isMe ? CurrentUser.name : widget.trip.hostName,
-          username: isMe ? CurrentUser.username : widget.trip.username,
-          avatarUrl: isMe ? CurrentUser.avatarUrl : widget.trip.avatarUrl,
-          isCurrentUser: isMe,
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => UserProfileScreen(
+            name: isMe ? CurrentUser.name : widget.trip.hostName,
+            username: isMe ? CurrentUser.username : widget.trip.username,
+            avatarUrl: isMe ? CurrentUser.avatarUrl : widget.trip.avatarUrl,
+            isCurrentUser: isMe,
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

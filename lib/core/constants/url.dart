@@ -27,22 +27,18 @@ class AppUrl {
   static const String allTrips = '/all_trips';
   static const String categoryTrips = '/category_trips';
   static const String createTrip = '/create_trip';
+  static const String updateTrip = '/update_trip';
+  static const String deleteTrip = '/delete_trip';
 
   // Image URL Resolver
   static String get baseImageUrl => baseUrl;
 
   static String resolveImageUrl(String? path) {
     if (path == null || path.isEmpty) return '';
-    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('assets/')) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;
-
-    // uploads/ is stored inside api/ folder
-    if (cleanPath.startsWith('uploads/')) {
-      return '$baseUrl/$cleanPath';
-    }
-
-    return '$baseUrl/uploads/$cleanPath';
+    return '$baseUrl/$cleanPath';
   }
 }

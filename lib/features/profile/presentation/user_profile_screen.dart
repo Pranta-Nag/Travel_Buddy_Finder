@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
@@ -58,6 +59,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.isCurrentUser) {
         context.read<ProfileProvider>().fetchMyProfile();
+        context.read<TripRequestProvider>().fetchPendingRequests();
       } else if (widget.username.isNotEmpty) {
         context.read<ProfileProvider>().fetchUserProfile(widget.username);
       }

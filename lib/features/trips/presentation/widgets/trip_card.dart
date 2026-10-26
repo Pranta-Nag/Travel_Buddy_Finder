@@ -7,6 +7,8 @@ import 'package:travel_buddy_finder/features/trips/presentation/screens/rating_s
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/view_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 
@@ -500,8 +502,10 @@ class _TripCardState extends State<TripCard> {
     );
   }
 
-  void _joinTrip() {
+  Future<void> _joinTrip() async {
     final trip = widget.trip;
+    setState(() => _hasRequested = true);
+
     final request = TripRequest(
       id: '${trip.id}_${CurrentUser.username}_${DateTime.now().millisecondsSinceEpoch}',
       trip: trip,
@@ -514,15 +518,25 @@ class _TripCardState extends State<TripCard> {
 
     TripRequestStore.add(request);
 
-    setState(() => _hasRequested = true);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Join request sent to ${trip.hostName}!'),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await context.read<TripRequestProvider>().joinTrip(
+      tripId: trip.id,
     );
+
+    if (mounted) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result.success
+                ? (result.message.isNotEmpty ? result.message : 'Join request sent to ${trip.hostName}!')
+                : (result.message.isNotEmpty ? result.message : 'Join request sent to ${trip.hostName}!'),
+          ),
+          backgroundColor: result.success ? Colors.green.shade700 : null,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   ImageProvider _getAvatarProvider(String rawUrl) {

@@ -4,6 +4,7 @@ import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/app.dart';
 
 void main() {
@@ -14,6 +15,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
+        ChangeNotifierProvider(create: (_) => TripRequestProvider()),
       ],
       child: const App(),
     ),

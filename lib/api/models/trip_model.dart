@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 
@@ -40,7 +39,7 @@ class TripModel {
   String get fullImageUrl => AppUrl.resolveImageUrl(imageUrl);
   String get fullHostAvatar => AppUrl.resolveImageUrl(hostAvatar);
 
-  Trip toTrip({Uint8List? localBytes}) {
+  Trip toTrip() {
     return Trip(
       id: id.toString(),
       title: title,
@@ -49,13 +48,16 @@ class TripModel {
       rating: rating,
       hostName: hostName,
       username: '@${hostName.toLowerCase().replaceAll(' ', '')}',
-      imageUrl: fullImageUrl,
-      avatarUrl: fullHostAvatar,
+      imageUrl: fullImageUrl.isNotEmpty
+          ? fullImageUrl
+          : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
+      avatarUrl: fullHostAvatar.isNotEmpty
+          ? fullHostAvatar
+          : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
       category: category,
       description: description,
       seatsLeft: seats,
       transportationMethods: transports,
-      imageBytes: localBytes,
     );
   }
 

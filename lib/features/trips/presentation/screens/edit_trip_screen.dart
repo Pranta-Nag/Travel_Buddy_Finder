@@ -2,12 +2,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/constants/app_lists.dart';
-import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 
 class EditTripScreen extends StatefulWidget {
   final Trip trip;
@@ -36,8 +37,8 @@ class _EditTripScreenState extends State<EditTripScreen> {
     super.initState();
     _tripNameController = TextEditingController(text: widget.trip.title);
     _destinationController = TextEditingController(text: widget.trip.location);
-    _startDateController = TextEditingController(text: "15 Oct 2024");
-    _endDateController = TextEditingController(text: "20 Oct 2024");
+    _startDateController = TextEditingController(text: "15 Oct 2026");
+    _endDateController = TextEditingController(text: "20 Oct 2026");
     _budgetController = TextEditingController(text: widget.trip.price.replaceAll('\$', ''));
     _descriptionController = TextEditingController(text: widget.trip.description);
     _selectedCategory = AppLists.categories.contains(widget.trip.category)
@@ -57,8 +58,83 @@ class _EditTripScreenState extends State<EditTripScreen> {
     super.dispose();
   }
 
+  Future<void> _handleDelete() async {
+    final tripProvider = context.read<TripProvider>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Trip'),
+        content: Text('Are you sure you want to delete "${widget.trip.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final tripIdInt = int.tryParse(widget.trip.id) ?? 0;
+      final result = await tripProvider.deleteTrip(tripIdInt);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    }
+  }
+
+  Future<void> _handleUpdate() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final tripIdInt = int.tryParse(widget.trip.id) ?? 0;
+    final rawBudget = _budgetController.text.trim().replaceAll('\$', '');
+    final budgetDouble = double.tryParse(rawBudget) ?? 0.0;
+
+    final tripProvider = context.read<TripProvider>();
+    final result = await tripProvider.updateTrip(
+      tripId: tripIdInt,
+      title: _tripNameController.text.trim(),
+      location: _destinationController.text.trim(),
+      price: budgetDouble,
+      startDate: _startDateController.text.trim(),
+      endDate: _endDateController.text.trim(),
+      category: _selectedCategory ?? widget.trip.category,
+      description: _descriptionController.text.trim(),
+      seats: widget.trip.seatsLeft,
+      transports: widget.trip.transportationMethods,
+      coverPhotoBytes: _coverImageBytes,
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: result.success ? Colors.green.shade600 : Colors.redAccent,
+        content: Text(
+          result.message,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<TripProvider>().isLoading;
+
     return Scaffold(
       body: ScreenBackground(
         child: SafeArea(
@@ -243,33 +319,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Trip'),
-                                content: Text('Are you sure you want to delete "${widget.trip.title}"?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed == true && context.mounted) {
-                              TripStore.remove(widget.trip.id);
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Trip Deleted")),
-                              );
-                            }
-                          },
+                          onPressed: isLoading ? null : _handleDelete,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red,
                             side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -282,35 +332,26 @@ class _EditTripScreenState extends State<EditTripScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              final rawBudget = _budgetController.text.trim().replaceAll('\$', '');
-                              final priceString = rawBudget.isNotEmpty ? '\$$rawBudget' : widget.trip.price;
-                              final updatedTrip = widget.trip.copyWith(
-                                title: _tripNameController.text.trim(),
-                                location: _destinationController.text.trim(),
-                                price: priceString,
-                                category: _selectedCategory ?? widget.trip.category,
-                                description: _descriptionController.text.trim(),
-                                imageBytes: _coverImageBytes,
-                              );
-                              TripStore.update(updatedTrip);
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Trip Updated Successfully")),
-                              );
-                            }
-                          },
+                          onPressed: isLoading ? null : _handleUpdate,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
-                          child: const Text(
-                            "Update Changes",
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "Update Changes",
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
                         ),
                       ),
                     ],

@@ -76,4 +76,60 @@ class TripProvider with ChangeNotifier {
 
     return (success: result.success, message: result.message);
   }
+
+  Future<({bool success, String message})> updateTrip({
+    required int tripId,
+    required String title,
+    required String location,
+    required double price,
+    required String startDate,
+    required String endDate,
+    required String category,
+    required String description,
+    int? seats,
+    List<String>? transports,
+    List<int>? coverPhotoBytes,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _tripController.updateTrip(
+      tripId: tripId,
+      title: title,
+      location: location,
+      price: price,
+      startDate: startDate,
+      endDate: endDate,
+      category: category,
+      description: description,
+      seats: seats,
+      transports: transports,
+      coverPhotoBytes: coverPhotoBytes,
+    );
+
+    _isLoading = false;
+    if (result.success) {
+      await fetchAllTrips();
+    } else {
+      notifyListeners();
+    }
+
+    return (success: result.success, message: result.message);
+  }
+
+  Future<({bool success, String message})> deleteTrip(int tripId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _tripController.deleteTrip(tripId);
+
+    _isLoading = false;
+    if (result.success) {
+      await fetchAllTrips();
+    } else {
+      notifyListeners();
+    }
+
+    return (success: result.success, message: result.message);
+  }
 }

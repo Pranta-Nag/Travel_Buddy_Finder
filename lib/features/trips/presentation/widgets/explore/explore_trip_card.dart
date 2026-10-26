@@ -3,6 +3,8 @@ import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/view_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
+import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/explore/explore_filter.dart';
 
 class ExploreTripCard extends StatelessWidget {
@@ -345,13 +347,40 @@ class ExploreTripCard extends StatelessWidget {
                           MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(
-                            trip.hostName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF475569),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              final isMe = CurrentUser.isCurrentUser(
+                                trip.username,
+                                inputName: trip.hostName,
+                              );
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!context.mounted) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => UserProfileScreen(
+                                      name: isMe ? CurrentUser.name : trip.hostName,
+                                      username: isMe ? CurrentUser.username : trip.username,
+                                      avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                      isCurrentUser: isMe,
+                                    ),
+                                  ),
+                                );
+                              });
+                            },
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: Text(
+                                trip.hostName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF475569),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ),

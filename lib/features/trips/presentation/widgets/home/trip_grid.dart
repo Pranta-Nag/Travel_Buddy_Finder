@@ -81,6 +81,7 @@ class TripGrid extends StatelessWidget {
           builder: (context, savedTrips, _) {
             return TripCard(
               trip: trip,
+              heroTag: 'home-trip-${trip.id}-$index',
               isBookmarked: savedTrips.any((item) => item.id == trip.id),
               onBookmarkToggle: () {
                 BookmarkStore.toggle(trip);

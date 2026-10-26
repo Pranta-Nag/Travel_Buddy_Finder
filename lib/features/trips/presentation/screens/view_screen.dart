@@ -419,19 +419,23 @@ class _ViewScreenState extends State<ViewScreen> {
                     child: Row(
                       children: [
                         GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: () {
                             final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => UserProfileScreen(
-                                  name: isMe ? CurrentUser.name : trip.hostName,
-                                  username: isMe ? CurrentUser.username : trip.username,
-                                  avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
-                                  isCurrentUser: isMe,
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!context.mounted) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => UserProfileScreen(
+                                    name: isMe ? CurrentUser.name : trip.hostName,
+                                    username: isMe ? CurrentUser.username : trip.username,
+                                    avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                    isCurrentUser: isMe,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            });
                           },
                           child: Stack(
                             children: [
@@ -469,19 +473,23 @@ class _ViewScreenState extends State<ViewScreen> {
                         const SizedBox(width: 14),
                         Expanded(
                           child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => UserProfileScreen(
-                                    name: isMe ? CurrentUser.name : trip.hostName,
-                                    username: isMe ? CurrentUser.username : trip.username,
-                                    avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
-                                    isCurrentUser: isMe,
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!context.mounted) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => UserProfileScreen(
+                                      name: isMe ? CurrentUser.name : trip.hostName,
+                                      username: isMe ? CurrentUser.username : trip.username,
+                                      avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                      isCurrentUser: isMe,
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              });
                             },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

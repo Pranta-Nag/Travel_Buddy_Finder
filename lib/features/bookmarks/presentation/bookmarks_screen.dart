@@ -88,6 +88,7 @@ class BookmarksScreen extends StatelessWidget {
               final trip = trips[index];
               return TripCard(
                 trip: trip,
+                heroTag: 'bookmark-trip-${trip.id}-$index',
                 isBookmarked: true,
                 onBookmarkToggle: () => BookmarkStore.remove(trip.id),
               );

@@ -3,14 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
+import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/features/bookmarks/presentation/bookmarks_screen.dart';
+import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/my_trip_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
+import 'package:travel_buddy_finder/features/trips/presentation/widgets/trip_card.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/trip_request/approvals_drawer.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -55,6 +60,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       } else if (widget.username.isNotEmpty) {
         context.read<ProfileProvider>().fetchUserProfile(widget.username);
       }
+      context.read<TripProvider>().fetchAllTrips();
     });
   }
 
@@ -173,6 +179,43 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     final displayGender = authUser?.gender;
 
+    final tripProvider = context.watch<TripProvider>();
+    final apiTrips = tripProvider.trips.map((m) => m.toTrip()).toList();
+
+    final Set<String> seenIds = {};
+    final List<Trip> allTrips = [];
+    for (final t in apiTrips) {
+      if (seenIds.add(t.id)) allTrips.add(t);
+    }
+    for (final t in TripStore.trips) {
+      if (seenIds.add(t.id)) allTrips.add(t);
+    }
+
+    final targetUsername = widget.isCurrentUser
+        ? (authUser?.username ?? CurrentUser.username)
+        : widget.username;
+    final targetName = widget.isCurrentUser
+        ? (authUser?.fullName ?? CurrentUser.name)
+        : widget.name;
+
+    final hostedTrips = allTrips.where((t) {
+      if (widget.isCurrentUser) {
+        return CurrentUser.isCurrentUser(t.username, inputName: t.hostName);
+      } else {
+        final cleanTargetUser = targetUsername.replaceAll('@', '').trim().toLowerCase();
+        final cleanTargetName = targetName.trim().toLowerCase();
+        final cleanTripUser = t.username.replaceAll('@', '').trim().toLowerCase();
+        final cleanTripHost = t.hostName.trim().toLowerCase();
+        return cleanTripUser == cleanTargetUser ||
+            cleanTripHost == cleanTargetName ||
+            cleanTripHost == cleanTargetUser;
+      }
+    }).toList();
+
+    final hostedCount = (authUser?.totalHostedTrips ?? 0) > 0
+        ? authUser!.totalHostedTrips
+        : hostedTrips.length;
+
     return Scaffold(
       endDrawer: widget.isCurrentUser ? const ApprovalsDrawer() : null,
       body: ScreenBackground(
@@ -181,9 +224,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             color: AppColors.primary,
             onRefresh: () async {
               if (widget.isCurrentUser) {
-                await context.read<ProfileProvider>().fetchMyProfile(silent: true);
+                await Future.wait([
+                  context.read<ProfileProvider>().fetchMyProfile(silent: true),
+                  context.read<TripProvider>().fetchAllTrips(),
+                ]);
               } else if (widget.username.isNotEmpty) {
-                await context.read<ProfileProvider>().fetchUserProfile(widget.username);
+                await Future.wait([
+                  context.read<ProfileProvider>().fetchUserProfile(widget.username),
+                  context.read<TripProvider>().fetchAllTrips(),
+                ]);
               }
             },
             child: SingleChildScrollView(
@@ -306,7 +355,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         children: [
                           _buildStatItem("${authUser?.totalJoinedTrips ?? 0}", "TRIPS JOINED"),
                           _buildDivider(),
-                          _buildStatItem("${authUser?.totalHostedTrips ?? 0}", "HOSTED TRIPS"),
+                          _buildStatItem("$hostedCount", "HOSTED TRIPS"),
                           _buildDivider(),
                           _buildStatItem(authUser?.rating ?? "5.0", "AVG RATING"),
                         ],
@@ -388,6 +437,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ],
                     ),
                   ),
+                const SizedBox(height: 20),
+                _buildHostedTripsSection(hostedTrips),
                 const SizedBox(height: 30),
                 if (widget.isCurrentUser) ...[
                   const SizedBox(height: 0),
@@ -508,6 +559,138 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     ),
   );
 }
+
+  Widget _buildHostedTripsSection(List<Trip> trips) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.isCurrentUser ? "MY HOSTED TRIPS" : "HOSTED TRIPS",
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${trips.length}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (trips.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  children: [
+                    Icon(Icons.luggage_outlined,
+                        size: 36, color: Colors.grey.shade400),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.isCurrentUser
+                          ? "You haven't posted any trips yet."
+                          : "No trips posted yet.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ValueListenableBuilder<int>(
+              valueListenable: TripStore.tripListNotifier,
+              builder: (context, _, __) {
+                return Column(
+                  children: trips.map((trip) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: ValueListenableBuilder<List<dynamic>>(
+                        valueListenable: BookmarkStore.savedTrips,
+                        builder: (context, savedTrips, _) => TripCard(
+                          trip: trip,
+                          isBookmarked:
+                              savedTrips.any((item) => item.id == trip.id),
+                          onBookmarkToggle: () => BookmarkStore.toggle(trip),
+                          onDelete: widget.isCurrentUser
+                              ? () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Trip'),
+                                      content: Text(
+                                          'Are you sure you want to delete "${trip.title}"?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          style: TextButton.styleFrom(
+                                              foregroundColor: Colors.red),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) {
+                                    TripStore.remove(trip.id);
+                                    if (context.mounted) {
+                                      await context
+                                          .read<TripProvider>()
+                                          .fetchAllTrips();
+                                    }
+                                  }
+                                }
+                              : null,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildStatItem(String value, String label) {
     return Column(

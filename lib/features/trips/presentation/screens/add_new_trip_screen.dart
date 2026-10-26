@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/explore/explore_filter.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/constants/app_lists.dart';
@@ -448,6 +450,8 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     if (!mounted) return;
 
     if (result.success) {
+      context.read<ProfileProvider>().fetchMyProfile(silent: true);
+      TripStore.refresh();
       Navigator.pop(context);
       _showMessage(result.message);
     } else {

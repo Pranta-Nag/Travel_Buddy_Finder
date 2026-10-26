@@ -200,9 +200,7 @@ class _TripCardState extends State<TripCard> {
                         child: CircleAvatar(
                           radius: 14,
                           backgroundColor: AppColors.fieldColor,
-                          backgroundImage: NetworkImage(
-                            widget.trip.avatarUrl,
-                          ),
+                          backgroundImage: _getAvatarProvider(widget.trip.avatarUrl),
                           onBackgroundImageError: (_, __) {},
                         ),
                       ),
@@ -523,15 +521,40 @@ class _TripCardState extends State<TripCard> {
     );
   }
 
+  ImageProvider _getAvatarProvider(String rawUrl) {
+    final isMe = CurrentUser.isCurrentUser(
+      widget.trip.username,
+      inputName: widget.trip.hostName,
+    );
+    String url = rawUrl.trim();
+    if (url.isEmpty && isMe) {
+      url = CurrentUser.avatarUrl;
+    }
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return NetworkImage(url);
+    } else if (url.startsWith('assets/')) {
+      return AssetImage(url);
+    } else if (url.isNotEmpty) {
+      return NetworkImage(url);
+    }
+    return AssetImage(
+      isMe ? CurrentUser.avatarUrl : 'assets/images/dummy_boy.jpg',
+    );
+  }
+
   void _openProfile(BuildContext context) {
+    final isMe = CurrentUser.isCurrentUser(
+      widget.trip.username,
+      inputName: widget.trip.hostName,
+    );
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => UserProfileScreen(
-          name: widget.trip.hostName,
-          username: widget.trip.username,
-          avatarUrl: widget.trip.avatarUrl,
-          isCurrentUser: false,
+          name: isMe ? CurrentUser.name : widget.trip.hostName,
+          username: isMe ? CurrentUser.username : widget.trip.username,
+          avatarUrl: isMe ? CurrentUser.avatarUrl : widget.trip.avatarUrl,
+          isCurrentUser: isMe,
         ),
       ),
     );

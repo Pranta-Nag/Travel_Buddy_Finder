@@ -34,11 +34,15 @@ class AppUrl {
   static String get baseImageUrl => baseUrl;
 
   static String resolveImageUrl(String? path) {
-    if (path == null || path.isEmpty) return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
+    if (path == null || path.trim().isEmpty) return '';
+    final trimmed = path.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('assets/')) {
+      return trimmed;
     }
-    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final cleanPath = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
+    if (cleanPath.isEmpty || cleanPath == 'uploads' || cleanPath == 'uploads/') {
+      return '';
+    }
     return '$baseUrl/$cleanPath';
   }
 }

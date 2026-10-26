@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
@@ -87,13 +88,17 @@ class _CommentScreenState extends State<CommentScreen> {
                             });
                           },
                           onProfileTap: () {
+                            final name = item["name"] ?? "User";
+                            final username = "@${(item["name"] as String).replaceAll(' ', '').toLowerCase()}";
+                            final isMe = CurrentUser.isCurrentUser(username, inputName: name);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => UserProfileScreen(
-                                  name: item["name"] ?? "User",
-                                  username:
-                                      "@${(item["name"] as String).replaceAll(' ', '').toLowerCase()}",
+                                  name: isMe ? CurrentUser.name : name,
+                                  username: isMe ? CurrentUser.username : username,
+                                  avatarUrl: isMe ? CurrentUser.avatarUrl : "",
+                                  isCurrentUser: isMe,
                                 ),
                               ),
                             );

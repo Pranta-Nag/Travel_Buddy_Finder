@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
+import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/trip_card.dart';
 
@@ -13,7 +17,18 @@ class MyTripScreen extends StatefulWidget {
 
 class _MyTripScreenState extends State<MyTripScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TripProvider>().fetchAllTrips();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final tripProvider = context.watch<TripProvider>();
+    final apiTrips = tripProvider.trips.map((m) => m.toTrip()).toList();
+
     return ValueListenableBuilder<int>(
       valueListenable: TripStore.tripListNotifier,
       builder: (context, _, __) {
@@ -23,10 +38,22 @@ class _MyTripScreenState extends State<MyTripScreen> {
             screenWidth < 600 ? 1 : screenWidth < 1000 ? 2 : 4;
         final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
 
-        final myTrips = TripStore.trips
-            .where((trip) =>
-                trip.username == '@yeasin' || trip.username == '@you')
-            .toList();
+        final Set<String> seenIds = {};
+        final List<Trip> combined = [];
+
+        for (final t in apiTrips) {
+          if (seenIds.add(t.id)) combined.add(t);
+        }
+        for (final t in TripStore.trips) {
+          if (seenIds.add(t.id)) combined.add(t);
+        }
+
+        final myTrips = combined.where((trip) {
+          return CurrentUser.isCurrentUser(
+            trip.username,
+            inputName: trip.hostName,
+          );
+        }).toList();
 
         return Scaffold(
           backgroundColor: Colors.white,

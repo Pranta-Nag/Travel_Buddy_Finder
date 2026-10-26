@@ -1,4 +1,5 @@
 import 'package:travel_buddy_finder/core/constants/url.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 
 class TripModel {
@@ -40,6 +41,20 @@ class TripModel {
   String get fullHostAvatar => AppUrl.resolveImageUrl(hostAvatar);
 
   Trip toTrip() {
+    final bool isMine = CurrentUser.isCurrentUser(hostName, inputName: hostName);
+
+    String resolvedAvatar = fullHostAvatar;
+    if (isMine) {
+      if (resolvedAvatar.isEmpty) {
+        resolvedAvatar = CurrentUser.avatarUrl;
+      }
+    } else if (resolvedAvatar.isEmpty) {
+      final g = hostGender.toLowerCase();
+      resolvedAvatar = (g.contains('fem') || g.contains('girl') || g.contains('woman'))
+          ? 'assets/images/dummy_girl.png'
+          : 'assets/images/dummy_boy.jpg';
+    }
+
     return Trip(
       id: id.toString(),
       title: title,
@@ -47,13 +62,15 @@ class TripModel {
       price: '\$$price',
       rating: rating,
       hostName: hostName,
-      username: '@${hostName.toLowerCase().replaceAll(' ', '')}',
+      username: hostName.startsWith('@')
+          ? hostName
+          : '@${hostName.toLowerCase().replaceAll(' ', '')}',
       imageUrl: fullImageUrl.isNotEmpty
           ? fullImageUrl
           : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
-      avatarUrl: fullHostAvatar.isNotEmpty
-          ? fullHostAvatar
-          : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+      avatarUrl: resolvedAvatar.isNotEmpty
+          ? resolvedAvatar
+          : (isMine ? CurrentUser.avatarUrl : 'assets/images/dummy_boy.jpg'),
       category: category,
       description: description,
       seatsLeft: seats,

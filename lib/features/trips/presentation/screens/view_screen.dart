@@ -420,14 +420,15 @@ class _ViewScreenState extends State<ViewScreen> {
                       children: [
                         GestureDetector(
                           onTap: () {
+                            final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => UserProfileScreen(
-                                  name: trip.hostName,
-                                  username: trip.username,
-                                  avatarUrl: trip.avatarUrl,
-                                  isCurrentUser: false,
+                                  name: isMe ? CurrentUser.name : trip.hostName,
+                                  username: isMe ? CurrentUser.username : trip.username,
+                                  avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                  isCurrentUser: isMe,
                                 ),
                               ),
                             );
@@ -437,7 +438,13 @@ class _ViewScreenState extends State<ViewScreen> {
                               CircleAvatar(
                                 radius: 26,
                                 backgroundColor: AppColors.fieldColor,
-                                backgroundImage: NetworkImage(trip.avatarUrl),
+                                backgroundImage: (trip.avatarUrl.startsWith('http://') || trip.avatarUrl.startsWith('https://'))
+                                    ? NetworkImage(trip.avatarUrl)
+                                    : (trip.avatarUrl.startsWith('assets/')
+                                        ? AssetImage(trip.avatarUrl)
+                                        : AssetImage(CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName)
+                                            ? CurrentUser.avatarUrl
+                                            : 'assets/images/dummy_boy.jpg')) as ImageProvider,
                                 onBackgroundImageError: (_, __) {},
                               ),
                               Positioned(
@@ -463,14 +470,15 @@ class _ViewScreenState extends State<ViewScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
+                              final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => UserProfileScreen(
-                                    name: trip.hostName,
-                                    username: trip.username,
-                                    avatarUrl: trip.avatarUrl,
-                                    isCurrentUser: false,
+                                    name: isMe ? CurrentUser.name : trip.hostName,
+                                    username: isMe ? CurrentUser.username : trip.username,
+                                    avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
+                                    isCurrentUser: isMe,
                                   ),
                                 ),
                               );

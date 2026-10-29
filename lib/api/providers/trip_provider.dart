@@ -76,6 +76,10 @@ class TripProvider with ChangeNotifier {
 
     _isLoading = false;
     if (result.success) {
+      if (result.trip != null) {
+        _trips.insert(0, result.trip!);
+        notifyListeners();
+      }
       await fetchAllTrips();
     } else {
       notifyListeners();

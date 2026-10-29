@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -282,35 +284,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: _coverImageBytes != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(_coverImageBytes!, fit: BoxFit.cover),
-                            )
-                          : (widget.trip.imageUrl.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    widget.trip.imageUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.add_a_photo, color: Colors.grey[400], size: 32),
-                                        const SizedBox(height: 8),
-                                        Text("Update Photo", style: TextStyle(color: Colors.grey[500])),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add_a_photo, color: Colors.grey[400], size: 32),
-                                    const SizedBox(height: 8),
-                                    Text("Update Photo", style: TextStyle(color: Colors.grey[500])),
-                                  ],
-                                )),
+                      child: _buildCoverImagePreview(),
                     ),
                   ),
 
@@ -399,5 +373,66 @@ class _EditTripScreenState extends State<EditTripScreen> {
       final bytes = await image.readAsBytes();
       setState(() => _coverImageBytes = bytes);
     }
+  }
+
+  Widget _buildCoverImagePreview() {
+    if (_coverImageBytes != null && _coverImageBytes!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(_coverImageBytes!, fit: BoxFit.cover),
+      );
+    }
+
+    final rawUrl = widget.trip.imageUrl.trim();
+    if (rawUrl.isEmpty) {
+      return _buildPhotoPlaceholder();
+    }
+
+    if (rawUrl.startsWith('data:image/') ||
+        (!rawUrl.startsWith('http') &&
+            !rawUrl.startsWith('assets/') &&
+            rawUrl.length > 200)) {
+      try {
+        final base64String =
+            rawUrl.contains(',') ? rawUrl.split(',').last : rawUrl;
+        final decodedBytes = base64Decode(base64String.trim());
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(decodedBytes, fit: BoxFit.cover),
+        );
+      } catch (_) {}
+    }
+
+    if (rawUrl.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(rawUrl, fit: BoxFit.cover),
+      );
+    }
+
+    final resolved = rawUrl.startsWith('http') ? rawUrl : AppUrl.resolveImageUrl(rawUrl);
+    if (resolved.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          resolved,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildPhotoPlaceholder(),
+        ),
+      );
+    }
+
+    return _buildPhotoPlaceholder();
+  }
+
+  Widget _buildPhotoPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_a_photo, color: Colors.grey[400], size: 32),
+        const SizedBox(height: 8),
+        Text("Update Photo", style: TextStyle(color: Colors.grey[500])),
+      ],
+    );
   }
 }

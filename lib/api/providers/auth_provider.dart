@@ -3,6 +3,7 @@ import 'package:travel_buddy_finder/api/controllers/auth_controller.dart';
 import 'package:travel_buddy_finder/api/controllers/profile_controller.dart';
 import 'package:travel_buddy_finder/api/models/user_model.dart';
 import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
+import 'package:travel_buddy_finder/api/providers/comment_provider.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 
@@ -187,6 +188,7 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _setCurrentUser(null);
     BookmarkProvider.instance?.clear();
+    CommentProvider.instance?.clear();
     notifyListeners();
   }
 }

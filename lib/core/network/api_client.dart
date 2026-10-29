@@ -27,7 +27,9 @@ class ApiClient {
 
   static Future<Map<String, String>> _headers([bool isJson = true]) async {
     final token = await getToken();
-    final Map<String, String> headers = {};
+    final Map<String, String> headers = {
+      'Accept': 'application/json',
+    };
     if (isJson) {
       headers['Content-Type'] = 'application/json';
     } else {
@@ -82,6 +84,7 @@ class ApiClient {
     final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
     final request = http.MultipartRequest('POST', uri);
 
+    request.headers['Accept'] = 'application/json';
     final token = await getToken();
     if (token != null && token.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $token';

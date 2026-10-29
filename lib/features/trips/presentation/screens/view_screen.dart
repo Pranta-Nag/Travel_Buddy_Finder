@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
@@ -7,11 +8,14 @@ import 'package:travel_buddy_finder/features/trips/presentation/screens/rating_s
 import 'package:travel_buddy_finder/features/trips/presentation/screens/comment_screen.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
+import 'package:travel_buddy_finder/api/providers/comment_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
+import 'package:travel_buddy_finder/features/trips/presentation/widgets/comment_reply_sheet.dart';
 
 class ViewScreen extends StatefulWidget {
   final Trip trip;
@@ -25,29 +29,14 @@ class ViewScreen extends StatefulWidget {
 class _ViewScreenState extends State<ViewScreen> {
   final TextEditingController _commentController = TextEditingController();
 
-  late final List<Map<String, String>> _comments;
-
   @override
   void initState() {
     super.initState();
-    _comments = [
-      {
-        "name": "Jane Doe",
-        "username": "@jane_d",
-        "comment": "This trip looks amazing! I would love to join.",
-        "avatarUrl":
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-        "time": "2h ago",
-      },
-      {
-        "name": "John Smith",
-        "username": "@jsmith",
-        "comment": "What is the exact meeting point?",
-        "avatarUrl":
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-        "time": "5h ago",
-      },
-    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<CommentProvider>().fetchComments(widget.trip.id);
+      }
+    });
   }
 
   @override
@@ -56,27 +45,42 @@ class _ViewScreenState extends State<ViewScreen> {
     super.dispose();
   }
 
-  void _addComment() {
+  void _addComment() async {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() {
-      _comments.insert(0, {
-        "name": "You",
-        "username": "@you",
-        "comment": text,
-        "avatarUrl":
-            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-        "time": "Just now",
-      });
-      _commentController.clear();
-    });
+    _commentController.clear();
+    FocusScope.of(context).unfocus();
 
+    final result = await context.read<CommentProvider>().addComment(
+      tripId: widget.trip.id,
+      comment: text,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Comment posted!"),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(result.success ? "Comment posted!" : result.message),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _openUserProfile(String name, String username, String? avatarUrl) {
+    final isMe = CurrentUser.isCurrentUser(username, inputName: name);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => isMe
+            ? const UserProfileScreen(isCurrentUser: true)
+            : UserProfileScreen(
+                name: name,
+                username: username,
+                avatarUrl: AppUrl.resolveImageUrl(avatarUrl),
+                isCurrentUser: false,
+              ),
       ),
     );
   }
@@ -157,6 +161,71 @@ class _ViewScreenState extends State<ViewScreen> {
     if (g.contains('female')) return Icons.female_rounded;
     if (g.contains('male')) return Icons.male_rounded;
     return Icons.groups_rounded;
+  }
+
+  Widget _buildTripCoverImage(Trip trip) {
+    if (trip.imageBytes != null && trip.imageBytes!.isNotEmpty) {
+      return Image.memory(trip.imageBytes!, fit: BoxFit.cover);
+    }
+
+    final rawUrl = trip.imageUrl.trim();
+    if (rawUrl.isEmpty) {
+      return _buildImagePlaceholder();
+    }
+
+    // 1. Handle Base64 data URI or raw Base64 string
+    if (rawUrl.startsWith('data:image/') ||
+        (!rawUrl.startsWith('http') &&
+            !rawUrl.startsWith('assets/') &&
+            rawUrl.length > 200)) {
+      try {
+        final base64String =
+            rawUrl.contains(',') ? rawUrl.split(',').last : rawUrl;
+        final decodedBytes = base64Decode(base64String.trim());
+        return Image.memory(
+          decodedBytes,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+        );
+      } catch (_) {}
+    }
+
+    // 2. Handle Asset path
+    if (rawUrl.startsWith('assets/')) {
+      return Image.asset(
+        rawUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+      );
+    }
+
+    // 3. Resolve and render Network Image
+    final resolvedUrl = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+        ? AppUrl.resolveImageUrl(rawUrl)
+        : AppUrl.resolveImageUrl(rawUrl);
+
+    if (resolvedUrl.isNotEmpty) {
+      return Image.network(
+        resolvedUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+      );
+    }
+
+    return _buildImagePlaceholder();
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: const Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.grey,
+          size: 50,
+        ),
+      ),
+    );
   }
 
   @override
@@ -266,24 +335,7 @@ class _ViewScreenState extends State<ViewScreen> {
                 children: [
                   Hero(
                     tag: widget.heroTag,
-                    child: trip.imageBytes != null
-                        ? Image.memory(trip.imageBytes!, fit: BoxFit.cover)
-                        : Image.network(
-                            trip.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey.shade200,
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.image_not_supported_outlined,
-                                    color: Colors.grey,
-                                    size: 50,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                    child: _buildTripCoverImage(trip),
                   ),
                   Container(
                     decoration: BoxDecoration(
@@ -767,21 +819,28 @@ class _ViewScreenState extends State<ViewScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              "${_comments.length}",
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
+                          Consumer<CommentProvider>(
+                            builder: (context, commentProvider, _) {
+                              final count = commentProvider
+                                  .getCommentsForTrip(widget.trip.id)
+                                  .length;
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  "$count",
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -790,7 +849,8 @@ class _ViewScreenState extends State<ViewScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const CommentScreen(),
+                              builder: (_) =>
+                                  CommentScreen(tripId: widget.trip.id),
                             ),
                           );
                         },
@@ -830,13 +890,33 @@ class _ViewScreenState extends State<ViewScreen> {
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: AppColors.fieldColor,
-                          backgroundImage: const NetworkImage(
-                            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+                        GestureDetector(
+                          onTap: () => _openUserProfile(
+                            CurrentUser.name,
+                            CurrentUser.username,
+                            CurrentUser.avatarUrl,
                           ),
-                          onBackgroundImageError: (_, __) {},
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: AppColors.fieldColor,
+                            backgroundImage: CurrentUser.avatarUrl.isNotEmpty
+                                ? NetworkImage(AppUrl.resolveImageUrl(
+                                    CurrentUser.avatarUrl))
+                                : null,
+                            onBackgroundImageError: (_, __) {},
+                            child: CurrentUser.avatarUrl.isEmpty
+                                ? Text(
+                                    CurrentUser.name.isNotEmpty
+                                        ? CurrentUser.name[0].toUpperCase()
+                                        : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -865,76 +945,240 @@ class _ViewScreenState extends State<ViewScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _comments.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final item = _comments[index];
-                      return Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFF1F5F9)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                  Consumer<CommentProvider>(
+                    builder: (context, commentProvider, _) {
+                      final tripComments =
+                          commentProvider.getCommentsForTrip(widget.trip.id);
+                      final isLoading =
+                          commentProvider.isLoading(widget.trip.id);
+
+                      if (isLoading && tripComments.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                              strokeWidth: 2.5,
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: AppColors.fieldColor,
-                              backgroundImage: NetworkImage(item["avatarUrl"]!),
-                              onBackgroundImageError: (_, __) {},
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        item["name"]!,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      Text(
-                                        item["time"]!,
-                                        style: const TextStyle(
-                                          color: AppColors.greyText,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item["comment"]!,
-                                    style: const TextStyle(
-                                      color: Color(0xFF334155),
-                                      fontSize: 13,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ],
+                          ),
+                        );
+                      }
+
+                      if (tripComments.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Text(
+                              "No questions yet. Be the first to ask!",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        );
+                      }
+
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: tripComments.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = tripComments[index];
+                          final String itemAvatar = item.fullAvatarUrl;
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.02),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => _openUserProfile(
+                                        item.name,
+                                        item.username,
+                                        itemAvatar,
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: AppColors.fieldColor,
+                                        backgroundImage: itemAvatar.isNotEmpty
+                                            ? NetworkImage(itemAvatar)
+                                            : null,
+                                        onBackgroundImageError: (_, __) {},
+                                        child: itemAvatar.isEmpty
+                                            ? Text(
+                                                item.name.isNotEmpty
+                                                    ? item.name[0].toUpperCase()
+                                                    : 'U',
+                                                style: const TextStyle(
+                                                  color: AppColors.primary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () => _openUserProfile(
+                                                  item.name,
+                                                  item.username,
+                                                  itemAvatar,
+                                                ),
+                                                child: Text(
+                                                  item.name,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                    color: Color(0xFF0F172A),
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                item.time,
+                                                style: const TextStyle(
+                                                  color: AppColors.greyText,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            item.text,
+                                            style: const TextStyle(
+                                              color: Color(0xFF334155),
+                                              fontSize: 13,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                // Action buttons: Like and Reply
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          item.isLiked = !item.isLiked;
+                                          item.likesCount +=
+                                              item.isLiked ? 1 : -1;
+                                          if (item.likesCount < 0) {
+                                            item.likesCount = 0;
+                                          }
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 3),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              item.isLiked
+                                                  ? Icons.favorite_rounded
+                                                  : Icons.favorite_border_rounded,
+                                              size: 15,
+                                              color: item.isLiked
+                                                  ? Colors.redAccent
+                                                  : const Color(0xFF64748B),
+                                            ),
+                                            if (item.likesCount > 0) ...[
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${item.likesCount}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: item.isLiked
+                                                      ? Colors.redAccent
+                                                      : const Color(0xFF64748B),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    InkWell(
+                                      onTap: () {
+                                        CommentReplySheet.show(
+                                          context,
+                                          comment: item,
+                                          tripId: widget.trip.id,
+                                          onReplyAdded: (_) => setState(() {}),
+                                          onStateChanged: () => setState(() {}),
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.reply_rounded,
+                                              size: 14,
+                                              color: Color(0xFF475569),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              item.replies.isNotEmpty
+                                                  ? '${item.replies.length} ${item.replies.length == 1 ? "reply" : "replies"}'
+                                                  : 'Reply',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF334155),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

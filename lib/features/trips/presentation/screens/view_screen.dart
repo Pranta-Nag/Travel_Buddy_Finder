@@ -8,6 +8,7 @@ import 'package:travel_buddy_finder/features/trips/presentation/screens/comment_
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
@@ -22,7 +23,6 @@ class ViewScreen extends StatefulWidget {
 }
 
 class _ViewScreenState extends State<ViewScreen> {
-  bool _isBookmarked = false;
   final TextEditingController _commentController = TextEditingController();
 
   late final List<Map<String, String>> _comments;
@@ -187,31 +187,56 @@ class _ViewScreenState extends State<ViewScreen> {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                child: CircleAvatar(
-                  backgroundColor: Colors.white.withValues(alpha: 0.9),
-                  child: IconButton(
-                    icon: Icon(
-                      _isBookmarked
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_outline_rounded,
-                      color: _isBookmarked ? AppColors.primary : Colors.black87,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isBookmarked = !_isBookmarked;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(_isBookmarked
-                              ? "Trip added to bookmarks"
-                              : "Trip removed from bookmarks"),
-                          duration: const Duration(seconds: 1),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
+                child: Consumer<BookmarkProvider>(
+                  builder: (context, bookmarkProvider, _) {
+                    final bool isSaved =
+                        bookmarkProvider.isBookmarked(widget.trip.id);
+                    final bool isBusy =
+                        bookmarkProvider.isPending(widget.trip.id);
+
+                    return CircleAvatar(
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
+                      child: IconButton(
+                        icon: isBusy
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.primary),
+                                ),
+                              )
+                            : Icon(
+                                isSaved
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_outline_rounded,
+                                color: isSaved
+                                    ? AppColors.primary
+                                    : Colors.black87,
+                                size: 20,
+                              ),
+                        onPressed: isBusy
+                            ? null
+                            : () async {
+                                final res = await bookmarkProvider
+                                    .toggleBookmark(widget.trip);
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context)
+                                    .hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res.isBookmarked
+                                        ? "Trip added to bookmarks"
+                                        : "Trip removed from bookmarks"),
+                                    duration: const Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              },
+                      ),
+                    );
+                  },
                 ),
               ),
               Padding(

@@ -35,6 +35,11 @@ class AppUrl {
   static const String respondRequest = '/respond_request';
   static const String pendingRequests = '/pending_requests';
 
+  // Bookmark API Endpoints
+  static const String addBookmark = '/add_bookmark';
+  static const String removeBookmark = '/remove_bookmark';
+  static const String myBookmarks = '/my_bookmarks';
+
   // Image URL Resolver
   static String get baseImageUrl => baseUrl;
 

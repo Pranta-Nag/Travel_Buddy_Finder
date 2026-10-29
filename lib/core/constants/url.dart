@@ -40,19 +40,50 @@ class AppUrl {
   static const String removeBookmark = '/remove_bookmark';
   static const String myBookmarks = '/my_bookmarks';
 
+  // Comment & Reply API Endpoints
+  static const String addComment = '/add_comment';
+  static const String replyComment = '/reply_comment';
+  static const String getComments = '/get_comments';
+
   // Image URL Resolver
   static String get baseImageUrl => baseUrl;
 
   static String resolveImageUrl(String? path) {
     if (path == null || path.trim().isEmpty) return '';
-    final trimmed = path.trim();
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('assets/')) {
+    var trimmed = path.trim();
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      if (trimmed.contains('localhost/travel_buddy/uploads/')) {
+        trimmed = trimmed.replaceFirst('localhost/travel_buddy/uploads/', 'localhost/travel_buddy/api/uploads/');
+      }
       return trimmed;
     }
-    final cleanPath = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
+    if (trimmed.startsWith('assets/')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('data:image/')) {
+      return trimmed;
+    }
+
+    var cleanPath = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
     if (cleanPath.isEmpty || cleanPath == 'uploads' || cleanPath == 'uploads/') {
       return '';
     }
-    return '$baseUrl/$cleanPath';
+
+    // If it's a bare uploaded filename (e.g. trip_user_123.jpg), ensure it has uploads/ prefix
+    if (!cleanPath.startsWith('uploads/') &&
+        (cleanPath.endsWith('.jpg') ||
+            cleanPath.endsWith('.png') ||
+            cleanPath.endsWith('.jpeg') ||
+            cleanPath.endsWith('.webp'))) {
+      cleanPath = 'uploads/$cleanPath';
+    }
+
+    var root = baseUrl;
+    while (root.endsWith('/')) {
+      root = root.substring(0, root.length - 1);
+    }
+
+    return '$root/$cleanPath';
   }
 }

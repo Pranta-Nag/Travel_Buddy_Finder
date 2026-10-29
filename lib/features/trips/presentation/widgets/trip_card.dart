@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/comment_screen.dart';
@@ -60,29 +62,7 @@ class _TripCardState extends State<TripCard> {
                 width: double.infinity,
                 child: Hero(
                   tag: effectiveHeroTag,
-                  child: widget.trip.imageBytes != null
-                      ? Image.memory(
-                          widget.trip.imageBytes!,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.network(
-                          widget.trip.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (
-                            context,
-                            error,
-                            stackTrace,
-                          ) {
-                            return Container(
-                              color: Colors.grey.shade200,
-                              child: Icon(
-                                Icons.image_not_supported_outlined,
-                                color: Colors.grey.shade500,
-                                size: 40,
-                              ),
-                            );
-                          },
-                        ),
+                  child: _buildTripCoverImage(),
                 ),
               ),
 
@@ -301,7 +281,8 @@ class _TripCardState extends State<TripCard> {
                         () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const CommentScreen(),
+                            builder: (_) =>
+                                CommentScreen(tripId: widget.trip.id),
                           ),
                         ),
                       ),
@@ -539,6 +520,76 @@ class _TripCardState extends State<TripCard> {
     }
   }
 
+  Widget _buildTripCoverImage() {
+    if (widget.trip.imageBytes != null && widget.trip.imageBytes!.isNotEmpty) {
+      return Image.memory(
+        widget.trip.imageBytes!,
+        fit: BoxFit.cover,
+      );
+    }
+
+    final rawUrl = widget.trip.imageUrl.trim();
+    if (rawUrl.isEmpty) {
+      return _buildImagePlaceholder();
+    }
+
+    // 1. Handle Base64 data URI or raw Base64 string
+    if (rawUrl.startsWith('data:image/') ||
+        (!rawUrl.startsWith('http') &&
+            !rawUrl.startsWith('assets/') &&
+            rawUrl.length > 200)) {
+      try {
+        final base64String =
+            rawUrl.contains(',') ? rawUrl.split(',').last : rawUrl;
+        final decodedBytes = base64Decode(base64String.trim());
+        return Image.memory(
+          decodedBytes,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+        );
+      } catch (_) {}
+    }
+
+    // 2. Handle Asset path
+    if (rawUrl.startsWith('assets/')) {
+      return Image.asset(
+        rawUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+      );
+    }
+
+    // 3. Resolve and render Network Image
+    final resolvedUrl = rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
+        ? AppUrl.resolveImageUrl(rawUrl)
+        : AppUrl.resolveImageUrl(rawUrl);
+
+    if (resolvedUrl.isNotEmpty) {
+      return Image.network(
+        resolvedUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildImagePlaceholder();
+        },
+      );
+    }
+
+    return _buildImagePlaceholder();
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.grey.shade500,
+          size: 40,
+        ),
+      ),
+    );
+  }
+
   ImageProvider _getAvatarProvider(String rawUrl) {
     final isMe = CurrentUser.isCurrentUser(
       widget.trip.username,
@@ -549,11 +600,14 @@ class _TripCardState extends State<TripCard> {
       url = CurrentUser.avatarUrl;
     }
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      return NetworkImage(url);
+      return NetworkImage(AppUrl.resolveImageUrl(url));
     } else if (url.startsWith('assets/')) {
       return AssetImage(url);
     } else if (url.isNotEmpty) {
-      return NetworkImage(url);
+      final resolved = AppUrl.resolveImageUrl(url);
+      if (resolved.isNotEmpty) {
+        return NetworkImage(resolved);
+      }
     }
     return AssetImage(
       isMe ? CurrentUser.avatarUrl : 'assets/images/dummy_boy.jpg',

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:travel_buddy_finder/api/models/trip_model.dart';
 import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
@@ -100,31 +101,52 @@ class TripController {
         'transportation': (transports ?? ['Bus', 'Flight']).join(','),
       };
 
+      http.Response response;
       if (coverPhotoBytes != null && coverPhotoBytes.isNotEmpty) {
-        final String rawBase64 = base64Encode(coverPhotoBytes);
-        final String dataUriBase64 = 'data:image/jpeg;base64,$rawBase64';
+        // 1. Try standard Multipart file upload first
+        final Map<String, String> formFields =
+            fields.map((k, v) => MapEntry(k, v.toString()));
 
-        fields['cover_picture'] = dataUriBase64;
-        fields['cover_photo'] = dataUriBase64;
-        fields['image'] = dataUriBase64;
-        fields['cover_picture_base64'] = rawBase64;
+        response = await ApiClient.multipartPost(
+          AppUrl.createTrip,
+          fields: formFields,
+          filesBytes: {
+            'cover_picture': coverPhotoBytes,
+            'image': coverPhotoBytes,
+            'cover_photo': coverPhotoBytes,
+            'cover_image': coverPhotoBytes,
+          },
+        );
+
+        // 2. If multipart failed or wasn't accepted by backend, fallback to JSON with Base64 data URI
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          final String rawBase64 = base64Encode(coverPhotoBytes);
+          final String dataUriBase64 = 'data:image/jpeg;base64,$rawBase64';
+          final Map<String, dynamic> jsonFields =
+              Map<String, dynamic>.from(fields);
+          jsonFields['cover_picture'] = dataUriBase64;
+          jsonFields['image'] = dataUriBase64;
+          jsonFields['cover_photo'] = dataUriBase64;
+          jsonFields['cover_image'] = dataUriBase64;
+          jsonFields['cover_picture_base64'] = rawBase64;
+
+          final jsonResponse = await ApiClient.post(
+            AppUrl.createTrip,
+            body: jsonFields,
+            isJson: true,
+          );
+          if (jsonResponse.statusCode == 200 ||
+              jsonResponse.statusCode == 201) {
+            response = jsonResponse;
+          }
+        }
+      } else {
+        response = await ApiClient.post(
+          AppUrl.createTrip,
+          body: fields,
+          isJson: true,
+        );
       }
-
-      var response = coverPhotoBytes != null && coverPhotoBytes.isNotEmpty
-          ? await ApiClient.multipartPost(
-              AppUrl.createTrip,
-              fields: fields.map((k, v) => MapEntry(k, v.toString())),
-              filesBytes: {
-                'cover_picture': coverPhotoBytes,
-                'cover_photo': coverPhotoBytes,
-                'image': coverPhotoBytes,
-              },
-            )
-          : await ApiClient.post(
-              AppUrl.createTrip,
-              body: fields,
-              isJson: true,
-            );
 
       print('Create Trip Status: ${response.statusCode}');
       print('Create Trip Body: ${response.body}');
@@ -215,29 +237,49 @@ class TripController {
         fields['transports'] = transports.join(',');
       }
 
+      http.Response response;
       if (coverPhotoBytes != null && coverPhotoBytes.isNotEmpty) {
-        final String rawBase64 = base64Encode(coverPhotoBytes);
-        final String dataUriBase64 = 'data:image/jpeg;base64,$rawBase64';
+        final Map<String, String> formFields =
+            fields.map((k, v) => MapEntry(k, v.toString()));
 
-        fields['cover_picture'] = dataUriBase64;
-        fields['cover_photo'] = dataUriBase64;
-        fields['image'] = dataUriBase64;
+        response = await ApiClient.multipartPost(
+          AppUrl.updateTrip,
+          fields: formFields,
+          filesBytes: {
+            'cover_picture': coverPhotoBytes,
+            'image': coverPhotoBytes,
+            'cover_photo': coverPhotoBytes,
+            'cover_image': coverPhotoBytes,
+          },
+        );
+
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          final String rawBase64 = base64Encode(coverPhotoBytes);
+          final String dataUriBase64 = 'data:image/jpeg;base64,$rawBase64';
+          final Map<String, dynamic> jsonFields =
+              Map<String, dynamic>.from(fields);
+          jsonFields['cover_picture'] = dataUriBase64;
+          jsonFields['image'] = dataUriBase64;
+          jsonFields['cover_photo'] = dataUriBase64;
+          jsonFields['cover_image'] = dataUriBase64;
+
+          final jsonResponse = await ApiClient.post(
+            AppUrl.updateTrip,
+            body: jsonFields,
+            isJson: true,
+          );
+          if (jsonResponse.statusCode == 200 ||
+              jsonResponse.statusCode == 201) {
+            response = jsonResponse;
+          }
+        }
+      } else {
+        response = await ApiClient.post(
+          AppUrl.updateTrip,
+          body: fields,
+          isJson: true,
+        );
       }
-
-      var response = coverPhotoBytes != null && coverPhotoBytes.isNotEmpty
-          ? await ApiClient.multipartPost(
-              AppUrl.updateTrip,
-              fields: fields.map((k, v) => MapEntry(k, v.toString())),
-              filesBytes: {
-                'cover_picture': coverPhotoBytes,
-                'cover_photo': coverPhotoBytes,
-              },
-            )
-          : await ApiClient.post(
-              AppUrl.updateTrip,
-              body: fields,
-              isJson: true,
-            );
 
       print('Update Trip Status: ${response.statusCode}');
       print('Update Trip Body: ${response.body}');

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/features/auth/presentation/login_screen.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/main_nav_screen.dart';
@@ -33,8 +34,9 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     if (isLoggedIn) {
-      // Sync ProfileProvider with the freshly verified profile
+      // Sync ProfileProvider and BookmarkProvider with server data
       context.read<ProfileProvider>().fetchMyProfile();
+      context.read<BookmarkProvider>().fetchMyBookmarks(silent: true);
 
       Navigator.pushReplacement(
         context,

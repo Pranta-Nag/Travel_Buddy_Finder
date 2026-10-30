@@ -42,7 +42,9 @@ class TripModel {
   String get fullHostAvatar => AppUrl.resolveImageUrl(hostAvatar);
 
   Trip toTrip({Uint8List? localImageBytes}) {
-    final bool isMine = CurrentUser.isCurrentUser(hostName, inputName: hostName);
+    final bool isMine = CurrentUser.isCurrentUser(hostName, inputName: hostName) ||
+        hostName.trim().isEmpty ||
+        hostName == 'Traveler Host';
 
     String resolvedAvatar = fullHostAvatar;
     if (isMine) {
@@ -139,8 +141,14 @@ class TripModel {
         json['user_avatar'] ??
         json['avatar_url'] ??
         json['avatar'] ??
+        json['profile_pic_url'] ??
         json['profile_pic'] ??
+        json['profile_image_url'] ??
         json['profile_image'] ??
+        json['host_profile_pic'] ??
+        json['host_profile_pic_url'] ??
+        json['user_profile_pic'] ??
+        json['user_profile_pic_url'] ??
         '';
 
     return TripModel(

@@ -278,6 +278,7 @@ class _TripCardState extends State<TripCard> {
                             );
                           }
                         },
+                        isActive: _isLiked,
                       ),
                       const SizedBox(width: 5),
                       _actionButton(
@@ -300,6 +301,7 @@ class _TripCardState extends State<TripCard> {
                             ? Colors.blue
                             : Colors.grey.shade700,
                         widget.onBookmarkToggle ?? () {},
+                        isActive: widget.isBookmarked,
                       ),
                       const SizedBox(width: 5),
                       _actionButton(
@@ -464,27 +466,14 @@ class _TripCardState extends State<TripCard> {
   Widget _actionButton(
     IconData icon,
     Color color,
-    VoidCallback onPressed,
-  ) {
-    return SizedBox(
-      width: 28,
-      height: 28,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.shade300,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: IconButton(
-          padding: EdgeInsets.zero,
-          splashRadius: 16,
-          iconSize: 16,
-          color: color,
-          onPressed: onPressed,
-          icon: Icon(icon),
-        ),
-      ),
+    VoidCallback onPressed, {
+    bool isActive = false,
+  }) {
+    return _AnimatedCardButton(
+      icon: icon,
+      color: color,
+      onPressed: onPressed,
+      isActive: isActive,
     );
   }
 
@@ -638,5 +627,65 @@ class _TripCardState extends State<TripCard> {
         ),
       );
     });
+  }
+}
+
+class _AnimatedCardButton extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+  final bool isActive;
+
+  const _AnimatedCardButton({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+    this.isActive = false,
+  });
+
+  @override
+  State<_AnimatedCardButton> createState() => _AnimatedCardButtonState();
+}
+
+class _AnimatedCardButtonState extends State<_AnimatedCardButton> {
+  double _scale = 1.0;
+
+  void _onTap() {
+    setState(() => _scale = 1.35);
+    Future.delayed(const Duration(milliseconds: 140), () {
+      if (mounted) setState(() => _scale = 1.0);
+    });
+    widget.onPressed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: widget.isActive
+                ? widget.color.withValues(alpha: 0.35)
+                : Colors.grey.shade300,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          splashRadius: 16,
+          iconSize: 16,
+          color: widget.color,
+          onPressed: _onTap,
+          icon: AnimatedScale(
+            scale: _scale,
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutBack,
+            child: Icon(widget.icon),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -43,32 +43,45 @@ class BottomNavItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Badge(
-              isLabelVisible: safeBadge > 0,
-              backgroundColor: const Color(0xFFEF4444),
-              label: Text(
-                safeBadge > 99 ? '99+' : '$safeBadge',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            AnimatedScale(
+              scale: isSelected ? 1.15 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutBack,
+              child: Badge(
+                isLabelVisible: safeBadge > 0,
+                backgroundColor: const Color(0xFFEF4444),
+                label: Text(
+                  safeBadge > 99 ? '99+' : '$safeBadge',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              child: Icon(
-                isSelected ? activeIcon : icon,
-                color: isSelected ? AppColors.primary : Colors.grey.shade400,
-                size: 22,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, anim) =>
+                      ScaleTransition(scale: anim, child: child),
+                  child: Icon(
+                    isSelected ? activeIcon : icon,
+                    key: ValueKey<bool>(isSelected),
+                    color:
+                        isSelected ? AppColors.primary : Colors.grey.shade400,
+                    size: 22,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 3),
-            Text(
-              label,
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: 9,
+                fontSize: isSelected ? 9.5 : 9.0,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppColors.primary : Colors.grey.shade400,
                 letterSpacing: 0.4,
               ),
+              child: Text(label),
             ),
           ],
         ),

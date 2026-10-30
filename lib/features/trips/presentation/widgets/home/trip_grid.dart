@@ -76,19 +76,34 @@ class TripGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final trip = trips[index];
 
-        return ValueListenableBuilder<List<dynamic>>(
-          valueListenable: BookmarkStore.savedTrips,
-          builder: (context, savedTrips, _) {
-            return TripCard(
-              trip: trip,
-              heroTag: 'home-trip-${trip.id}-$index',
-              isBookmarked: savedTrips.any((item) => item.id == trip.id),
-              onBookmarkToggle: () {
-                BookmarkStore.toggle(trip);
-              },
-              onDelete: () => _confirmDelete(context, trip),
+        return TweenAnimationBuilder<double>(
+          key: ValueKey('stagger-home-${trip.id}-$index'),
+          tween: Tween<double>(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 320 + (index * 60).clamp(0, 450)),
+          curve: Curves.easeOutCubic,
+          builder: (context, animValue, child) {
+            return Opacity(
+              opacity: animValue,
+              child: Transform.translate(
+                offset: Offset(0, 22 * (1 - animValue)),
+                child: child,
+              ),
             );
           },
+          child: ValueListenableBuilder<List<dynamic>>(
+            valueListenable: BookmarkStore.savedTrips,
+            builder: (context, savedTrips, _) {
+              return TripCard(
+                trip: trip,
+                heroTag: 'home-trip-${trip.id}-$index',
+                isBookmarked: savedTrips.any((item) => item.id == trip.id),
+                onBookmarkToggle: () {
+                  BookmarkStore.toggle(trip);
+                },
+                onDelete: () => _confirmDelete(context, trip),
+              );
+            },
+          ),
         );
       },
     );

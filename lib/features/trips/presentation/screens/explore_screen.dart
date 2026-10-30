@@ -326,12 +326,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            return ExploreTripCard(
-              key: ValueKey(
-                'explore-grid-${trips[index].id}',
+            final trip = trips[index];
+            return TweenAnimationBuilder<double>(
+              key: ValueKey('stagger-explore-grid-${trip.id}-$index'),
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: Duration(
+                milliseconds: 300 + (index * 50).clamp(0, 400),
               ),
-              trip: trips[index],
-              gridView: true,
+              curve: Curves.easeOutCubic,
+              builder: (context, animValue, child) {
+                return Opacity(
+                  opacity: animValue,
+                  child: Transform.translate(
+                    offset: Offset(0, 18 * (1 - animValue)),
+                    child: child,
+                  ),
+                );
+              },
+              child: ExploreTripCard(
+                key: ValueKey(
+                  'explore-grid-${trip.id}',
+                ),
+                trip: trip,
+                gridView: true,
+              ),
             );
           },
           childCount: trips.length,
@@ -349,16 +367,34 @@ class _ExploreScreenState extends State<ExploreScreen> {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(
-                bottom: 16,
+            final trip = trips[index];
+            return TweenAnimationBuilder<double>(
+              key: ValueKey('stagger-explore-list-${trip.id}-$index'),
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: Duration(
+                milliseconds: 300 + (index * 50).clamp(0, 400),
               ),
-              child: ExploreTripCard(
-                key: ValueKey(
-                  'explore-list-${trips[index].id}',
+              curve: Curves.easeOutCubic,
+              builder: (context, animValue, child) {
+                return Opacity(
+                  opacity: animValue,
+                  child: Transform.translate(
+                    offset: Offset(0, 18 * (1 - animValue)),
+                    child: child,
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  bottom: 16,
                 ),
-                trip: trips[index],
-                gridView: false,
+                child: ExploreTripCard(
+                  key: ValueKey(
+                    'explore-list-${trip.id}',
+                  ),
+                  trip: trip,
+                  gridView: false,
+                ),
               ),
             );
           },

@@ -1,3 +1,6 @@
+import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
+import 'package:travel_buddy_finder/api/models/chat_room_model.dart';
+import 'package:travel_buddy_finder/features/chat/presentation/screens/chat_room_screen.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -520,14 +523,33 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           height: 52,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      Text("Chat with $displayName coming soon!"),
-                                  duration: const Duration(seconds: 2),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
+                              final chatProvider = context.read<ChatProvider>();
+                              final cleanTarget = displayUsername.replaceAll('@', '').toLowerCase();
+                              final existingRoom = chatProvider.chatRooms.cast<ChatRoomModel?>().firstWhere(
+                                (r) => r != null && r.partnerUsername.replaceAll('@', '').toLowerCase() == cleanTarget,
+                                orElse: () => null,
                               );
+                              if (existingRoom != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ChatRoomScreen(
+                                      roomId: existingRoom.roomId,
+                                      partnerName: existingRoom.partnerName,
+                                      partnerAvatarUrl: existingRoom.partnerAvatarUrl,
+                                      tripTitle: existingRoom.tripTitle,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("To chat with $displayName, tap 'Chat' on any of their trips!"),
+                                    duration: const Duration(seconds: 3),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             },
                             icon: const Icon(Icons.chat_bubble_outline_rounded,
                                 color: Colors.white, size: 18),
@@ -671,12 +693,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     );
                   },
                   borderRadius: BorderRadius.circular(8),
-                  child: Padding(
+                  child: const Padding(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.add_circle_outline_rounded,
                             size: 16, color: AppColors.primary),
                         SizedBox(width: 4),
@@ -1037,12 +1059,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             );
                           },
                           borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 4),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
+                              children: [
                                 Text(
                                   "View Details",
                                   style: TextStyle(

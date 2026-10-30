@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:travel_buddy_finder/api/models/comment_model.dart';
 import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 
 class CommentController {
   // 1. GET Comments for a Trip (/get_comments?trip_id=4)
@@ -21,24 +22,75 @@ class CommentController {
         if (response.body.isEmpty) return [];
 
         final dynamic data = jsonDecode(response.body);
-        List rawList = [];
+        List rawComments = [];
+        List rawReplies = [];
 
         if (data is List) {
-          rawList = data;
+          rawComments = data;
         } else if (data is Map) {
           if (data['data'] is List) {
-            rawList = data['data'];
+            rawComments = data['data'];
           } else if (data['comments'] is List) {
-            rawList = data['comments'];
-          } else if (data['data'] is Map && data['data']['comments'] is List) {
-            rawList = data['data']['comments'];
+            rawComments = data['comments'];
+            if (data['replies'] is List) {
+              rawReplies = data['replies'];
+            }
+          } else if (data['data'] is Map) {
+            final Map dataMap = data['data'];
+            if (dataMap['comments'] is List) {
+              rawComments = dataMap['comments'];
+            }
+            if (dataMap['replies'] is List) {
+              rawReplies = dataMap['replies'];
+            }
           }
         }
 
-        return rawList
-            .whereType<Map>()
-            .map((item) => CommentItem.fromJson(Map<String, dynamic>.from(item)))
-            .toList();
+        // Separate root comments and standalone replies (in case flat list was returned)
+        final List<CommentItem> rootComments = [];
+        final List<CommentReply> extraReplies = [];
+
+        // Parse any replies from dedicated 'replies' list
+        for (final r in rawReplies.whereType<Map>()) {
+          extraReplies.add(CommentReply.fromJson(Map<String, dynamic>.from(r)));
+        }
+
+        for (final item in rawComments.whereType<Map>()) {
+          final map = Map<String, dynamic>.from(item);
+          final parentId = map['parent_id'] ?? map['parentId'];
+          if (parentId != null &&
+              parentId.toString().trim().isNotEmpty &&
+              parentId.toString().trim() != '0') {
+            // This is a reply in a flat list
+            extraReplies.add(CommentReply.fromJson(map));
+          } else {
+            rootComments.add(CommentItem.fromJson(map));
+          }
+        }
+
+        // Attach extra replies to their corresponding parent comment
+        if (extraReplies.isNotEmpty) {
+          for (final reply in extraReplies) {
+            if (reply.commentId != null) {
+              final parent = rootComments.firstWhere(
+                (c) => c.id == reply.commentId,
+                orElse: () => CommentItem(
+                  id: '',
+                  name: '',
+                  username: '',
+                  text: '',
+                  time: '',
+                ),
+              );
+              if (parent.id.isNotEmpty &&
+                  !parent.replies.any((r) => r.id == reply.id)) {
+                parent.addReply(reply);
+              }
+            }
+          }
+        }
+
+        return rootComments;
       }
     } catch (e) {
       print('Get Comments Error: $e');
@@ -46,7 +98,6 @@ class CommentController {
     return [];
   }
 
-  // 2. POST Add Comment (/add_comment)
   // 2. POST Add Comment (/add_comment)
   Future<({bool success, String message, CommentItem? comment, dynamic data})>
       addComment({
@@ -71,11 +122,17 @@ class CommentController {
       final Map<String, dynamic> body = {
         'trip_id': intTripId ?? cleanTripId,
         'tripId': intTripId ?? cleanTripId,
-        'id': intTripId ?? cleanTripId,
         'comment': cleanComment,
+        'comment_text': cleanComment,
         'text': cleanComment,
         'content': cleanComment,
         'message': cleanComment,
+        if (CurrentUser.activeUser?.id != null && CurrentUser.activeUser!.id > 0)
+          'user_id': CurrentUser.activeUser!.id,
+        if (CurrentUser.username.isNotEmpty)
+          'username': CurrentUser.username.replaceAll('@', ''),
+        if (CurrentUser.name.isNotEmpty)
+          'name': CurrentUser.name,
       };
 
       print('=== [POST] /add_comment ===');
@@ -211,11 +268,12 @@ class CommentController {
       final int? intTripId =
           tripId != null ? int.tryParse(tripId.toString().trim()) : null;
 
+      // NOTE: Do NOT send 'id': intCommentId! The commentId is the PARENT comment ID,
+      // not the new reply's primary key ID.
       final Map<String, dynamic> body = {
         'comment_id': intCommentId ?? cleanCommentId,
         'commentId': intCommentId ?? cleanCommentId,
         'parent_id': intCommentId ?? cleanCommentId,
-        if (intCommentId != null) 'id': intCommentId,
         if (tripId != null) ...{
           'trip_id': intTripId ?? tripId.toString().trim(),
           'tripId': intTripId ?? tripId.toString().trim(),
@@ -228,6 +286,12 @@ class CommentController {
         'text': cleanReply,
         'content': cleanReply,
         'message': cleanReply,
+        if (CurrentUser.activeUser?.id != null && CurrentUser.activeUser!.id > 0)
+          'user_id': CurrentUser.activeUser!.id,
+        if (CurrentUser.username.isNotEmpty)
+          'username': CurrentUser.username.replaceAll('@', ''),
+        if (CurrentUser.name.isNotEmpty)
+          'name': CurrentUser.name,
       };
 
       print('=== [POST] /reply_comment ===');

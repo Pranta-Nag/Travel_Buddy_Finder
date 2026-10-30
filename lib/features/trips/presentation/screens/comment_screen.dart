@@ -178,52 +178,66 @@ class _CommentScreenState extends State<CommentScreen> {
                     )
                   : displayComments.isEmpty
                       ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          itemCount: displayComments.length,
-                          itemBuilder: (context, index) {
-                            final item = displayComments[index];
-                            return _CommentCard(
-                              name: item.name,
-                              comment: item.text,
-                              time: item.time,
-                              avatarUrl: item.avatarUrl,
-                              isLiked: item.isLiked,
-                              commentItem: item,
-                              onLike: () {
-                                setState(() {
-                                  item.isLiked = !item.isLiked;
-                                  item.likesCount += item.isLiked ? 1 : -1;
-                                  if (item.likesCount < 0) item.likesCount = 0;
-                                });
-                              },
-                              onReply: () => _openReplies(item),
-                              onProfileTap: () {
-                                final name = item.name;
-                                final username = item.username;
-                                final isMe = CurrentUser.isCurrentUser(username,
-                                    inputName: name);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => UserProfileScreen(
-                                      name: isMe ? CurrentUser.name : name,
-                                      username: isMe
-                                          ? CurrentUser.username
-                                          : username,
-                                      avatarUrl: isMe
-                                          ? CurrentUser.avatarUrl
-                                          : (item.fullAvatarUrl.isNotEmpty
-                                              ? item.fullAvatarUrl
-                                              : AppUrl.resolveImageUrl(item.avatarUrl)),
-                                      isCurrentUser: isMe,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
+                      : RefreshIndicator(
+                          color: AppColors.primary,
+                          onRefresh: () async {
+                            if (widget.tripId != null) {
+                              await context
+                                  .read<CommentProvider>()
+                                  .fetchComments(widget.tripId,
+                                      forceRefresh: true);
+                            }
                           },
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            itemCount: displayComments.length,
+                            itemBuilder: (context, index) {
+                              final item = displayComments[index];
+                              return _CommentCard(
+                                name: item.name,
+                                comment: item.text,
+                                time: item.time,
+                                avatarUrl: item.avatarUrl,
+                                isLiked: item.isLiked,
+                                commentItem: item,
+                                onLike: () {
+                                  setState(() {
+                                    item.isLiked = !item.isLiked;
+                                    item.likesCount += item.isLiked ? 1 : -1;
+                                    if (item.likesCount < 0) item.likesCount = 0;
+                                  });
+                                },
+                                onReply: () => _openReplies(item),
+                                onProfileTap: () {
+                                  final name = item.name;
+                                  final username = item.username;
+                                  final isMe = CurrentUser.isCurrentUser(
+                                      username,
+                                      inputName: name);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UserProfileScreen(
+                                        name: isMe ? CurrentUser.name : name,
+                                        username: isMe
+                                            ? CurrentUser.username
+                                            : username,
+                                        avatarUrl: isMe
+                                            ? CurrentUser.avatarUrl
+                                            : (item.fullAvatarUrl.isNotEmpty
+                                                ? item.fullAvatarUrl
+                                                : AppUrl.resolveImageUrl(
+                                                    item.avatarUrl)),
+                                        isCurrentUser: isMe,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
             ),
             _buildCommentInput(),
@@ -308,6 +322,8 @@ class _CommentScreenState extends State<CommentScreen> {
   }
 
   Widget _buildCommentInput() {
+    final avatarProvider = AppUrl.imageProvider(CurrentUser.avatarUrl);
+
     return Container(
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
@@ -339,14 +355,11 @@ class _CommentScreenState extends State<CommentScreen> {
             },
             child: CircleAvatar(
               radius: 20,
-              backgroundImage: CurrentUser.avatarUrl.isNotEmpty
-                  ? (CurrentUser.avatarUrl.startsWith('http')
-                      ? NetworkImage(CurrentUser.avatarUrl)
-                      : AssetImage(CurrentUser.avatarUrl) as ImageProvider)
-                  : null,
+              backgroundImage: avatarProvider,
               backgroundColor: Colors.grey.shade200,
-              onBackgroundImageError: (_, __) {},
-              child: CurrentUser.avatarUrl.isEmpty
+              onBackgroundImageError:
+                  avatarProvider != null ? (_, __) {} : null,
+              child: avatarProvider == null
                   ? Text(
                       CurrentUser.name.isNotEmpty
                           ? CurrentUser.name[0].toUpperCase()
@@ -442,12 +455,15 @@ class _CommentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String resolvedAvatar = (commentItem != null && commentItem!.fullAvatarUrl.isNotEmpty)
-        ? commentItem!.fullAvatarUrl
-        : AppUrl.resolveImageUrl(commentItem?.avatarUrl ?? avatarUrl);
+    final String resolvedAvatar =
+        (commentItem != null && commentItem!.fullAvatarUrl.isNotEmpty)
+            ? commentItem!.fullAvatarUrl
+            : AppUrl.resolveImageUrl(commentItem?.avatarUrl ?? avatarUrl);
     final effectiveAvatarUrl = resolvedAvatar.isNotEmpty
         ? resolvedAvatar
         : (commentItem?.avatarUrl ?? avatarUrl);
+    final avatarProvider = AppUrl.imageProvider(effectiveAvatarUrl);
+
     final int repliesCount = commentItem?.replies.length ?? 0;
     final String displayName = commentItem?.name ?? name;
     final String displayComment = commentItem?.text ?? comment;
@@ -477,16 +493,11 @@ class _CommentCard extends StatelessWidget {
             onTap: onProfileTap,
             child: CircleAvatar(
               radius: 22,
-              backgroundImage: effectiveAvatarUrl != null && effectiveAvatarUrl.isNotEmpty
-                  ? (effectiveAvatarUrl.startsWith('http')
-                      ? NetworkImage(effectiveAvatarUrl)
-                      : (effectiveAvatarUrl.startsWith('assets/')
-                          ? AssetImage(effectiveAvatarUrl) as ImageProvider
-                          : NetworkImage(AppUrl.resolveImageUrl(effectiveAvatarUrl))))
-                  : null,
-              onBackgroundImageError: (_, __) {},
+              backgroundImage: avatarProvider,
+              onBackgroundImageError:
+                  avatarProvider != null ? (_, __) {} : null,
               backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              child: effectiveAvatarUrl == null || effectiveAvatarUrl.isEmpty
+              child: avatarProvider == null
                   ? Text(
                       displayName.isNotEmpty
                           ? displayName[0].toUpperCase()

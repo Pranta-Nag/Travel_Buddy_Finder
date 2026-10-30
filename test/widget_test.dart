@@ -1,29 +1,32 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/auth_provider.dart';
+import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
+import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
+import 'package:travel_buddy_finder/api/providers/comment_provider.dart';
+import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const App());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('App smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
+          ChangeNotifierProvider<BookmarkProvider>(create: (_) => BookmarkProvider()),
+          ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
+          ChangeNotifierProvider<CommentProvider>(create: (_) => CommentProvider()),
+          ChangeNotifierProvider<ProfileProvider>(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider<TripProvider>(create: (_) => TripProvider()),
+          ChangeNotifierProvider<TripRequestProvider>(create: (_) => TripRequestProvider()),
+        ],
+        child: const App(),
+      ),
+    );
+    expect(find.byType(App), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
   });
 }

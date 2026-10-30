@@ -242,16 +242,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       width: 2,
                                     ),
                                   ),
-                                  child: CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Colors.grey.shade200,
-                                    backgroundImage: _getAvatarImage(
-                                      profileUser?.avatarUrl.isNotEmpty == true
-                                          ? profileUser!.avatarUrl
-                                          : widget.avatarUrl,
-                                      _genderController.text,
-                                    ),
-                                    onBackgroundImageError: (_, __) {},
+                                  child: Builder(
+                                    builder: (context) {
+                                      final editProv = _getAvatarImage(
+                                        profileUser?.avatarUrl.isNotEmpty == true
+                                            ? profileUser!.avatarUrl
+                                            : widget.avatarUrl,
+                                        _genderController.text,
+                                      );
+                                      return CircleAvatar(
+                                        radius: 50,
+                                        backgroundColor: Colors.grey.shade200,
+                                        backgroundImage: editProv,
+                                        onBackgroundImageError: (_, __) {},
+                                      );
+                                    },
                                   ),
                                 ),
                                 Positioned(

@@ -251,7 +251,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
       children: [
         const TripFieldLabel(text: 'Category'),
         DropdownButtonFormField<String>(
-          value: _selectedCategory,
+          initialValue: _selectedCategory,
           isExpanded: true,
           decoration: inputDecoration(
             hint: 'Adventure',

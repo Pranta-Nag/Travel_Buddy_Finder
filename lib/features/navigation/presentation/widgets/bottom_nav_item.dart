@@ -8,6 +8,7 @@ class BottomNavItem extends StatelessWidget {
   final int index;
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final int badgeCount;
 
   const BottomNavItem({
     super.key,
@@ -17,11 +18,13 @@ class BottomNavItem extends StatelessWidget {
     required this.index,
     required this.currentIndex,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isSelected = currentIndex == index;
+    final int safeBadge = badgeCount;
 
     return InkWell(
       onTap: () => onTap(index),
@@ -40,10 +43,22 @@ class BottomNavItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppColors.primary : Colors.grey.shade400,
-              size: 22,
+            Badge(
+              isLabelVisible: safeBadge > 0,
+              backgroundColor: const Color(0xFFEF4444),
+              label: Text(
+                safeBadge > 99 ? '99+' : '$safeBadge',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              child: Icon(
+                isSelected ? activeIcon : icon,
+                color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                size: 22,
+              ),
             ),
             const SizedBox(height: 3),
             Text(

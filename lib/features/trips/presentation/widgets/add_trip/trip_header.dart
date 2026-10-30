@@ -41,7 +41,7 @@ class TripHeader extends StatelessWidget {
             ),
             child: IconButton(
               onPressed: onBack,
-              icon: Icon(
+              icon: const Icon(
                 Icons.arrow_back_ios_rounded,
                 color: AppColors.greyText,
                 size: 18,
@@ -56,7 +56,7 @@ class TripHeader extends StatelessWidget {
               crossAxisAlignment:
                   CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Create New Trip',
                   style: TextStyle(
                     fontSize: 18,

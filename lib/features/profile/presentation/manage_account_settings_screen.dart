@@ -394,7 +394,7 @@ class _ManageAccountSettingsScreenState
                 title: const Text('Push Notifications'),
                 subtitle: const Text('Receive alerts on your device'),
                 value: _pushNotifications,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   setState(() => _pushNotifications = val);
                   setModalState(() {});
@@ -404,7 +404,7 @@ class _ManageAccountSettingsScreenState
                 title: const Text('Email Alerts'),
                 subtitle: const Text('Get summary emails and updates'),
                 value: _emailAlerts,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   setState(() => _emailAlerts = val);
                   setModalState(() {});
@@ -414,7 +414,7 @@ class _ManageAccountSettingsScreenState
                 title: const Text('Trip Request Alerts'),
                 subtitle: const Text('Notifications when someone requests your trip'),
                 value: _tripRequestAlerts,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   setState(() => _tripRequestAlerts = val);
                   setModalState(() {});
@@ -424,7 +424,7 @@ class _ManageAccountSettingsScreenState
                 title: const Text('Promotions & Offers'),
                 subtitle: const Text('Receive special deals and trip ideas'),
                 value: _promoAlerts,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   setState(() => _promoAlerts = val);
                   setModalState(() {});
@@ -459,8 +459,11 @@ class _ManageAccountSettingsScreenState
                 return RadioListTile<String>(
                   title: Text(opt),
                   value: opt,
+                  // ignore: deprecated_member_use
                   groupValue: _profileVisibility,
+                  // ignore: deprecated_member_use
                   activeColor: AppColors.primary,
+                  // ignore: deprecated_member_use
                   onChanged: (val) {
                     if (val != null) {
                       setState(() => _profileVisibility = val);
@@ -474,7 +477,7 @@ class _ManageAccountSettingsScreenState
                 title: const Text('Show Location'),
                 subtitle: const Text('Allow travelers to see your city'),
                 value: _showLocation,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   setState(() => _showLocation = val);
                   setModalState(() {});
@@ -484,7 +487,7 @@ class _ManageAccountSettingsScreenState
                 title: const Text('Allow Direct Messages'),
                 subtitle: const Text('Receive messages from non-buddies'),
                 value: _allowMessages,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   setState(() => _allowMessages = val);
                   setModalState(() {});

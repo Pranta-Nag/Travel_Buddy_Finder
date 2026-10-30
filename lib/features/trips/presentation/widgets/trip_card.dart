@@ -188,11 +188,16 @@ class _TripCardState extends State<TripCard> {
                             cursor: SystemMouseCursors.click,
                             child: Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: AppColors.fieldColor,
-                                  backgroundImage: _getAvatarProvider(widget.trip.avatarUrl),
-                                  onBackgroundImageError: (_, __) {},
+                                Builder(
+                                  builder: (context) {
+                                    final avatarProv = _getAvatarProvider(widget.trip.avatarUrl);
+                                    return CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: AppColors.fieldColor,
+                                      backgroundImage: avatarProv,
+                                      onBackgroundImageError: (_, __) {},
+                                    );
+                                  },
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(

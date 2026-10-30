@@ -22,7 +22,7 @@ class TripSectionTitle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.circle,
             size: 6,
             color: AppColors.primary,
@@ -32,7 +32,7 @@ class TripSectionTitle extends StatelessWidget {
 
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.primary,

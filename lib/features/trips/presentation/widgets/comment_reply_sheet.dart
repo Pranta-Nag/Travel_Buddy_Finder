@@ -146,163 +146,182 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final commentProvider = context.watch<CommentProvider>();
+    final List<CommentItem> tripComments = widget.tripId != null
+        ? commentProvider.getCommentsForTrip(widget.tripId)
+        : <CommentItem>[];
+
+    // Find the live synchronized CommentItem in memory
+    final CommentItem liveComment = tripComments.firstWhere(
+      (c) => c.id == widget.comment.id,
+      orElse: () => widget.comment,
+    );
+
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.88,
-      ),
-      margin: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 20,
-            offset: Offset(0, -6),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 1. Drag Handle
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 44,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(10),
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.85,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 20,
+              offset: Offset(0, -6),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 1. Drag Handle
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // 2. Header Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.forum_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Replies',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${widget.comment.replies.length}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF475569),
+              // 2. Header Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.forum_rounded,
+                        color: AppColors.primary,
+                        size: 20,
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded,
-                        color: Color(0xFF64748B), size: 22),
-                    onPressed: () => Navigator.pop(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF8FAFC),
-                      padding: const EdgeInsets.all(8),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Replies',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 16, thickness: 1, color: Color(0xFFF1F5F9)),
-
-            // 3. Scrollable Content: Original Comment & Threaded Replies
-            Flexible(
-              child: ListView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
-                children: [
-                  // Original Parent Comment Card
-                  _buildParentCommentCard(),
-
-                  const SizedBox(height: 16),
-
-                  // Replies Title Separator
-                  if (widget.comment.replies.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, bottom: 12),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 14,
-                            height: 1.5,
-                            color: const Color(0xFFCBD5E1),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Conversation (${widget.comment.replies.length})',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF64748B),
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 8),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${liveComment.replies.length}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded,
+                          color: Color(0xFF64748B), size: 22),
+                      onPressed: () => Navigator.pop(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFF8FAFC),
+                        padding: const EdgeInsets.all(8),
                       ),
                     ),
                   ],
-
-                  // Replies list or empty state
-                  if (widget.comment.replies.isEmpty)
-                    _buildEmptyRepliesState()
-                  else
-                    ...widget.comment.replies.asMap().entries.map((entry) {
-                      final int index = entry.key;
-                      final CommentReply reply = entry.value;
-                      return _buildReplyItem(reply, index);
-                    }),
-                ],
+                ),
               ),
-            ),
+              const Divider(height: 16, thickness: 1, color: Color(0xFFF1F5F9)),
 
-            // 4. Classy Reply Input Section
-            _buildInputSection(),
-          ],
+              // 3. Scrollable Content: Original Comment & Threaded Replies
+              Flexible(
+                child: ListView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
+                  children: [
+                    // Original Parent Comment Card
+                    _buildParentCommentCard(liveComment),
+
+                    const SizedBox(height: 16),
+
+                    // Replies Title Separator
+                    if (liveComment.replies.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, bottom: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 14,
+                              height: 1.5,
+                              color: const Color(0xFFCBD5E1),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Conversation (${liveComment.replies.length})',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Replies list or empty state
+                    if (liveComment.replies.isEmpty)
+                      _buildEmptyRepliesState(liveComment)
+                    else
+                      ...liveComment.replies.asMap().entries.map((entry) {
+                        final int index = entry.key;
+                        final CommentReply reply = entry.value;
+                        return _buildReplyItem(reply, index);
+                      }),
+                  ],
+                ),
+              ),
+
+              // 4. Classy Reply Input Section
+              _buildInputSection(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   /// Original parent comment card
-  Widget _buildParentCommentCard() {
+  Widget _buildParentCommentCard(CommentItem liveComment) {
+    final avatarProvider = AppUrl.imageProvider(
+      liveComment.fullAvatarUrl.isNotEmpty
+          ? liveComment.fullAvatarUrl
+          : liveComment.avatarUrl,
+    );
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -318,31 +337,22 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
             children: [
               GestureDetector(
                 onTap: () => _openUserProfile(
-                  widget.comment.name,
-                  widget.comment.username,
-                  widget.comment.fullAvatarUrl.isNotEmpty
-                      ? widget.comment.fullAvatarUrl
-                      : widget.comment.avatarUrl,
+                  liveComment.name,
+                  liveComment.username,
+                  liveComment.fullAvatarUrl.isNotEmpty
+                      ? liveComment.fullAvatarUrl
+                      : liveComment.avatarUrl,
                 ),
                 child: CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                  backgroundImage: widget.comment.fullAvatarUrl.isNotEmpty
-                      ? NetworkImage(widget.comment.fullAvatarUrl)
-                      : (widget.comment.avatarUrl != null &&
-                              widget.comment.avatarUrl!.isNotEmpty
-                          ? (widget.comment.avatarUrl!.startsWith('http')
-                              ? NetworkImage(widget.comment.avatarUrl!)
-                              : NetworkImage(AppUrl.resolveImageUrl(
-                                  widget.comment.avatarUrl)))
-                          : null),
-                  onBackgroundImageError: (_, __) {},
-                  child: (widget.comment.fullAvatarUrl.isEmpty &&
-                          (widget.comment.avatarUrl == null ||
-                              widget.comment.avatarUrl!.isEmpty))
+                  backgroundImage: avatarProvider,
+                  onBackgroundImageError:
+                      avatarProvider != null ? (_, __) {} : null,
+                  child: avatarProvider == null
                       ? Text(
-                          widget.comment.name.isNotEmpty
-                              ? widget.comment.name[0].toUpperCase()
+                          liveComment.name.isNotEmpty
+                              ? liveComment.name[0].toUpperCase()
                               : 'U',
                           style: const TextStyle(
                             color: AppColors.primary,
@@ -359,17 +369,17 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
                   children: [
                     GestureDetector(
                       onTap: () => _openUserProfile(
-                        widget.comment.name,
-                        widget.comment.username,
-                        widget.comment.fullAvatarUrl.isNotEmpty
-                            ? widget.comment.fullAvatarUrl
-                            : widget.comment.avatarUrl,
+                        liveComment.name,
+                        liveComment.username,
+                        liveComment.fullAvatarUrl.isNotEmpty
+                            ? liveComment.fullAvatarUrl
+                            : liveComment.avatarUrl,
                       ),
                       child: Row(
                         children: [
                           Flexible(
                             child: Text(
-                              widget.comment.name,
+                              liveComment.name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14,
@@ -380,7 +390,7 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            widget.comment.username,
+                            liveComment.username,
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
@@ -392,7 +402,7 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.comment.time,
+                      liveComment.time,
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF94A3B8),
@@ -404,21 +414,21 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
               // Like original comment button
               IconButton(
                 icon: Icon(
-                  widget.comment.isLiked
+                  liveComment.isLiked
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
-                  color: widget.comment.isLiked
+                  color: liveComment.isLiked
                       ? Colors.redAccent
                       : const Color(0xFF94A3B8),
                   size: 18,
                 ),
                 onPressed: () {
                   setState(() {
-                    widget.comment.isLiked = !widget.comment.isLiked;
-                    widget.comment.likesCount +=
-                        widget.comment.isLiked ? 1 : -1;
-                    if (widget.comment.likesCount < 0) {
-                      widget.comment.likesCount = 0;
+                    liveComment.isLiked = !liveComment.isLiked;
+                    liveComment.likesCount +=
+                        liveComment.isLiked ? 1 : -1;
+                    if (liveComment.likesCount < 0) {
+                      liveComment.likesCount = 0;
                     }
                   });
                   widget.onStateChanged?.call();
@@ -430,7 +440,7 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
           ),
           const SizedBox(height: 10),
           Text(
-            widget.comment.text,
+            liveComment.text,
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF1E293B),
@@ -444,7 +454,7 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
   }
 
   /// Empty replies placeholder
-  Widget _buildEmptyRepliesState() {
+  Widget _buildEmptyRepliesState(CommentItem liveComment) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
       child: Center(
@@ -473,7 +483,7 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Be the first to reply to ${widget.comment.name}',
+              'Be the first to reply to ${liveComment.name}',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
@@ -488,6 +498,10 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
 
   /// Single threaded reply item
   Widget _buildReplyItem(CommentReply reply, int index) {
+    final avatarProvider = AppUrl.imageProvider(
+      reply.fullAvatarUrl.isNotEmpty ? reply.fullAvatarUrl : reply.avatarUrl,
+    );
+
     return Padding(
       padding: const EdgeInsets.only(left: 18, bottom: 14),
       child: Row(
@@ -515,17 +529,10 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
             child: CircleAvatar(
               radius: 17,
               backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-              backgroundImage: reply.fullAvatarUrl.isNotEmpty
-                  ? NetworkImage(reply.fullAvatarUrl)
-                  : (reply.avatarUrl != null && reply.avatarUrl!.isNotEmpty
-                      ? (reply.avatarUrl!.startsWith('http')
-                          ? NetworkImage(reply.avatarUrl!)
-                          : NetworkImage(
-                              AppUrl.resolveImageUrl(reply.avatarUrl)))
-                      : null),
-              onBackgroundImageError: (_, __) {},
-              child: (reply.fullAvatarUrl.isEmpty &&
-                      (reply.avatarUrl == null || reply.avatarUrl!.isEmpty))
+              backgroundImage: avatarProvider,
+              onBackgroundImageError:
+                  avatarProvider != null ? (_, __) {} : null,
+              child: avatarProvider == null
                   ? Text(
                       reply.name.isNotEmpty
                           ? reply.name[0].toUpperCase()
@@ -584,6 +591,7 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
                           ],
                         ),
                       ),
+                      const Spacer(),
                       // Heart like button
                       InkWell(
                         onTap: () {
@@ -647,6 +655,8 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
 
   /// Classy bottom reply input bar with user avatar and dynamic header
   Widget _buildInputSection() {
+    final avatarProvider = AppUrl.imageProvider(CurrentUser.avatarUrl);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: BoxDecoration(
@@ -724,13 +734,10 @@ class _CommentReplySheetState extends State<CommentReplySheet> {
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                  backgroundImage: CurrentUser.avatarUrl.isNotEmpty
-                      ? (CurrentUser.avatarUrl.startsWith('http')
-                          ? NetworkImage(CurrentUser.avatarUrl)
-                          : AssetImage(CurrentUser.avatarUrl) as ImageProvider)
-                      : null,
-                  onBackgroundImageError: (_, __) {},
-                  child: CurrentUser.avatarUrl.isEmpty
+                  backgroundImage: avatarProvider,
+                  onBackgroundImageError:
+                      avatarProvider != null ? (_, __) {} : null,
+                  child: avatarProvider == null
                       ? Text(
                           CurrentUser.name.isNotEmpty
                               ? CurrentUser.name[0].toUpperCase()

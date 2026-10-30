@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
 import 'package:travel_buddy_finder/features/navigation/presentation/widgets/bottom_nav_item.dart';
 
 class MainBottomNavBar extends StatelessWidget {
@@ -13,6 +15,8 @@ class MainBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int unreadChatCount = context.watch<ChatProvider>().totalUnreadCount;
+
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
@@ -57,6 +61,7 @@ class MainBottomNavBar extends StatelessWidget {
                 index: 2,
                 currentIndex: currentIndex,
                 onTap: onTap,
+                badgeCount: unreadChatCount,
               ),
               BottomNavItem(
                 icon: Icons.person_outline_rounded,

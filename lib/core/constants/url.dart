@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 class AppUrl {
   AppUrl._();
 
@@ -85,5 +87,19 @@ class AppUrl {
     }
 
     return '$root/$cleanPath';
+  }
+
+  static ImageProvider? imageProvider(String? path) {
+    if (path == null || path.trim().isEmpty) return null;
+    final trimmed = path.trim();
+    if (trimmed.startsWith('assets/')) {
+      return AssetImage(trimmed);
+    }
+    final resolved = resolveImageUrl(trimmed);
+    if (resolved.isEmpty) return null;
+    if (resolved.startsWith('assets/')) {
+      return AssetImage(resolved);
+    }
+    return NetworkImage(resolved);
   }
 }

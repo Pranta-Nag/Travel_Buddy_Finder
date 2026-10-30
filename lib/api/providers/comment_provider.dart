@@ -79,15 +79,16 @@ class CommentProvider with ChangeNotifier {
       return;
     }
 
-    _isLoadingByTrip[cleanTripId] = true;
-    _errorsByTrip[cleanTripId] = null;
     if (!silent) {
+      _isLoadingByTrip[cleanTripId] = true;
+      _errorsByTrip[cleanTripId] = null;
       _safeNotifyListeners();
     }
 
     try {
       final fetched = await _controller.getComments(cleanTripId);
       _commentsByTripId[cleanTripId] = fetched;
+      _errorsByTrip[cleanTripId] = null;
     } catch (e) {
       _errorsByTrip[cleanTripId] = 'Failed to load comments: $e';
     } finally {
@@ -143,47 +144,59 @@ class CommentProvider with ChangeNotifier {
     _commentsByTripId[cleanTripId]!.insert(0, optimisticComment);
     _safeNotifyListeners();
 
-    // --- CALL BACKEND API ---
-    final result = await _controller.addComment(
-      tripId: cleanTripId,
-      comment: cleanComment,
-    );
-
-    _pendingCommentTripIds.remove(cleanTripId);
-
-    if (result.success) {
-      // Replace optimistic comment with server-returned version
-      final list = _commentsByTripId[cleanTripId];
-      if (list != null) {
-        final idx = list.indexWhere((c) => c.id == tempId);
-        if (idx >= 0) {
-          list[idx] = result.comment ??
-              CommentItem(
-                id: result.data?['id']?.toString() ??
-                    result.data?['comment_id']?.toString() ??
-                    tempId,
-                tripId: cleanTripId,
-                name: CurrentUser.name,
-                username: CurrentUser.username,
-                text: cleanComment,
-                time: 'Just now',
-                avatarUrl: CurrentUser.avatarUrl,
-                isLiked: false,
-                likesCount: 0,
-                replies: [],
-              );
-        }
-      }
-      _safeNotifyListeners();
-      // Re-fetch in background to get real MySQL auto-increment IDs from phpMyAdmin
-      fetchComments(cleanTripId);
-      return (
-        success: true,
-        message: result.message,
-        comment: result.comment,
+    try {
+      // --- CALL BACKEND API ---
+      final result = await _controller.addComment(
+        tripId: cleanTripId,
+        comment: cleanComment,
       );
-    } else {
-      // --- ROLLBACK ON FAILURE ---
+
+      if (result.success) {
+        // Replace optimistic comment with server-returned version
+        final list = _commentsByTripId[cleanTripId];
+        if (list != null) {
+          final idx = list.indexWhere((c) => c.id == tempId);
+          if (idx >= 0) {
+            list[idx] = result.comment ??
+                CommentItem(
+                  id: result.data?['id']?.toString() ??
+                      result.data?['comment_id']?.toString() ??
+                      tempId,
+                  tripId: cleanTripId,
+                  name: CurrentUser.name,
+                  username: CurrentUser.username,
+                  text: cleanComment,
+                  time: 'Just now',
+                  avatarUrl: CurrentUser.avatarUrl,
+                  isLiked: false,
+                  likesCount: 0,
+                  replies: [],
+                );
+          }
+        }
+        _safeNotifyListeners();
+
+        // Re-fetch in background to sync real MySQL auto-increment IDs
+        fetchComments(cleanTripId, silent: true, forceRefresh: true);
+        return (
+          success: true,
+          message: result.message,
+          comment: result.comment,
+        );
+      } else {
+        // --- ROLLBACK ON FAILURE ---
+        final list = _commentsByTripId[cleanTripId];
+        if (list != null) {
+          list.removeWhere((c) => c.id == tempId);
+        }
+        _safeNotifyListeners();
+        return (
+          success: false,
+          message: result.message,
+          comment: null,
+        );
+      }
+    } catch (e) {
       final list = _commentsByTripId[cleanTripId];
       if (list != null) {
         list.removeWhere((c) => c.id == tempId);
@@ -191,9 +204,11 @@ class CommentProvider with ChangeNotifier {
       _safeNotifyListeners();
       return (
         success: false,
-        message: result.message,
+        message: 'Failed to post comment: $e',
         comment: null,
       );
+    } finally {
+      _pendingCommentTripIds.remove(cleanTripId);
     }
   }
 
@@ -260,57 +275,67 @@ class CommentProvider with ChangeNotifier {
     parentComment?.addReply(optimisticReply);
     _safeNotifyListeners();
 
-    // --- CALL BACKEND API ---
-    final result = await _controller.replyComment(
-      commentId: cleanCommentId,
-      reply: cleanReply,
-      tripId: matchedTripId,
-    );
-
-    _pendingReplyCommentIds.remove(cleanCommentId);
-
-    if (result.success) {
-      if (parentComment != null) {
-        final idx =
-            parentComment.replies.indexWhere((r) => r.id == tempReplyId);
-        if (idx >= 0) {
-          parentComment.replies[idx] = result.reply ??
-              CommentReply(
-                id: result.data?['id']?.toString() ??
-                    result.data?['reply_id']?.toString() ??
-                    tempReplyId,
-                commentId: cleanCommentId,
-                name: CurrentUser.name,
-                username: CurrentUser.username,
-                text: cleanReply,
-                time: 'Just now',
-                avatarUrl: CurrentUser.avatarUrl,
-                isLiked: false,
-                likesCount: 0,
-              );
-        }
-      }
-      _safeNotifyListeners();
-
-      // Re-fetch comments to sync newly inserted replies directly from phpMyAdmin
-      if (matchedTripId != null) {
-        fetchComments(matchedTripId);
-      }
-
-      return (
-        success: true,
-        message: result.message,
-        reply: result.reply,
+    try {
+      // --- CALL BACKEND API ---
+      final result = await _controller.replyComment(
+        commentId: cleanCommentId,
+        reply: cleanReply,
+        tripId: matchedTripId,
       );
-    } else {
-      // --- ROLLBACK ON FAILURE ---
+
+      if (result.success) {
+        if (parentComment != null) {
+          final idx =
+              parentComment.replies.indexWhere((r) => r.id == tempReplyId);
+          if (idx >= 0) {
+            parentComment.replies[idx] = result.reply ??
+                CommentReply(
+                  id: result.data?['id']?.toString() ??
+                      result.data?['reply_id']?.toString() ??
+                      tempReplyId,
+                  commentId: cleanCommentId,
+                  name: CurrentUser.name,
+                  username: CurrentUser.username,
+                  text: cleanReply,
+                  time: 'Just now',
+                  avatarUrl: CurrentUser.avatarUrl,
+                  isLiked: false,
+                  likesCount: 0,
+                );
+          }
+        }
+        _safeNotifyListeners();
+
+        // Re-fetch comments to sync newly inserted replies directly from server
+        if (matchedTripId != null) {
+          fetchComments(matchedTripId, silent: true, forceRefresh: true);
+        }
+
+        return (
+          success: true,
+          message: result.message,
+          reply: result.reply,
+        );
+      } else {
+        // --- ROLLBACK ON FAILURE ---
+        parentComment?.replies.removeWhere((r) => r.id == tempReplyId);
+        _safeNotifyListeners();
+        return (
+          success: false,
+          message: result.message,
+          reply: null,
+        );
+      }
+    } catch (e) {
       parentComment?.replies.removeWhere((r) => r.id == tempReplyId);
       _safeNotifyListeners();
       return (
         success: false,
-        message: result.message,
+        message: 'Failed to post reply: $e',
         reply: null,
       );
+    } finally {
+      _pendingReplyCommentIds.remove(cleanCommentId);
     }
   }
 

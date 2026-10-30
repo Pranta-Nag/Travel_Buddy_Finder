@@ -1,3 +1,4 @@
+import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
@@ -41,11 +42,27 @@ class TripRequestItem extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.fieldColor,
-                backgroundImage: NetworkImage(request.requesterAvatarUrl),
-                onBackgroundImageError: (_, __) {},
+              Builder(
+                builder: (context) {
+                  final reqProv = AppUrl.imageProvider(request.requesterAvatarUrl);
+                  return CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.fieldColor,
+                    backgroundImage: reqProv,
+                    onBackgroundImageError: reqProv != null ? (_, __) {} : null,
+                    child: reqProv == null
+                        ? Text(
+                            request.requesterName.isNotEmpty
+                                ? request.requesterName[0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  );
+                },
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -61,7 +61,7 @@ class TripImagePicker extends StatelessWidget {
             ),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.add_a_photo_rounded,
             size: 32,
             color: AppColors.primary,
@@ -70,7 +70,7 @@ class TripImagePicker extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        Text(
+        const Text(
           'Upload Cover Photo',
           style: TextStyle(
             fontSize: 14,

@@ -1,3 +1,5 @@
+import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
+import 'package:travel_buddy_finder/features/chat/presentation/screens/chat_room_screen.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
@@ -529,17 +531,34 @@ class _ViewScreenState extends State<ViewScreen> {
                           },
                           child: Stack(
                             children: [
-                              CircleAvatar(
-                                radius: 26,
-                                backgroundColor: AppColors.fieldColor,
-                                backgroundImage: (trip.avatarUrl.startsWith('http://') || trip.avatarUrl.startsWith('https://'))
-                                    ? NetworkImage(trip.avatarUrl)
-                                    : (trip.avatarUrl.startsWith('assets/')
-                                        ? AssetImage(trip.avatarUrl)
-                                        : AssetImage(CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName)
+                              Builder(
+                                builder: (context) {
+                                  final hostProv = AppUrl.imageProvider(
+                                    trip.avatarUrl.isNotEmpty
+                                        ? trip.avatarUrl
+                                        : (CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName)
                                             ? CurrentUser.avatarUrl
-                                            : 'assets/images/dummy_boy.jpg')) as ImageProvider,
-                                onBackgroundImageError: (_, __) {},
+                                            : 'assets/images/dummy_boy.jpg'),
+                                  );
+                                  return CircleAvatar(
+                                    radius: 26,
+                                    backgroundColor: AppColors.fieldColor,
+                                    backgroundImage: hostProv,
+                                    onBackgroundImageError: hostProv != null ? (_, __) {} : null,
+                                    child: hostProv == null
+                                        ? Text(
+                                            trip.hostName.isNotEmpty
+                                                ? trip.hostName[0].toUpperCase()
+                                                : 'H',
+                                            style: const TextStyle(
+                                              color: AppColors.primary,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : null,
+                                  );
+                                },
                               ),
                               Positioned(
                                 right: 0,
@@ -631,15 +650,54 @@ class _ViewScreenState extends State<ViewScreen> {
                           ),
                         ),
                         OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    "Chat with ${trip.hostName} coming soon!"),
-                                duration: const Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
+                          onPressed: () async {
+                            final isMe = CurrentUser.isCurrentUser(trip.username, inputName: trip.hostName);
+                            if (isMe) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("You are the host of this trip."),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(color: AppColors.primary),
                               ),
                             );
+
+                            final result = await context.read<ChatProvider>().startChat(trip.id);
+                            if (!context.mounted) return;
+                            Navigator.pop(context); // close loading
+
+                            if (result.success && result.roomId != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatRoomScreen(
+                                    roomId: result.roomId!,
+                                    partnerName: trip.hostName,
+                                    partnerAvatarUrl: trip.avatarUrl,
+                                    tripTitle: trip.title,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result.message.isNotEmpty
+                                      ? result.message
+                                      : "Could not initiate chat with host."),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           },
                           icon: const Icon(Icons.chat_bubble_outline_rounded,
                               size: 14, color: AppColors.primary),
@@ -896,26 +954,28 @@ class _ViewScreenState extends State<ViewScreen> {
                             CurrentUser.username,
                             CurrentUser.avatarUrl,
                           ),
-                          child: CircleAvatar(
-                            radius: 16,
-                            backgroundColor: AppColors.fieldColor,
-                            backgroundImage: CurrentUser.avatarUrl.isNotEmpty
-                                ? NetworkImage(AppUrl.resolveImageUrl(
-                                    CurrentUser.avatarUrl))
-                                : null,
-                            onBackgroundImageError: (_, __) {},
-                            child: CurrentUser.avatarUrl.isEmpty
-                                ? Text(
-                                    CurrentUser.name.isNotEmpty
-                                        ? CurrentUser.name[0].toUpperCase()
-                                        : 'U',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )
-                                : null,
+                          child: Builder(
+                            builder: (context) {
+                              final myProv = AppUrl.imageProvider(CurrentUser.avatarUrl);
+                              return CircleAvatar(
+                                radius: 16,
+                                backgroundColor: AppColors.fieldColor,
+                                backgroundImage: myProv,
+                                onBackgroundImageError: myProv != null ? (_, __) {} : null,
+                                child: myProv == null
+                                    ? Text(
+                                        CurrentUser.name.isNotEmpty
+                                            ? CurrentUser.name[0].toUpperCase()
+                                            : 'U',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -1013,25 +1073,28 @@ class _ViewScreenState extends State<ViewScreen> {
                                         item.username,
                                         itemAvatar,
                                       ),
-                                      child: CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor: AppColors.fieldColor,
-                                        backgroundImage: itemAvatar.isNotEmpty
-                                            ? NetworkImage(itemAvatar)
-                                            : null,
-                                        onBackgroundImageError: (_, __) {},
-                                        child: itemAvatar.isEmpty
-                                            ? Text(
-                                                item.name.isNotEmpty
-                                                    ? item.name[0].toUpperCase()
-                                                    : 'U',
-                                                style: const TextStyle(
-                                                  color: AppColors.primary,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              )
-                                            : null,
+                                      child: Builder(
+                                        builder: (context) {
+                                          final itemProv = AppUrl.imageProvider(itemAvatar);
+                                          return CircleAvatar(
+                                            radius: 18,
+                                            backgroundColor: AppColors.fieldColor,
+                                            backgroundImage: itemProv,
+                                            onBackgroundImageError: itemProv != null ? (_, __) {} : null,
+                                            child: itemProv == null
+                                                ? Text(
+                                                    item.name.isNotEmpty
+                                                        ? item.name[0].toUpperCase()
+                                                        : 'U',
+                                                    style: const TextStyle(
+                                                      color: AppColors.primary,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 12,
+                                                    ),
+                                                  )
+                                                : null,
+                                          );
+                                        },
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -1620,11 +1683,28 @@ class _ViewScreenState extends State<ViewScreen> {
                       children: [
                         Row(
                           children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: AppColors.fieldColor,
-                              backgroundImage: NetworkImage(review.userAvatarUrl),
-                              onBackgroundImageError: (_, __) {},
+                            Builder(
+                              builder: (context) {
+                                final revProv = AppUrl.imageProvider(review.userAvatarUrl);
+                                return CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: AppColors.fieldColor,
+                                  backgroundImage: revProv,
+                                  onBackgroundImageError: revProv != null ? (_, __) {} : null,
+                                  child: revProv == null
+                                      ? Text(
+                                          review.userName.isNotEmpty
+                                              ? review.userName[0].toUpperCase()
+                                              : 'U',
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        )
+                                      : null,
+                                );
+                              },
                             ),
                             const SizedBox(width: 10),
                             Expanded(

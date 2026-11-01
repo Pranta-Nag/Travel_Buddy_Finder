@@ -33,6 +33,8 @@ class UserProfileScreen extends StatefulWidget {
   final String avatarUrl;
   final Uint8List? avatarBytes;
   final bool isCurrentUser;
+  final dynamic tripId;
+  final String? tripTitle;
 
   const UserProfileScreen({
     super.key,
@@ -42,6 +44,8 @@ class UserProfileScreen extends StatefulWidget {
     this.avatarUrl = "",
     this.avatarBytes,
     this.isCurrentUser = true,
+    this.tripId,
+    this.tripTitle,
   });
 
   @override
@@ -80,6 +84,93 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       _avatarUrl = data['avatarUrl'] as String;
       _avatarBytes = data['avatarBytes'] as Uint8List?;
     });
+  }
+
+  Future<void> _openDirectChat({
+    required String displayName,
+    required String displayUsername,
+    required String displayAvatar,
+    required List<Trip> hostedTrips,
+    required List<Trip> allTrips,
+  }) async {
+    final isMe = CurrentUser.isCurrentUser(
+      displayUsername,
+      inputName: displayName,
+    );
+    if (isMe) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You cannot message yourself."),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+
+    // Determine target trip if available
+    dynamic selectedTripId = widget.tripId;
+    String? selectedTripTitle = widget.tripTitle;
+
+    if (selectedTripId == null && hostedTrips.isNotEmpty) {
+      selectedTripId = hostedTrips.first.id;
+      selectedTripTitle ??= hostedTrips.first.title;
+    }
+
+    if (selectedTripId == null && allTrips.isNotEmpty) {
+      final cleanTargetUser =
+          displayUsername.replaceAll('@', '').trim().toLowerCase();
+      final matchedTrip = allTrips.firstWhere(
+        (t) =>
+            t.username.replaceAll('@', '').trim().toLowerCase() ==
+            cleanTargetUser,
+        orElse: () => allTrips.first,
+      );
+      selectedTripId = matchedTrip.id;
+      selectedTripTitle ??= matchedTrip.title;
+    }
+
+    final result = await context.read<ChatProvider>().startChat(
+      selectedTripId,
+      partnerUsername: displayUsername,
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context); // close loading
+
+    if (result.success && result.roomId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatRoomScreen(
+            roomId: result.roomId!,
+            partnerName: displayName,
+            partnerAvatarUrl: displayAvatar,
+            tripTitle: result.tripTitle ?? selectedTripTitle,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.message.isNotEmpty
+                ? result.message
+                : "Could not initiate chat with $displayName.",
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Widget _buildAvatarWidget(String avatarUrl, String? gender) {
@@ -365,7 +456,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "$displayUsername • ${authUser?.level ?? widget.level}",
+                          "$displayUsername ΓÇó ${authUser?.level ?? widget.level}",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade500,
@@ -423,9 +514,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      _buildBadgeItem("🏅", "Wanderlust"),
-                      _buildBadgeItem("🔥", "5-Streak"),
-                      _buildBadgeItem("🛡️", "ID Verified"),
+                      _buildBadgeItem("≡ƒÅà", "Wanderlust"),
+                      _buildBadgeItem("≡ƒöÑ", "5-Streak"),
+                      _buildBadgeItem("≡ƒ¢í∩╕Å", "ID Verified"),
                     ],
                   ),
                 ),
@@ -522,35 +613,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         child: SizedBox(
                           height: 52,
                           child: ElevatedButton.icon(
-                            onPressed: () {
-                              final chatProvider = context.read<ChatProvider>();
-                              final cleanTarget = displayUsername.replaceAll('@', '').toLowerCase();
-                              final existingRoom = chatProvider.chatRooms.cast<ChatRoomModel?>().firstWhere(
-                                (r) => r != null && r.partnerUsername.replaceAll('@', '').toLowerCase() == cleanTarget,
-                                orElse: () => null,
-                              );
-                              if (existingRoom != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChatRoomScreen(
-                                      roomId: existingRoom.roomId,
-                                      partnerName: existingRoom.partnerName,
-                                      partnerAvatarUrl: existingRoom.partnerAvatarUrl,
-                                      tripTitle: existingRoom.tripTitle,
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("To chat with $displayName, tap 'Chat' on any of their trips!"),
-                                    duration: const Duration(seconds: 3),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: () => _openDirectChat(
+                              displayName: displayName,
+                              displayUsername: displayUsername,
+                              displayAvatar: displayAvatar,
+                              hostedTrips: hostedTrips,
+                              allTrips: allTrips,
+                            ),
                             icon: const Icon(Icons.chat_bubble_outline_rounded,
                                 color: Colors.white, size: 18),
                             label: const Text(
@@ -922,10 +991,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ],
                             ),
                             child: Text(
-                              trip.price.startsWith('৳') ||
+                              trip.price.startsWith('αº│') ||
                                       trip.price.toLowerCase().contains('tk')
                                   ? trip.price
-                                  : '৳${trip.price}',
+                                  : 'αº│${trip.price}',
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 13,
@@ -1085,7 +1154,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
 
                         // Edit / Delete Actions (for host) or Bookmark (for viewer)
-                        if (widget.isCurrentUser) ...[
+                        if (CurrentUser.isCurrentUser(trip.username,
+                            inputName: trip.hostName)) ...[
                           Row(
                             children: [
                               // Edit Button

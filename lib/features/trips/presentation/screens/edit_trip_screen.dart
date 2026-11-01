@@ -11,6 +11,7 @@ import 'package:travel_buddy_finder/core/constants/app_lists.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
+import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 
 class EditTripScreen extends StatefulWidget {
   final Trip trip;
@@ -61,6 +62,19 @@ class _EditTripScreenState extends State<EditTripScreen> {
   }
 
   Future<void> _handleDelete() async {
+    final isMe = CurrentUser.isCurrentUser(
+      widget.trip.username,
+      inputName: widget.trip.hostName,
+    );
+    if (!isMe) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You can only delete your own trips!"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
     final tripProvider = context.read<TripProvider>();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -94,6 +108,19 @@ class _EditTripScreenState extends State<EditTripScreen> {
   }
 
   Future<void> _handleUpdate() async {
+    final isMe = CurrentUser.isCurrentUser(
+      widget.trip.username,
+      inputName: widget.trip.hostName,
+    );
+    if (!isMe) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You can only edit your own trips!"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     final tripIdInt = int.tryParse(widget.trip.id) ?? 0;
@@ -136,6 +163,34 @@ class _EditTripScreenState extends State<EditTripScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<TripProvider>().isLoading;
+    final isMe = CurrentUser.isCurrentUser(
+      widget.trip.username,
+      inputName: widget.trip.hostName,
+    );
+
+    if (!isMe) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Edit Trip"),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Text(
+              "You can only edit your own published trips.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.redAccent,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: ScreenBackground(

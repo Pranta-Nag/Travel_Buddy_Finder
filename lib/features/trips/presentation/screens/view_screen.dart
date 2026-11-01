@@ -82,6 +82,8 @@ class _ViewScreenState extends State<ViewScreen> {
                 username: username,
                 avatarUrl: AppUrl.resolveImageUrl(avatarUrl),
                 isCurrentUser: false,
+                tripId: widget.trip.id,
+                tripTitle: widget.trip.title,
               ),
       ),
     );
@@ -524,6 +526,8 @@ class _ViewScreenState extends State<ViewScreen> {
                                     username: isMe ? CurrentUser.username : trip.username,
                                     avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
                                     isCurrentUser: isMe,
+                                    tripId: trip.id,
+                                    tripTitle: trip.title,
                                   ),
                                 ),
                               );
@@ -595,6 +599,8 @@ class _ViewScreenState extends State<ViewScreen> {
                                       username: isMe ? CurrentUser.username : trip.username,
                                       avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
                                       isCurrentUser: isMe,
+                                    tripId: trip.id,
+                                    tripTitle: trip.title,
                                     ),
                                   ),
                                 );

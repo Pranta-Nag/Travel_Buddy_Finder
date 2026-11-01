@@ -364,6 +364,8 @@ class ExploreTripCard extends StatelessWidget {
                                       username: isMe ? CurrentUser.username : trip.username,
                                       avatarUrl: isMe ? CurrentUser.avatarUrl : trip.avatarUrl,
                                       isCurrentUser: isMe,
+                                      tripId: trip.id,
+                                      tripTitle: trip.title,
                                     ),
                                   ),
                                 );

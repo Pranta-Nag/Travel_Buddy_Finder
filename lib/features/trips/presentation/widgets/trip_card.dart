@@ -41,7 +41,10 @@ class _TripCardState extends State<TripCard> {
   @override
   Widget build(BuildContext context) {
     final bool isOwner =
-        widget.trip.username == '@you' || widget.trip.username == '@yeasin';
+        CurrentUser.isCurrentUser(
+          widget.trip.username,
+          inputName: widget.trip.hostName,
+        );
     final effectiveHeroTag = widget.heroTag ?? 'card-trip-image-${widget.trip.id}';
 
     return Card(
@@ -66,7 +69,8 @@ class _TripCardState extends State<TripCard> {
                 ),
               ),
 
-              // Edit button
+              // Edit button (only visible for post owner)
+              if (isOwner)
               Positioned(
                 top: 12,
                 left: 12,

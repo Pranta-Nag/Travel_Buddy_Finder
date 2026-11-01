@@ -181,6 +181,6 @@ lib/
 
 1. Pranta Nag
 2. Yeasin Khan
-3. galib
+3. Abdullah Mohammad Galib
 
 Thank you!

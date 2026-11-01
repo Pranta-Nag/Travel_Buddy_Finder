@@ -57,12 +57,14 @@ class ChatController {
   Future<({bool success, int? roomId, String? tripTitle, String? partnerUsername, String message})>
       startChat(dynamic tripId, {String? partnerUsername}) async {
     try {
-      final cleanTripId = tripId.toString().trim();
+      final cleanTripId = tripId != null ? tripId.toString().trim() : '';
       final int? intTripId = int.tryParse(cleanTripId);
 
       final Map<String, dynamic> body = {
-        'trip_id': intTripId ?? cleanTripId,
-        'tripId': intTripId ?? cleanTripId,
+        if (intTripId != null || (cleanTripId.isNotEmpty && cleanTripId.toLowerCase() != 'null')) ...{
+          'trip_id': intTripId ?? cleanTripId,
+          'tripId': intTripId ?? cleanTripId,
+        },
         if (partnerUsername != null && partnerUsername.trim().isNotEmpty) ...{
           'partner_username': partnerUsername.trim().replaceAll('@', ''),
           'traveler_username': partnerUsername.trim().replaceAll('@', ''),

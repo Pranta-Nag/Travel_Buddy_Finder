@@ -135,7 +135,7 @@ class ChatProvider with ChangeNotifier {
   }
 
   // 3. Start or get existing chat room for a trip
-  Future<({bool success, int? roomId, String message})> startChat(
+  Future<({bool success, int? roomId, String? tripTitle, String message})> startChat(
     dynamic tripId, {
     String? partnerUsername,
   }) async {
@@ -151,6 +151,7 @@ class ChatProvider with ChangeNotifier {
         return (
           success: true,
           roomId: res.roomId,
+          tripTitle: res.tripTitle,
           message: res.message,
         );
       }
@@ -158,12 +159,14 @@ class ChatProvider with ChangeNotifier {
       return (
         success: false,
         roomId: null,
+        tripTitle: null,
         message: res.message,
       );
     } catch (e) {
       return (
         success: false,
         roomId: null,
+        tripTitle: null,
         message: 'Could not start chat: $e',
       );
     }

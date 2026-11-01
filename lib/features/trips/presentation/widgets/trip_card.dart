@@ -623,6 +623,8 @@ class _TripCardState extends State<TripCard> {
             username: isMe ? CurrentUser.username : widget.trip.username,
             avatarUrl: isMe ? CurrentUser.avatarUrl : widget.trip.avatarUrl,
             isCurrentUser: isMe,
+            tripId: widget.trip.id,
+            tripTitle: widget.trip.title,
           ),
         ),
       );

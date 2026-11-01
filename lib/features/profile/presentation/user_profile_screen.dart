@@ -456,7 +456,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "$displayUsername ΓÇó ${authUser?.level ?? widget.level}",
+                          "$displayUsername • ${authUser?.level ?? widget.level}",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade500,
@@ -514,9 +514,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      _buildBadgeItem("≡ƒÅà", "Wanderlust"),
-                      _buildBadgeItem("≡ƒöÑ", "5-Streak"),
-                      _buildBadgeItem("≡ƒ¢í∩╕Å", "ID Verified"),
+                      _buildBadgeItem("🏅", "Wanderlust"),
+                      _buildBadgeItem("🔥", "5-Streak"),
+                      _buildBadgeItem("🛡️", "ID Verified"),
                     ],
                   ),
                 ),
@@ -991,10 +991,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ],
                             ),
                             child: Text(
-                              trip.price.startsWith('αº│') ||
+                              trip.price.startsWith('৳') ||
                                       trip.price.toLowerCase().contains('tk')
                                   ? trip.price
-                                  : 'αº│${trip.price}',
+                                  : '৳${trip.price}',
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 13,

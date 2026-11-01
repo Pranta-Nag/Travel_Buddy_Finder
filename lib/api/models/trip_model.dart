@@ -137,7 +137,12 @@ class TripModel {
         json['media'] ??
         '';
 
-    final rawAvatar = json['host_avatar'] ??
+    final dynamic hostObj = json['host'] is Map ? json['host'] : null;
+    final rawAvatar = json['host_avatar_url'] ??
+        json['host_avatar'] ??
+        hostObj?['profile_pic_url'] ??
+        hostObj?['profile_pic'] ??
+        hostObj?['avatar'] ??
         json['user_avatar'] ??
         json['avatar_url'] ??
         json['avatar'] ??
@@ -163,9 +168,14 @@ class TripModel {
       category: json['category'] ?? 'Adventure',
       description: json['description'] ?? '',
       imageUrl: rawImageUrl.toString(),
-      hostName: json['host_username'] ?? json['host_name'] ?? json['user_name'] ?? 'Traveler Host',
+      hostName: json['host_username'] ??
+          hostObj?['username'] ??
+          json['host_name'] ??
+          hostObj?['full_name'] ??
+          json['user_name'] ??
+          'Traveler Host',
       hostAvatar: rawAvatar.toString(),
-      hostGender: json['host_gender'] ?? json['gender'] ?? 'Male',
+      hostGender: json['host_gender'] ?? hostObj?['gender'] ?? json['gender'] ?? 'Male',
       seats: parsedSeats,
       rating: json['rating']?.toString() ?? '4.9',
       transports: parsedTransports.isNotEmpty ? parsedTransports : ['Flight', 'Bus'],

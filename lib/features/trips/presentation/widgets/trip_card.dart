@@ -192,17 +192,7 @@ class _TripCardState extends State<TripCard> {
                             cursor: SystemMouseCursors.click,
                             child: Row(
                               children: [
-                                Builder(
-                                  builder: (context) {
-                                    final avatarProv = _getAvatarProvider(widget.trip.avatarUrl);
-                                    return CircleAvatar(
-                                      radius: 14,
-                                      backgroundColor: AppColors.fieldColor,
-                                      backgroundImage: avatarProv,
-                                      onBackgroundImageError: (_, __) {},
-                                    );
-                                  },
-                                ),
+                                _buildHostAvatar(widget.trip.avatarUrl),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -588,27 +578,98 @@ class _TripCardState extends State<TripCard> {
     );
   }
 
-  ImageProvider _getAvatarProvider(String rawUrl) {
+  Widget _buildHostAvatar(String rawUrl) {
     final isMe = CurrentUser.isCurrentUser(
       widget.trip.username,
       inputName: widget.trip.hostName,
     );
+
     String url = rawUrl.trim();
     if (url.isEmpty && isMe) {
       url = CurrentUser.avatarUrl;
     }
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return NetworkImage(AppUrl.resolveImageUrl(url));
+
+    final String fallbackAsset = (isMe && CurrentUser.avatarUrl.isNotEmpty)
+        ? CurrentUser.avatarUrl
+        : 'assets/images/dummy_boy.jpg';
+
+    Widget img;
+    if (url.isNotEmpty &&
+        (url.startsWith('http://') || url.startsWith('https://'))) {
+      img = Image.network(
+        AppUrl.resolveImageUrl(url),
+        width: 28,
+        height: 28,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Image.asset(
+          fallbackAsset.startsWith('assets/')
+              ? fallbackAsset
+              : 'assets/images/dummy_boy.jpg',
+          width: 28,
+          height: 28,
+          fit: BoxFit.cover,
+        ),
+      );
     } else if (url.startsWith('assets/')) {
-      return AssetImage(url);
+      img = Image.asset(
+        url,
+        width: 28,
+        height: 28,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Image.asset(
+          'assets/images/dummy_boy.jpg',
+          width: 28,
+          height: 28,
+          fit: BoxFit.cover,
+        ),
+      );
     } else if (url.isNotEmpty) {
       final resolved = AppUrl.resolveImageUrl(url);
-      if (resolved.isNotEmpty) {
-        return NetworkImage(resolved);
+      if (resolved.isNotEmpty &&
+          (resolved.startsWith('http://') || resolved.startsWith('https://'))) {
+        img = Image.network(
+          resolved,
+          width: 28,
+          height: 28,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Image.asset(
+            fallbackAsset.startsWith('assets/')
+                ? fallbackAsset
+                : 'assets/images/dummy_boy.jpg',
+            width: 28,
+            height: 28,
+            fit: BoxFit.cover,
+          ),
+        );
+      } else {
+        img = Image.asset(
+          fallbackAsset.startsWith('assets/')
+              ? fallbackAsset
+              : 'assets/images/dummy_boy.jpg',
+          width: 28,
+          height: 28,
+          fit: BoxFit.cover,
+        );
       }
+    } else {
+      img = Image.asset(
+        fallbackAsset.startsWith('assets/')
+            ? fallbackAsset
+            : 'assets/images/dummy_boy.jpg',
+        width: 28,
+        height: 28,
+        fit: BoxFit.cover,
+      );
     }
-    return AssetImage(
-      isMe ? CurrentUser.avatarUrl : 'assets/images/dummy_boy.jpg',
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 28,
+        height: 28,
+        color: AppColors.fieldColor,
+        child: img,
+      ),
     );
   }
 

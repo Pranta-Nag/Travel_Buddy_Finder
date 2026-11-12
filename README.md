@@ -1,38 +1,34 @@
 # Travel Buddy Finder
 
-**Travel Buddy Finder** is a mobile & web application built with Flutter that helps travelers find companions for their journeys. Users can browse trips posted by other travelers, join trips as companions, create their own trips, chat in real-time with hosts, and connect with like-minded adventurers.
+**Travel Buddy Finder** is a cross-platform mobile & web application built with Flutter that helps travelers find companions for their journeys. Users can browse and filter trips posted by other travelers, send join requests, create and manage their own trips, comment on trip posts, chat in real-time with hosts and fellow travelers, and manage their travel profiles.
 
 ---
 
 ## Features
 
 ### Authentication & Authorization
-- **Onboarding Flow** – Splash screen, Login, Signup, Forgot Password with OTP, and Reset Password screens
-- **JWT Authentication** – Stateless JWT tokens saved in `SharedPreferences` with Bearer Token headers
-- Form validation with real-time input checking
-- Multipart form-data registration with Profile Picture & NID Card copy upload
+- **Onboarding Flow** – Splash screen, Login, Signup, Forgot Password with OTP verification, and Reset Password screens
+- **JWT Authentication** – Stateless JWT tokens persisted in `SharedPreferences` with automated Bearer Token headers via `ApiClient`
+- **Form Validation** – Real-time input validation via centralized validators
+- **Multipart Registration** – Profile picture & NID card upload support
 
-### Explore Trips & Feed
-- Browse a list of trips shared by the community
-- **Search** trips by title, location, description, or host name
-- **Filter** trips by:
+### Home & Explore Trips
+- **Home Feed & Explore Screen** – Browse community-posted trips in **Grid & List** layouts with pull-to-refresh
+- **Search** – Search trips by title, location, description, or host name
+- **Advanced Filters** – Filter trips by:
   - Budget (price cap slider)
   - Gender preference
   - Category (Adventure, Beach, Cultural, Family, Romantic, Wildlife)
   - Transportation methods (multi-select chips)
   - Sort by: Recommended, Price (low–high / high–low), Highest-rated
-- **Grid & List** view layouts
-- Active filter indicators with quick removal
-- Pull-to-refresh
+- Active filter tags with quick one-tap removal
 
-### Trip Details
+### Trip Details & Community Discussion
 - Full-screen trip view with collapsible image header and Hero animations
-- Host profile card with avatar and verification badge
-- Trip overview: price, availability, gender preference, category
-- Transportation method icons
-- **Community discussion** section with top-level comments and nested replies
-- Post comments and ask the host questions
-- "Join Trip Now" action that creates a trip request
+- Host profile card with avatar, verification badge, and tap-to-view host profile
+- Trip overview: budget (`৳`), seat availability, gender preference, category, and transportation method icons
+- **Community Comments & Replies** – API-backed comments (`get_comments`, `add_comment`, `reply_comment`) with nested reply sheets
+- **"Join Trip Now"** action to submit a trip join request
 
 ### Creating & Managing Trips
 - **Add New Trip** form with:
@@ -43,96 +39,128 @@
   - Description field
   - Multi-select transportation methods
   - Seats counter
-  - Cover photo picker (from gallery)
-- **Edit Trip** screen for modifying existing trips
-- **Delete** trips with confirmation dialog
-- **My Trips** screen showing trips created by the current user
+  - Cover photo picker (gallery upload with Base64/multipart handling)
+- **Owner-Only Edit & Delete** – Only the trip host (`CurrentUser.isCurrentUser`) sees card edit controls and can access `EditTripScreen`, with delete confirmation dialogs
+- **My Trips** screen displaying trips created by the current user
 
-### Real-Time Messenger & Chat Engine
-- **Chat Inbox** displaying active conversations with last message, time, and unread badges
-- **Smart Live Polling** engine (2-second interval with `last_id` tracking) for real-time messaging without WebSocket overhead
-- Automatic message `seen_status` updates when entering chat rooms
-- Auto-scrolling chat room interface
+### Real-Time Messenger, Chat & In-App Notifications
+- **Chat Inbox** – Displays active conversations with last message preview, timestamp, and unread count chips
+- **Direct Chat Initiation** – Start a chat directly from a user's profile (`_openDirectChat`) or from any trip card/detail view
+- **Smart Live Polling** – Inbox polling and 2-second chat room polling with `last_id` tracking for real-time messaging without WebSocket overhead
+- **In-App Notification Banner** – Animated slide-down overlay banner (`InAppNotificationService`) when a new chat message arrives, with tap-to-open chat room and 5-second auto-dismiss
+- **Bottom Navigation Badge** – Live unread message badge on the Chat tab
+- Automatic message seen-status synchronization upon opening a chat room
 
-### User Profile & Settings
-- Personal profile with dynamic logged-in user data
-- Stats display (completed trips, followers, avg rating)
-- Travel interests and achievement badges
-- Quick actions: Bookmarks, Trip Approvals, My Trips
-- Edit profile, change password via API, & manage account settings
-- Follow other travelers
+### User Profile & Account Settings
+- Personal & public traveler profiles bound to `AuthProvider` / `ProfileProvider`
+- Gender-aware default fallback avatars (`dummy_boy.jpg` / `dummy_girl.png`) and custom image URL resolution
+- Stats display (completed trips, followers, average rating)
+- Travel interests & **Achievements / Badges** (`🏅 Wanderlust`, `🔥 5-Streak`, `🛡️ ID Verified`)
+- Quick actions: **Bookmarks**, **Trip Approvals** (with pending count badge), and **My Trips**
+- Edit profile, change password via API, & manage account settings (language, currency, privacy/notifications)
+- Follow / unfollow other travelers
 
 ### Trip Requests & Approvals
-- Send join requests to trip hosts
-- Host approval workflow via a slide-out **Approvals Drawer**
+- Send join requests to trip hosts (`join_trip`)
+- Host approval workflow via a slide-out **Approvals Drawer** (`pending_requests`, `accept_request`, `reject_request`, `respond_request`)
 - Pending / approved / rejected status tracking
 
 ### Ratings & Reviews
-- **Rating screen** with 1–5 star selection
-- Quick-select tags (Friendly Host, Safe & Reliable, etc.)
-- Free-text review box with recommendation toggle
-- Success confirmation dialog
+- **Rating Screen** with 1–5 star selection and dynamic feedback labels
+- Quick-select review tags (Friendly Host, Safe & Reliable, etc.)
+- Free-text review box with recommendation toggle and confirmation dialog
 
 ### Bookmarks
-- Save interesting trips to a personal bookmarks list
+- API-backed bookmarks (`add_bookmark`, `remove_bookmark`, `my_bookmarks`) with `BookmarkProvider`
 - Optimistic UI updates for instant bookmark toggling
 
 ### Notifications
-- List of user notifications with read/unread states
-- Mark all as read
-- Dismissible notifications (swipe to delete)
+- Notification center listing approval and activity updates with read/unread states
+- Mark all as read & swipe-to-dismiss notifications
 
 ---
 
 ## Technology Stack
 
-| Layer        | Tech                        |
-|--------------|-----------------------------|
-| Framework    | [Flutter](https://flutter.dev) (Dart SDK ^3.5.3) |
-| Architecture | **Feature-First + Centralized API Architecture** |
-| State        | `Provider` (`ChangeNotifier` + `Consumer`) + `ValueNotifier` |
-| Networking   | `http` `^1.2.2` with custom `ApiClient` & Bearer Token |
-| Storage      | `shared_preferences` `^2.3.2` |
-| Image Picker | `image_picker` `^1.1.2`     |
-| SVG Rendering| `flutter_svg` `^2.1.0`      |
-| Intl         | `intl` `^0.20.2`            |
-| Icons        | `cupertino_icons` `^1.0.8`  |
+| Layer | Technology |
+|---|---|
+| Framework | [Flutter](https://flutter.dev) (Dart SDK `^3.5.3`) |
+| Architecture | **Feature-First + Centralized API Architecture** (`api/` + `core/` + `features/`) |
+| State Management | `provider` (`^6.1.2`) with `MultiProvider` (`AuthProvider`, `BookmarkProvider`, `ChatProvider`, `CommentProvider`, `ProfileProvider`, `TripProvider`, `TripRequestProvider`) + `ValueNotifier` |
+| Networking | `http` (`^1.2.2`) & `http_parser` (`^4.1.0`) via custom `ApiClient` with Bearer Token & multipart support |
+| Local Storage | `shared_preferences` (`^2.3.2`) |
+| Media & Assets | `image_picker` (`^1.1.2`), `flutter_svg` (`^2.1.0`) |
+| Formatting & Icons | `intl` (`^0.20.2`), `cupertino_icons` (`^1.0.8`) |
 
 ---
 
 ## Project Structure
 
-```
+```text
 lib/
-├── app.dart                      # Root MaterialApp widget
-├── main.dart                     # App entry point with MultiProvider setup
-├── core/                         # Shared core utilities & constants
+├── app.dart                                  # Root MaterialApp with AppNavigator key
+├── main.dart                                 # App entrypoint & MultiProvider registration
+├── core/                                     # Shared utilities, constants, network & services
 │   ├── constants/
-│   │   ├── api_constants.dart    # Central API constants
-│   │   ├── app_colors.dart       # Centralized color palette
-│   │   ├── app_lists.dart        # Option lists (genders, countries, categories)
-│   │   ├── asset_path.dart       # Asset path constants
-│   │   └── url.dart              # AppUrl containing ALL API Endpoint Constants
+│   │   ├── api_constants.dart                # Wrapper helpers for base URL & image resolution
+│   │   ├── app_colors.dart                   # Centralized color palette
+│   │   ├── app_lists.dart                    # Static option lists (genders, countries, categories)
+│   │   ├── asset_path.dart                   # Asset path constants
+│   │   └── url.dart                          # AppUrl with all API endpoints & image URL resolver
 │   ├── network/
-│   │   └── api_client.dart       # Base HTTP client with Bearer Token & multipart
+│   │   └── api_client.dart                   # HTTP client with Bearer token & multipart upload
+│   ├── services/
+│   │   └── in_app_notification_service.dart  # Animated overlay banner for incoming chat messages
 │   ├── utils/
-│   │   └── validators.dart       # Form input validators
+│   │   └── validators.dart                   # Form field validators
 │   └── widgets/
-│       ├── input_decoration.dart # Shared InputDecoration helper
-│       └── screen_background.dart# Shared background widget
-├── api/                          # Centralized API Implementation Layer
-│   ├── models/                   # Data Models (UserModel, ChatRoomModel, MessageModel)
-│   ├── controllers/              # API Controllers (AuthController, ChatController)
-│   └── providers/                # State Providers (AuthProvider, ChatProvider)
-└── features/                     # Feature UI & Presentation Layer
-    ├── auth/                     # Auth Presentation Screens (Login, SignUp, ForgotPass, ResetPass)
-    ├── navigation/               # Main Nav Shell, BottomNavBar, MainFAB
-    ├── profile/                  # UserProfileScreen, EditProfile, ChangePassword, ManageSettings
-    ├── trips/                    # Explore, ViewTrip, AddTrip, EditTrip, MyTrips, Rating, Comments
-    ├── bookmarks/                # BookmarksScreen
-    ├── notifications/            # NotificationsScreen
-    └── chat/                     # ChatInboxScreen & ChatRoomScreen
+│       ├── input_decoration.dart             # Shared InputDecoration helper
+│       └── screen_background.dart            # Shared screen background widget
+├── api/                                      # Centralized REST API Layer
+│   ├── models/                               # Data Models
+│   │   ├── bookmark_model.dart
+│   │   ├── chat_room_model.dart
+│   │   ├── comment_model.dart
+│   │   ├── message_model.dart
+│   │   ├── trip_model.dart
+│   │   └── user_model.dart
+│   ├── controllers/                          # API Controllers
+│   │   ├── auth_controller.dart
+│   │   ├── bookmark_controller.dart
+│   │   ├── chat_controller.dart
+│   │   ├── comment_controller.dart
+│   │   ├── profile_controller.dart
+│   │   └── trip_controller.dart
+│   └── providers/                            # ChangeNotifier State Providers
+│       ├── auth_provider.dart
+│       ├── bookmark_provider.dart
+│       ├── chat_provider.dart
+│       ├── comment_provider.dart
+│       ├── profile_provider.dart
+│       ├── trip_provider.dart
+│       └── trip_request_provider.dart
+└── features/                                 # Feature UI & Presentation Layer
+    ├── auth/presentation/                    # Splash, Login, SignUp, ForgotPassword, ResetPassword
+    ├── bookmarks/                            # BookmarksStore & BookmarksScreen
+    ├── chat/presentation/screens/            # ChatInboxScreen & ChatRoomScreen
+    ├── navigation/presentation/              # MainNavScreen, MainBottomNavBar, BottomNavItem, MainFAB
+    ├── notifications/                        # Notification models, store & NotificationsScreen
+    ├── profile/                              # CurrentUser, UserProfile, EditProfile, ChangePassword, Settings
+    └── trips/                                # Home, Explore, ViewTrip, AddTrip, EditTrip, MyTrips, Rating, Comments, ApprovalsDrawer
 ```
+
+---
+
+## API Endpoints Overview
+
+All endpoints are configured relative to `AppUrl.baseUrl` (`http://localhost/travel_buddy/api`) in `lib/core/constants/url.dart`:
+
+- **Auth:** `/login`, `/registration`, `/forgot_password`, `/verify_otp`, `/reset_password`, `/change_password`, `/logout`
+- **Profile:** `/profile`, `/update_profile`
+- **Trips & Requests:** `/all_trips`, `/category_trips`, `/create_trip`, `/update_trip`, `/delete_trip`, `/join_trip`, `/pending_requests`, `/accept_request`, `/reject_request`, `/respond_request`
+- **Bookmarks:** `/add_bookmark`, `/remove_bookmark`, `/my_bookmarks`
+- **Comments:** `/add_comment`, `/reply_comment`, `/get_comments`
+- **Chat:** `/chat_rooms`, `/start_chat`, `/get_messages`, `/send_message`
 
 ---
 
@@ -141,8 +169,8 @@ lib/
 ### Prerequisites
 
 - **Flutter** SDK
-- **Dart** SDK ^3.5.3
-- **Local XAMPP Server** with PHP 8+ and MariaDB
+- **Dart** SDK `^3.5.3`
+- **Local XAMPP Server** with PHP 8+ and MariaDB (or compatible backend host)
 - Android Studio / VS Code
 
 ### Installation
@@ -153,27 +181,33 @@ lib/
    cd Travel_Buddy_Finder
    ```
 
-2. **Get Dependencies**
+2. **Install dependencies**
    ```bash
    flutter pub get
    ```
 
-3. **Configure Local XAMPP Backend**
-   - Start Apache & MySQL in XAMPP Control Panel.
-   - Place PHP API files inside `htdocs/travel_buddy/api/`.
-   - Update `lib/core/constants/url.dart` with your base URL if needed.
+3. **Configure the PHP Backend**
+   - Start Apache & MySQL in the XAMPP Control Panel.
+   - Place the PHP API files inside `htdocs/travel_buddy/api/`.
+   - Update `AppUrl.baseUrl` in `lib/core/constants/url.dart` if your server host or path differs.
 
 4. **Run the app**
 
-   **Web:**
+   **Web (Chrome):**
    ```bash
    flutter run -d chrome
    ```
 
-   **Mobile (Android/iOS):**
+   **Mobile (Android / iOS):**
    ```bash
    flutter run
    ```
+
+   **Production Web Build:**
+   ```bash
+   flutter build web
+   ```
+   *(Pre-built web artifacts are output to `build/web/`.)*
 
 ---
 

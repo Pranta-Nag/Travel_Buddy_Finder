@@ -37,7 +37,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
   final _endDateController = TextEditingController();
   final _budgetController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _seatsController = TextEditingController();
+  final _seatsController = TextEditingController(text: '4');
 
   final List<String> _selectedTransportations = [];
 
@@ -54,8 +54,33 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     super.dispose();
   }
 
+  IconData _transportIcon(String method) {
+    final m = method.toLowerCase();
+    if (m.contains('flight') || m.contains('air') || m.contains('plane')) {
+      return Icons.flight_rounded;
+    }
+    if (m.contains('bus')) return Icons.directions_bus_rounded;
+    if (m.contains('train') || m.contains('rail')) return Icons.train_rounded;
+    if (m.contains('car') || m.contains('drive') || m.contains('road')) {
+      return Icons.directions_car_rounded;
+    }
+    if (m.contains('boat') || m.contains('ferry') || m.contains('ship') || m.contains('cruise')) {
+      return Icons.directions_boat_rounded;
+    }
+    if (m.contains('walk') || m.contains('trek') || m.contains('hike')) {
+      return Icons.directions_walk_rounded;
+    }
+    if (m.contains('bike') || m.contains('cycle')) {
+      return Icons.two_wheeler_rounded;
+    }
+    return Icons.commute_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isLoading = context.watch<TripProvider>().isLoading;
+
     return Scaffold(
       body: ScreenBackground(
         child: SafeArea(
@@ -65,41 +90,72 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                 onBack: () => Navigator.pop(context),
               ),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context).copyWith(
+                    scrollbars: false,
                   ),
-                  child: Card(
-                    color: Colors.white,
-                    elevation: 6,
-                    shadowColor: Colors.black.withValues(alpha: 0.08),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildTripDetailsSection(),
-                            const SizedBox(height: 20),
-                            _buildScheduleSection(),
-                            const SizedBox(height: 20),
-                            _buildMoreDetailsSection(),
-                            const SizedBox(height: 20),
-                            _buildTransportAndSeatsSection(),
-                            const SizedBox(height: 20),
-                            _buildCoverPhotoSection(),
-                            const SizedBox(height: 28),
-                            TripActionButtons(
-                              onCancel: () => Navigator.pop(context),
-                              onPublish: _submitTrip,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: size.width > 600 ? 540 : size.width,
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: AppColors.borderColor.withValues(alpha: 0.8),
+                              width: 1,
                             ),
-                            const SizedBox(height: 16),
-                          ],
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildTripDetailsSection(),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                ),
+                                _buildScheduleSection(),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                ),
+                                _buildMoreDetailsSection(),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                ),
+                                _buildTransportAndSeatsSection(),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                ),
+                                _buildCoverPhotoSection(),
+                                const SizedBox(height: 28),
+                                TripActionButtons(
+                                  isLoading: isLoading,
+                                  onCancel: () => Navigator.pop(context),
+                                  onPublish: _submitTrip,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -117,14 +173,20 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripSectionTitle(title: 'Trip Details'),
-        const SizedBox(height: 16),
-        const TripFieldLabel(text: 'Trip Title'),
+        const TripSectionTitle(
+          title: 'Trip Details',
+          icon: Icons.explore_outlined,
+        ),
+        const TripFieldLabel(text: 'Trip Title', isRequired: true),
         TextFormField(
           controller: _tripNameController,
+          textInputAction: TextInputAction.next,
           decoration: inputDecoration(
             hint: 'e.g. Summer Kyoto Temples Discovery',
-            prefixIcon: const Icon(Icons.title),
+            prefixIcon: const Icon(
+              Icons.flight_takeoff_rounded,
+              size: 20,
+            ),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
@@ -134,12 +196,16 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
           },
         ),
         const SizedBox(height: 16),
-        const TripFieldLabel(text: 'Destination City'),
+        const TripFieldLabel(text: 'Destination City', isRequired: true),
         TextFormField(
           controller: _destinationController,
+          textInputAction: TextInputAction.next,
           decoration: inputDecoration(
             hint: 'e.g. Bali, Indonesia',
-            prefixIcon: const Icon(Icons.location_on_rounded),
+            prefixIcon: const Icon(
+              Icons.location_on_rounded,
+              size: 20,
+            ),
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
@@ -156,8 +222,10 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripSectionTitle(title: 'Schedule & Budget'),
-        const SizedBox(height: 16),
+        const TripSectionTitle(
+          title: 'Schedule & Budget',
+          icon: Icons.calendar_month_outlined,
+        ),
         Row(
           children: [
             Expanded(
@@ -198,15 +266,16 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TripFieldLabel(text: label),
+        TripFieldLabel(text: label, isRequired: true),
         TextFormField(
           controller: controller,
           readOnly: true,
           onTap: () => _selectDate(controller),
           decoration: inputDecoration(
-            hint: 'Select date',
+            hint: 'YYYY-MM-DD',
             prefixIcon: const Icon(
               Icons.calendar_today_rounded,
+              size: 19,
             ),
           ),
           validator: (value) {
@@ -224,14 +293,16 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripFieldLabel(text: 'Budget'),
+        const TripFieldLabel(text: 'Budget (৳)', isRequired: true),
         TextFormField(
           controller: _budgetController,
           keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.next,
           decoration: inputDecoration(
-            hint: '\$1,200',
+            hint: 'e.g. 12000',
             prefixIcon: const Icon(
-              Icons.account_balance_wallet_rounded,
+              Icons.account_balance_wallet_outlined,
+              size: 20,
             ),
           ),
           validator: (value) {
@@ -249,21 +320,27 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripFieldLabel(text: 'Category'),
+        const TripFieldLabel(text: 'Category', isRequired: true),
         DropdownButtonFormField<String>(
           initialValue: _selectedCategory,
           isExpanded: true,
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(14),
           decoration: inputDecoration(
             hint: 'Adventure',
             prefixIcon: const Icon(
               Icons.category_rounded,
+              size: 20,
             ),
           ),
           items: AppLists.categories.map(
             (category) {
               return DropdownMenuItem<String>(
                 value: category,
-                child: Text(category),
+                child: Text(
+                  category,
+                  style: const TextStyle(fontSize: 14),
+                ),
               );
             },
           ).toList(),
@@ -287,16 +364,19 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripSectionTitle(title: 'More Details'),
-        const SizedBox(height: 16),
-        const TripFieldLabel(text: 'Description & Pace'),
+        const TripSectionTitle(
+          title: 'Trip Itinerary & Story',
+          icon: Icons.notes_outlined,
+        ),
+        const TripFieldLabel(text: 'Description & Pace', isRequired: true),
         TextFormField(
           controller: _descriptionController,
           maxLines: 4,
           decoration: inputDecoration(
-            hint: 'Details about itinerary and partner expectations...',
+            hint: 'Describe your route, travel pace, planned activities, and what kind of buddy you are looking for...',
             prefixIcon: const Icon(
-              Icons.description_rounded,
+              Icons.edit_note_rounded,
+              size: 22,
             ),
           ),
           validator: (value) {
@@ -314,24 +394,34 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripSectionTitle(title: 'Transport & Seats'),
-        const SizedBox(height: 16),
+        const TripSectionTitle(
+          title: 'Transport & Seats',
+          icon: Icons.commute_outlined,
+        ),
         const TripFieldLabel(text: 'Transportation Methods'),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: ExploreFilterData.transportationMethods.map((method) {
             final isSelected = _selectedTransportations.contains(method);
-            return ChoiceChip(
+            final icon = _transportIcon(method);
+
+            return FilterChip(
+              avatar: Icon(
+                icon,
+                size: 16,
+                color: isSelected ? Colors.white : AppColors.primary,
+              ),
               label: Text(
                 method,
                 style: TextStyle(
-                  color: isSelected ? AppColors.primary : Colors.grey.shade700,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
               selected: isSelected,
+              showCheckmark: false,
               onSelected: (bool selected) {
                 setState(() {
                   if (selected) {
@@ -341,37 +431,79 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   }
                 });
               },
-              backgroundColor: Colors.grey.shade100,
-              selectedColor: AppColors.primary.withValues(alpha: 0.12),
+              backgroundColor: AppColors.fieldColor,
+              selectedColor: AppColors.primary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                  color: isSelected ? AppColors.primary : AppColors.borderColor,
+                  width: 1.2,
                 ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             );
           }).toList(),
         ),
-        const SizedBox(height: 16),
-        const TripFieldLabel(text: 'Available Seats'),
-        TextFormField(
-          controller: _seatsController,
-          keyboardType: TextInputType.number,
-          decoration: inputDecoration(
-            hint: 'e.g. 4',
-            prefixIcon: const Icon(Icons.event_seat_rounded),
-          ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Enter number of seats';
-            }
-            final count = int.tryParse(value.trim());
-            if (count == null || count <= 0) {
-              return 'Enter a valid number of seats';
-            }
-            return null;
-          },
+        const SizedBox(height: 18),
+        const TripFieldLabel(text: 'Available Seats', isRequired: true),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _seatsController,
+                keyboardType: TextInputType.number,
+                decoration: inputDecoration(
+                  hint: 'e.g. 4',
+                  prefixIcon: const Icon(
+                    Icons.group_outlined,
+                    size: 20,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Enter number of seats';
+                  }
+                  final count = int.tryParse(value.trim());
+                  if (count == null || count <= 0) {
+                    return 'Enter a valid number of seats';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.fieldColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.borderColor, width: 1.2),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    splashRadius: 18,
+                    icon: const Icon(Icons.remove_rounded, size: 18, color: AppColors.primary),
+                    onPressed: () {
+                      final current = int.tryParse(_seatsController.text.trim()) ?? 1;
+                      if (current > 1) {
+                        _seatsController.text = '${current - 1}';
+                        setState(() {});
+                      }
+                    },
+                  ),
+                  IconButton(
+                    splashRadius: 18,
+                    icon: const Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+                    onPressed: () {
+                      final current = int.tryParse(_seatsController.text.trim()) ?? 0;
+                      _seatsController.text = '${current + 1}';
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -381,8 +513,11 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TripFieldLabel(text: 'Cover Photo'),
-        const SizedBox(height: 8),
+        const TripSectionTitle(
+          title: 'Cover Photo',
+          icon: Icons.add_photo_alternate_outlined,
+        ),
+        const TripFieldLabel(text: 'Trip Cover Image', isRequired: true),
         TripImagePicker(
           imageBytes: _coverImageBytes,
           onTap: _pickCoverImage,
@@ -462,7 +597,15 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }

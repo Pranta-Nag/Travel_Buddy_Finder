@@ -38,49 +38,63 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const Text(
-              'Messages',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.5,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.borderColor.withValues(alpha: 0.8),
+                width: 1,
               ),
             ),
-            if (unreadTotal > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  unreadTotal > 99 ? '99+' : '$unreadTotal',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
+          ),
+          child: AppBar(
+            title: Row(
+              children: [
+                const Text(
+                  'Messages',
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                if (unreadTotal > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      unreadTotal > 99 ? '99+' : '$unreadTotal',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
+                onPressed: () => chatProvider.fetchChatRooms(silent: true),
+                tooltip: 'Refresh conversations',
               ),
             ],
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF475569)),
-            onPressed: () => chatProvider.fetchChatRooms(silent: true),
-            tooltip: 'Refresh conversations',
           ),
-        ],
+        ),
       ),
       body: StreamBuilder<List<ChatRoomModel>>(
         stream: chatProvider.roomsStream,
@@ -167,10 +181,14 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Container(
-                  height: 42,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.fieldColor,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.borderColor,
+                      width: 1,
+                    ),
                   ),
                   child: TextField(
                     controller: _searchController,
@@ -181,17 +199,17 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                       hintText: 'Search chats or tour titles...',
                       hintStyle: const TextStyle(
                         fontSize: 13.5,
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textTertiary,
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
                         size: 20,
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textTertiary,
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear_rounded,
-                                  size: 16, color: Color(0xFF94A3B8)),
+                                  size: 16, color: AppColors.textTertiary),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -199,7 +217,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                             )
                           : null,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
@@ -292,14 +310,14 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: hasUnread
-                  ? AppColors.primary.withValues(alpha: 0.3)
-                  : const Color(0xFFF1F5F9),
+                  ? AppColors.primary
+                  : AppColors.borderColor,
               width: hasUnread ? 1.5 : 1.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 6,
+                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -352,7 +370,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444),
+                          color: AppColors.error,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -483,7 +501,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 7, vertical: 2.5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444),
+                              color: AppColors.error,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(

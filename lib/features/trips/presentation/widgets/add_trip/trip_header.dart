@@ -3,10 +3,14 @@ import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 
 class TripHeader extends StatelessWidget {
   final VoidCallback onBack;
+  final String title;
+  final String subtitle;
 
   const TripHeader({
     super.key,
     required this.onBack,
+    this.title = 'Create New Trip',
+    this.subtitle = 'Share your journey with fellow travelers',
   });
 
   @override
@@ -17,62 +21,91 @@ class TripHeader extends StatelessWidget {
         vertical: 14,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: Colors.white,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(20),
-          bottomRight: Radius.circular(20),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.borderColor.withValues(alpha: 0.8),
+            width: 1,
+          ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(
-                alpha: 0.08,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              onPressed: onBack,
-              icon: const Icon(
-                Icons.arrow_back_ios_rounded,
-                color: AppColors.greyText,
-                size: 18,
+          Material(
+            color: AppColors.primarySoft,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onBack,
+              borderRadius: BorderRadius.circular(12),
+              child: const SizedBox(
+                height: 40,
+                width: 40,
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.primary,
+                  size: 18,
+                ),
               ),
             ),
           ),
-
-          const SizedBox(width: 10),
-
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Create New Trip',
-                  style: TextStyle(
+                Text(
+                  title,
+                  style: const TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
                   ),
                 ),
-
                 const SizedBox(height: 2),
-
                 Text(
-                  'Share your journey with fellow travelers',
-                  style: TextStyle(
+                  subtitle,
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.greyText
-                        .withValues(alpha: 0.8),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.edit_note_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  "Draft",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
                 ),
               ],

@@ -38,15 +38,9 @@ class _MyTripScreenState extends State<MyTripScreen> {
             screenWidth < 600 ? 1 : screenWidth < 1000 ? 2 : 4;
         final cardHeight = screenWidth < 600 ? 420.0 : 360.0;
 
-        final Set<String> seenIds = {};
-        final List<Trip> combined = [];
-
-        for (final t in apiTrips) {
-          if (seenIds.add(t.id)) combined.add(t);
-        }
-        for (final t in TripStore.trips) {
-          if (seenIds.add(t.id)) combined.add(t);
-        }
+        final List<Trip> combined = apiTrips.isNotEmpty
+            ? apiTrips
+            : TripStore.trips;
 
         final myTrips = combined.where((trip) {
           return CurrentUser.isCurrentUser(

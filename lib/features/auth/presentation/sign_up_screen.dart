@@ -107,9 +107,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -172,13 +179,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget fieldLabel(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 7),
       child: Text(
         title,
         style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF374151),
+          color: Color(0xFF334155),
           letterSpacing: 0.1,
         ),
       ),
@@ -211,98 +218,171 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 30,
+                  vertical: 24,
                 ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                     maxWidth: size.width > 600 ? 480 : size.width,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      24,
-                      28,
-                      24,
-                      28,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: AppColors.borderColor.withValues(alpha: 0.8),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.07),
+                          blurRadius: 28,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
+                    padding: const EdgeInsets.fromLTRB(24, 30, 24, 26),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 22),
+                          // App Branding Badge
+                          Center(
+                            child: Container(
+                              height: 68,
+                              width: 68,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [AppColors.primary, AppColors.primaryDark],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.35),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.person_add_alt_1_rounded,
+                                size: 34,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
 
                           // Title
                           const Text(
                             "Create Account",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 26,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
+                              color: AppColors.textPrimary,
                               letterSpacing: -0.5,
                             ),
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
 
                           const Text(
-                            "Join our Travel Buddy Finder community",
+                            "Join the Travel Buddy Finder community",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Color(0xFF6B7280),
-                              height: 1.5,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
                             ),
                           ),
 
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
 
-                          // Profile Image
+                          // Profile Image Picker
                           Center(
                             child: GestureDetector(
                               onTap: _pickProfileImage,
-                              child: Stack(
+                              child: Column(
                                 children: [
-                                  Container(
-                                    height: 96,
-                                    width: 96,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: AppColors.fieldColor,
-                                      border: Border.all(
-                                        color: AppColors.borderColor,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: _profileImageBytes != null
-                                        ? ClipOval(
-                                            child: Image.memory(
-                                              _profileImageBytes!,
-                                              fit: BoxFit.cover,
-                                              width: 96,
-                                              height: 96,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons.person_outlined,
-                                            size: 44,
-                                            color: AppColors.greyText,
+                                  Stack(
+                                    children: [
+                                      Container(
+                                        height: 98,
+                                        width: 98,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: AppColors.fieldColor,
+                                          border: Border.all(
+                                            color: AppColors.primary.withValues(alpha: 0.25),
+                                            width: 3,
                                           ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.05),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: _profileImageBytes != null
+                                            ? ClipOval(
+                                                child: Image.memory(
+                                                  _profileImageBytes!,
+                                                  fit: BoxFit.cover,
+                                                  width: 98,
+                                                  height: 98,
+                                                ),
+                                              )
+                                            : const Icon(
+                                                Icons.person_outline_rounded,
+                                                size: 46,
+                                                color: AppColors.greyText,
+                                              ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(7),
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [AppColors.primary, AppColors.primaryDark],
+                                            ),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2.5,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: AppColors.primary.withValues(alpha: 0.35),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 15,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Positioned(
-                                    right: 0,
-                                    bottom: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.primary,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.camera_alt_rounded,
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _profileImageBytes != null
+                                        ? "Change profile photo"
+                                        : "Upload profile photo",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ],
@@ -310,7 +390,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 22),
 
                           // Full Name
                           fieldLabel("Full Name"),
@@ -319,7 +399,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             textInputAction: TextInputAction.next,
                             decoration: inputDecoration(
                               hint: "Enter your full name",
-                              prefixIcon: const Icon(Icons.person_outline_rounded),
+                              prefixIcon: const Icon(
+                                Icons.person_outline_rounded,
+                                size: 20,
+                              ),
                             ),
                             validator: (value) => AppValidators.required(
                               value,
@@ -337,7 +420,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             textInputAction: TextInputAction.next,
                             decoration: inputDecoration(
                               hint: "Choose a unique username",
-                              prefixIcon: const Icon(Icons.alternate_email_rounded),
+                              prefixIcon: const Icon(
+                                Icons.alternate_email_rounded,
+                                size: 20,
+                              ),
                               suffixIcon: _usernameAvailable == null
                                   ? null
                                   : Icon(
@@ -345,8 +431,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           ? Icons.check_circle_rounded
                                           : Icons.cancel_rounded,
                                       color: _usernameAvailable!
-                                          ? Colors.green
-                                          : Colors.redAccent,
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                      size: 20,
                                     ),
                             ),
                             validator: (value) {
@@ -362,25 +449,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                           ),
                           const SizedBox(height: 6),
-                          Text(
-                            _usernameAvailable == null
-                                ? "Choose a unique username"
-                                : _usernameAvailable!
-                                    ? "Username available"
-                                    : "Username already exists",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _usernameAvailable == null
-                                  ? AppColors.greyText
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              _usernameAvailable == null
+                                  ? "Choose a unique handle without spaces"
                                   : _usernameAvailable!
-                                      ? Colors.green
-                                      : Colors.redAccent,
+                                      ? "✓ Username available"
+                                      : "✕ Username already taken",
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: _usernameAvailable == null
+                                    ? AppColors.textTertiary
+                                    : _usernameAvailable!
+                                        ? AppColors.success
+                                        : AppColors.error,
+                              ),
                             ),
                           ),
 
                           const SizedBox(height: 16),
 
-                          // Gender & Country
+                          // Gender & Country in Row
                           Row(
                             children: [
                               Expanded(
@@ -390,15 +481,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     fieldLabel("Gender"),
                                     DropdownButtonFormField<String>(
                                       isExpanded: true,
+                                      dropdownColor: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
                                       initialValue: _selectedGender,
                                       decoration: inputDecoration(
-                                        prefixIcon: const Icon(Icons.wc_rounded),
+                                        prefixIcon: const Icon(
+                                          Icons.wc_rounded,
+                                          size: 20,
+                                        ),
                                       ),
                                       items: AppLists.genders
                                           .map(
                                             (gender) => DropdownMenuItem(
                                               value: gender,
-                                              child: Text(gender),
+                                              child: Text(
+                                                gender,
+                                                style: const TextStyle(fontSize: 14),
+                                              ),
                                             ),
                                           )
                                           .toList(),
@@ -420,14 +519,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     DropdownButtonFormField<String>(
                                       initialValue: _selectedCountry,
                                       isExpanded: true,
+                                      dropdownColor: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
                                       decoration: inputDecoration(
-                                        prefixIcon: const Icon(Icons.public_rounded),
+                                        prefixIcon: const Icon(
+                                          Icons.public_rounded,
+                                          size: 20,
+                                        ),
                                       ),
                                       items: AppLists.countries
                                           .map(
                                             (country) => DropdownMenuItem(
                                               value: country,
-                                              child: Text(country),
+                                              child: Text(
+                                                country,
+                                                style: const TextStyle(fontSize: 14),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
                                           )
                                           .toList(),
@@ -445,38 +553,101 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                           const SizedBox(height: 16),
 
-                          // NID Card
-                          fieldLabel("NID Card"),
-                          OutlinedButton.icon(
-                            onPressed: _pickNidImage,
-                            icon: const Icon(
-                              Icons.badge_outlined,
-                            ),
-                            label: Text(
-                              _nidImageBytes == null
-                                  ? "Upload NID Copy"
-                                  : "Change NID Copy",
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              foregroundColor: AppColors.primary,
-                              side: const BorderSide(color: AppColors.primary),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          // NID Document Upload
+                          fieldLabel("National ID / Passport Copy"),
+                          GestureDetector(
+                            onTap: _pickNidImage,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 13,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.fieldColor,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _nidImageBytes != null
+                                      ? AppColors.success
+                                      : AppColors.borderColor,
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(9),
+                                    decoration: BoxDecoration(
+                                      color: _nidImageBytes != null
+                                          ? AppColors.success.withValues(alpha: 0.12)
+                                          : AppColors.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      _nidImageBytes != null
+                                          ? Icons.check_circle_rounded
+                                          : Icons.badge_outlined,
+                                      color: _nidImageBytes != null
+                                          ? AppColors.success
+                                          : AppColors.primary,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _nidImageBytes == null
+                                              ? "Upload NID Copy"
+                                              : "NID Document Attached",
+                                          style: TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: _nidImageBytes != null
+                                                ? AppColors.textPrimary
+                                                : AppColors.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _nidImageBytes == null
+                                              ? "JPG or PNG file for verification"
+                                              : "Tap to change image",
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            color: AppColors.textTertiary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    _nidImageBytes == null
+                                        ? Icons.file_upload_outlined
+                                        : Icons.swap_horiz_rounded,
+                                    color: _nidImageBytes != null
+                                        ? AppColors.success
+                                        : AppColors.primary,
+                                    size: 20,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                           if (_nidImageBytes != null) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             Container(
-                              height: 160,
+                              height: 140,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppColors.borderColor),
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(11),
+                                borderRadius: BorderRadius.circular(13),
                                 child: Image.memory(
                                   _nidImageBytes!,
                                   fit: BoxFit.cover,
@@ -484,7 +655,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     return const Center(
                                       child: Text(
                                         "Error loading image preview",
-                                        style: TextStyle(color: Colors.redAccent),
+                                        style: TextStyle(color: AppColors.error),
                                       ),
                                     );
                                   },
@@ -504,7 +675,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             textInputAction: TextInputAction.next,
                             decoration: inputDecoration(
                               hint: "Select your birth date",
-                              prefixIcon: const Icon(Icons.calendar_month_outlined),
+                              prefixIcon: const Icon(
+                                Icons.calendar_month_outlined,
+                                size: 20,
+                              ),
                             ),
                             validator: (value) => AppValidators.required(
                               value,
@@ -522,7 +696,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             textInputAction: TextInputAction.next,
                             decoration: inputDecoration(
                               hint: "Enter your email",
-                              prefixIcon: const Icon(Icons.email_outlined),
+                              prefixIcon: const Icon(
+                                Icons.email_outlined,
+                                size: 20,
+                              ),
                             ),
                             validator: AppValidators.email,
                           ),
@@ -537,9 +714,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             textInputAction: TextInputAction.done,
                             decoration: inputDecoration(
                               hint: "Enter your password",
-                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                                size: 20,
+                              ),
                               suffixIcon: IconButton(
-                                splashRadius: 22,
+                                splashRadius: 20,
                                 tooltip: _obscurePassword
                                     ? "Show password"
                                     : "Hide password",
@@ -547,8 +727,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   _obscurePassword
                                       ? Icons.visibility_off_outlined
                                       : Icons.visibility_outlined,
-                                  color: const Color(0xFF6B7280),
-                                  size: 21,
+                                  color: AppColors.greyText,
+                                  size: 20,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -560,49 +740,79 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             validator: AppValidators.password,
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
                           // Terms Checkbox
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Checkbox(
-                                value: _agreeTerms,
-                                activeColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _agreeTerms,
+                                  activeColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _agreeTerms = value ?? false;
+                                    });
+                                  },
                                 ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _agreeTerms = value ?? false;
-                                  });
-                                },
                               ),
+                              const SizedBox(width: 10),
                               const Expanded(
-                                child: Padding(
-                                  padding: EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    "I agree to the Terms & Conditions and Travel Safety Guidelines.",
-                                    style: TextStyle(fontSize: 13),
+                                child: Text(
+                                  "I agree to the Terms & Conditions and Travel Safety Guidelines.",
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: AppColors.textSecondary,
+                                    height: 1.4,
                                   ),
                                 ),
                               ),
                             ],
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 22),
 
-                          // Sign Up Button
-                          SizedBox(
-                            height: 54,
+                          // Sign Up CTA Button
+                          Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: LinearGradient(
+                                colors: isLoading
+                                    ? [
+                                        AppColors.primary.withValues(alpha: 0.65),
+                                        AppColors.primaryDark.withValues(alpha: 0.65),
+                                      ]
+                                    : [
+                                        AppColors.primary,
+                                        AppColors.primaryDark,
+                                      ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: isLoading
+                                  ? []
+                                  : [
+                                      BoxShadow(
+                                        color: AppColors.primary.withValues(alpha: 0.32),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                            ),
                             child: ElevatedButton(
                               onPressed: isLoading ? null : _signUp,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: Colors.transparent,
                                 foregroundColor: Colors.white,
-                                elevation: 2,
-                                shadowColor:
-                                    AppColors.primary.withValues(alpha: 0.25),
+                                shadowColor: Colors.transparent,
+                                disabledBackgroundColor: Colors.transparent,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
@@ -618,18 +828,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         ),
                                       ),
                                     )
-                                  : const Text(
-                                      "Continue Registration",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.2,
-                                      ),
+                                  : const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          "Create Account",
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.2,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                      ],
                                     ),
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
 
                           // Login Link
                           Row(
@@ -638,8 +860,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               const Text(
                                 "Already have an account?",
                                 style: TextStyle(
-                                  color: Color(0xFF6B7280),
+                                  color: AppColors.textSecondary,
                                   fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               TextButton(
@@ -652,12 +875,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   );
                                 },
                                 style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.only(
-                                    left: 5,
-                                  ),
+                                  padding: const EdgeInsets.only(left: 6),
                                   minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: const Text(
                                   "Login",

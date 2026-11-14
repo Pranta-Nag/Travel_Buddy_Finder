@@ -1,5 +1,4 @@
 import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
-import 'package:travel_buddy_finder/api/models/chat_room_model.dart';
 import 'package:travel_buddy_finder/features/chat/presentation/screens/chat_room_screen.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -10,6 +9,7 @@ import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/manage_account_settings_screen.dart';
+import 'package:travel_buddy_finder/features/profile/presentation/edit_profile_screen.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/features/bookmarks/presentation/bookmarks_screen.dart';
@@ -53,6 +53,7 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late String _name;
   late String _username;
   late String _avatarUrl;
@@ -173,7 +174,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  Widget _buildAvatarWidget(String avatarUrl, String? gender) {
+  Widget _buildAvatarWidget(String avatarUrl, String? gender, {VoidCallback? onEdit}) {
     final defaultAsset = (gender ?? '').toLowerCase().contains('fem') ||
             (gender ?? '').toLowerCase().contains('girl')
         ? 'assets/images/dummy_girl.png'
@@ -183,29 +184,29 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     if (_avatarBytes != null) {
       imageWidget = Image.memory(
         _avatarBytes!,
-        width: 120,
-        height: 120,
+        width: 110,
+        height: 110,
         fit: BoxFit.cover,
       );
     } else if (avatarUrl.isNotEmpty &&
         (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'))) {
       imageWidget = Image.network(
         avatarUrl,
-        width: 120,
-        height: 120,
+        width: 110,
+        height: 110,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Image.asset(
           defaultAsset,
-          width: 120,
-          height: 120,
+          width: 110,
+          height: 110,
           fit: BoxFit.cover,
         ),
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
-            width: 120,
-            height: 120,
-            color: Colors.grey.shade200,
+            width: 110,
+            height: 110,
+            color: const Color(0xFFF1F5F9),
             child: const Center(
               child: SizedBox(
                 width: 24,
@@ -222,8 +223,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } else if (avatarUrl.startsWith('assets/')) {
       imageWidget = Image.asset(
         avatarUrl,
-        width: 120,
-        height: 120,
+        width: 110,
+        height: 110,
         fit: BoxFit.cover,
       );
     } else if (avatarUrl.isNotEmpty) {
@@ -231,48 +232,111 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       if (resolved.startsWith('http://') || resolved.startsWith('https://')) {
         imageWidget = Image.network(
           resolved,
-          width: 120,
-          height: 120,
+          width: 110,
+          height: 110,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Image.asset(
             defaultAsset,
-            width: 120,
-            height: 120,
+            width: 110,
+            height: 110,
             fit: BoxFit.cover,
           ),
         );
       } else {
         imageWidget = Image.asset(
           defaultAsset,
-          width: 120,
-          height: 120,
+          width: 110,
+          height: 110,
           fit: BoxFit.cover,
         );
       }
     } else {
       imageWidget = Image.asset(
         defaultAsset,
-        width: 120,
-        height: 120,
+        width: 110,
+        height: 110,
         fit: BoxFit.cover,
       );
     }
 
-    return Container(
-      width: 124,
-      height: 124,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 114,
+          height: 114,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ClipOval(child: imageWidget),
+          padding: const EdgeInsets.all(3),
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            padding: const EdgeInsets.all(2.5),
+            child: ClipOval(child: imageWidget),
+          ),
+        ),
+        if (onEdit != null)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onEdit,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(7.5),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    size: 13,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          )
+        else if (!widget.isCurrentUser)
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -311,14 +375,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final tripProvider = context.watch<TripProvider>();
     final apiTrips = tripProvider.trips.map((m) => m.toTrip()).toList();
 
-    final Set<String> seenIds = {};
-    final List<Trip> allTrips = [];
-    for (final t in apiTrips) {
-      if (seenIds.add(t.id)) allTrips.add(t);
-    }
-    for (final t in TripStore.trips) {
-      if (seenIds.add(t.id)) allTrips.add(t);
-    }
+    // Use API trips if available, otherwise fallback to local mock TripStore
+    final List<Trip> allTrips = apiTrips.isNotEmpty
+        ? apiTrips
+        : TripStore.trips;
 
     final targetUsername = widget.isCurrentUser
         ? (authUser?.username ?? CurrentUser.username)
@@ -341,11 +401,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       }
     }).toList();
 
-    final hostedCount = (authUser?.totalHostedTrips ?? 0) > 0
-        ? authUser!.totalHostedTrips
-        : hostedTrips.length;
+    final hostedCount = hostedTrips.isNotEmpty
+        ? hostedTrips.length
+        : ((authUser?.totalHostedTrips ?? 0) > 0 ? authUser!.totalHostedTrips : 0);
 
     return Scaffold(
+      key: _scaffoldKey,
       endDrawer: widget.isCurrentUser ? const ApprovalsDrawer() : null,
       body: ScreenBackground(
         child: SafeArea(
@@ -368,7 +429,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Top Navigation Bar
                   if (canGoBack) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -376,51 +439,65 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: AppColors.borderColor, width: 1),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: const Color(0xFF0F172A)
+                                    .withValues(alpha: 0.04),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
                           child: IconButton(
+                            splashRadius: 22,
                             icon: const Icon(Icons.arrow_back_rounded,
-                                color: Color(0xFF1F2937)),
+                                color: Color(0xFF0F172A), size: 20),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
                         Text(
-                          widget.isCurrentUser ? "My Profile" : "User Profile",
+                          widget.isCurrentUser ? "My Profile" : "Traveler Profile",
                           style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
                           ),
                         ),
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: AppColors.borderColor, width: 1),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: const Color(0xFF0F172A)
+                                    .withValues(alpha: 0.04),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
                             ],
                           ),
                           child: IconButton(
+                            splashRadius: 22,
                             icon: const Icon(Icons.share_outlined,
-                                color: Color(0xFF1F2937), size: 20),
+                                color: Color(0xFF0F172A), size: 18),
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text("Profile link copied to clipboard!"),
-                                  duration: Duration(seconds: 1),
+                                SnackBar(
+                                  content: const Text(
+                                      "Profile link copied to clipboard!"),
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  duration: const Duration(seconds: 2),
                                   behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.all(16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               );
                             },
@@ -428,10 +505,117 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                   ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "My Profile",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Manage your account & travel presence",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: AppColors.borderColor, width: 1),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0F172A)
+                                        .withValues(alpha: 0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                splashRadius: 22,
+                                icon: const Icon(Icons.share_outlined,
+                                    color: Color(0xFF0F172A), size: 18),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          "Profile link copied to clipboard!"),
+                                      backgroundColor: const Color(0xFF0F172A),
+                                      duration: const Duration(seconds: 2),
+                                      behavior: SnackBarBehavior.floating,
+                                      margin: const EdgeInsets.all(16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: AppColors.borderColor, width: 1),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0F172A)
+                                        .withValues(alpha: 0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                splashRadius: 22,
+                                icon: const Icon(Icons.tune_rounded,
+                                    color: Color(0xFF0F172A), size: 18),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ManageAccountSettingsScreen(
+                                        name: displayName,
+                                        username: displayUsername,
+                                        avatarUrl: displayAvatar,
+                                        avatarBytes: _avatarBytes,
+                                        onProfileUpdated: _updateProfile,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
                   ],
+
                   if (isLoading && authUser == null && _name.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 60),
@@ -442,241 +626,489 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ),
                     )
                   else ...[
-                    Column(
-                      children: [
-                        _buildAvatarWidget(displayAvatar, displayGender),
-                        const SizedBox(height: 16),
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "$displayUsername • ${authUser?.level ?? widget.level}",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
+                    // Hero Profile Card
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 22),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border:
+                            Border.all(color: AppColors.borderColor, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F172A)
+                                .withValues(alpha: 0.04),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildAvatarWidget(
+                            displayAvatar,
+                            displayGender,
+                            onEdit: widget.isCurrentUser
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EditProfileScreen(
+                                          name: displayName,
+                                          username: displayUsername,
+                                          avatarUrl: displayAvatar,
+                                          avatarBytes: _avatarBytes,
+                                          onProfileUpdated: _updateProfile,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  displayName,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.verified_rounded,
+                                size: 20,
+                                color: AppColors.primary,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                displayUsername,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (authUser?.country != null &&
+                                  authUser!.country!.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                const Text("•",
+                                    style:
+                                        TextStyle(color: Color(0xFF94A3B8))),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.location_on_rounded,
+                                  size: 13,
+                                  color: Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  authUser.country!,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.2),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.stars_rounded,
+                                      size: 13,
+                                      color: AppColors.primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      authUser?.level ?? widget.level,
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFA7F3D0),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.shield_outlined,
+                                      size: 13,
+                                      color: Color(0xFF059669),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "Verified Member",
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF059669),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Travel Statistics Card
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 18, horizontal: 12),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
+                        border:
+                            Border.all(color: AppColors.borderColor, width: 1),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
+                            color: const Color(0xFF0F172A)
+                                .withValues(alpha: 0.04),
+                            blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildStatItem("${authUser?.totalJoinedTrips ?? 0}", "TRIPS JOINED"),
+                          Expanded(
+                            child: _buildStatItem(
+                              value: "${authUser?.totalJoinedTrips ?? 0}",
+                              label: "TRIPS JOINED",
+                              icon: Icons.luggage_outlined,
+                              color: const Color(0xFF3B82F6),
+                            ),
+                          ),
                           _buildDivider(),
-                          _buildStatItem("$hostedCount", "HOSTED TRIPS"),
+                          Expanded(
+                            child: _buildStatItem(
+                              value: "$hostedCount",
+                              label: "HOSTED TRIPS",
+                              icon: Icons.flight_takeoff_rounded,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
                           _buildDivider(),
-                          _buildStatItem(authUser?.rating ?? "5.0", "AVG RATING"),
+                          Expanded(
+                            child: _buildStatItem(
+                              value: authUser?.rating ?? "5.0",
+                              label: "AVG RATING",
+                              icon: Icons.star_rounded,
+                              color: const Color(0xFFF59E0B),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ],
-                const SizedBox(height: 20),
-                _buildSection(
-                  title: "TRAVEL INTERESTS",
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _buildInterestChip("Solo Travel"),
-                      _buildInterestChip("Beach Volley"),
-                      _buildInterestChip("Photography"),
-                      _buildInterestChip("Backpacking"),
-                      _buildInterestChip("Zen Temples"),
-                      _buildInterestChip("Gourmet Eating"),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildSection(
-                  title: "ACHIEVEMENTS / BADGES",
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _buildBadgeItem("🏅", "Wanderlust"),
-                      _buildBadgeItem("🔥", "5-Streak"),
-                      _buildBadgeItem("🛡️", "ID Verified"),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (widget.isCurrentUser)
+                  const SizedBox(height: 18),
+
+                  // Quick Actions Hub (for current user)
+                  if (widget.isCurrentUser) ...[
+                    _buildSection(
+                      title: "QUICK ACTIONS",
+                      icon: Icons.bolt_rounded,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildQuickActionCard(
+                              icon: Icons.bookmark_rounded,
+                              iconBg: const Color(0xFFEEF2FF),
+                              iconColor: const Color(0xFF4F46E5),
+                              title: "Bookmarks",
+                              subtitle: "Saved Trips",
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const BookmarksScreen(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ValueListenableBuilder<List<TripRequest>>(
+                              valueListenable: TripRequestStore.requests,
+                              builder: (context, requests, _) {
+                                final localPending =
+                                    TripRequestStore.pendingCountForHost(
+                                        authUser?.username ??
+                                            CurrentUser.username);
+                                final pending =
+                                    (authUser?.pendingRequestsCount ?? 0) > 0
+                                        ? authUser!.pendingRequestsCount
+                                        : localPending;
+                                return _buildQuickActionCard(
+                                  icon: Icons.checklist_rtl_rounded,
+                                  iconBg: pending > 0
+                                      ? const Color(0xFFFEF2F2)
+                                      : const Color(0xFFFFFBEB),
+                                  iconColor: pending > 0
+                                      ? AppColors.error
+                                      : const Color(0xFFD97706),
+                                  title: "Approvals",
+                                  subtitle: pending > 0
+                                      ? "$pending pending"
+                                      : "Requests",
+                                  badgeCount: pending,
+                                  onTap: () => _scaffoldKey.currentState
+                                      ?.openEndDrawer(),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildQuickActionCard(
+                              icon: Icons.hiking_rounded,
+                              iconBg: const Color(0xFFECFDF5),
+                              iconColor: const Color(0xFF059669),
+                              title: "My Trips",
+                              subtitle: "Created/Joined",
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const MyTripScreen(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+
+                  // Travel Interests
                   _buildSection(
-                    title: "QUICK ACTIONS",
+                    title: "TRAVEL INTERESTS",
+                    icon: Icons.interests_outlined,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildInterestChip("Solo Travel"),
+                        _buildInterestChip("Beach Volley"),
+                        _buildInterestChip("Photography"),
+                        _buildInterestChip("Backpacking"),
+                        _buildInterestChip("Zen Temples"),
+                        _buildInterestChip("Gourmet Eating"),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Achievements & Badges
+                  _buildSection(
+                    title: "ACHIEVEMENTS & BADGES",
+                    icon: Icons.military_tech_outlined,
                     child: Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        _buildQuickActionItem(
-                          Icons.bookmark_border_rounded,
-                          "Bookmark",
-                          onTap: () => Navigator.of(context).push(
+                        _buildBadgeItem("🏅", "Wanderlust", "Top Explorer"),
+                        _buildBadgeItem("🔥", "5-Streak", "Active Week"),
+                        _buildBadgeItem("🛡️", "ID Verified", "Trusted Host"),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Hosted Trips Section
+                  _buildHostedTripsSection(hostedTrips),
+                  const SizedBox(height: 24),
+                  if (widget.isCurrentUser) ...[
+                    Container(
+                      width: double.infinity,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF0F172A).withValues(alpha: 0.12),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
                             MaterialPageRoute(
-                              builder: (_) => const BookmarksScreen(),
+                              builder: (_) => ManageAccountSettingsScreen(
+                                name: displayName,
+                                username: displayUsername,
+                                avatarUrl: displayAvatar,
+                                avatarBytes: _avatarBytes,
+                                onProfileUpdated: _updateProfile,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.tune_rounded,
+                            size: 20, color: Colors.white),
+                        label: const Text(
+                          "Manage Account Settings",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F172A),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.25),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton.icon(
+                              onPressed: () => _openDirectChat(
+                                displayName: displayName,
+                                displayUsername: displayUsername,
+                                displayAvatar: displayAvatar,
+                                hostedTrips: hostedTrips,
+                                allTrips: allTrips,
+                              ),
+                              icon: const Icon(Icons.chat_bubble_outline_rounded,
+                                  color: Colors.white, size: 18),
+                              label: const Text(
+                                "Message",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                        ValueListenableBuilder<List<TripRequest>>(
-                          valueListenable: TripRequestStore.requests,
-                          builder: (context, requests, _) {
-                            final localPending =
-                                TripRequestStore.pendingCountForHost(
-                                    authUser?.username ?? CurrentUser.username);
-                            final pending = (authUser?.pendingRequestsCount ?? 0) > 0
-                                ? authUser!.pendingRequestsCount
-                                : localPending;
-                            return _buildQuickActionItem(
-                              Icons.fact_check_outlined,
-                              "Trip Approvals",
-                              onTap: () => Scaffold.of(context).openEndDrawer(),
-                              badgeCount: pending,
-                            );
-                          },
-                        ),
-                        _buildQuickActionItem(
-                          Icons.directions_walk_rounded,
-                          "My Trips",
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const MyTripScreen(),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Followed $displayName!"),
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  duration: const Duration(seconds: 1),
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.all(16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.person_add_outlined,
+                                size: 18, color: AppColors.primary),
+                            label: const Text(
+                              "Follow",
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                  color: AppColors.primary, width: 1.5),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                const SizedBox(height: 20),
-                _buildHostedTripsSection(hostedTrips),
-                const SizedBox(height: 30),
-                if (widget.isCurrentUser) ...[
-                  const SizedBox(height: 0),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ManageAccountSettingsScreen(
-                              name: displayName,
-                              username: displayUsername,
-                              avatarUrl: displayAvatar,
-                              avatarBytes: _avatarBytes,
-                              onProfileUpdated: _updateProfile,
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF111827),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        "Manage Account Settings",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _openDirectChat(
-                              displayName: displayName,
-                              displayUsername: displayUsername,
-                              displayAvatar: displayAvatar,
-                              hostedTrips: hostedTrips,
-                              allTrips: allTrips,
-                            ),
-                            icon: const Icon(Icons.chat_bubble_outline_rounded,
-                                color: Colors.white, size: 18),
-                            label: const Text(
-                              "Message",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        height: 52,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Followed $displayName!"),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.person_add_outlined,
-                              size: 18, color: AppColors.primary),
-                          label: const Text(
-                            "Follow",
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                                color: AppColors.primary, width: 1.5),
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                    const SizedBox(height: 20),
+                  ],
               ],
             ),
           ),
@@ -693,9 +1125,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.borderColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -812,10 +1245,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200, width: 1.2),
+        border: Border.all(color: AppColors.borderColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1383,9 +1816,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200, width: 1.2),
+        border: Border.all(color: AppColors.borderColor, width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1541,25 +1974,42 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  Widget _buildStatItem(String value, String label) {
+  Widget _buildStatItem({
+    required String value,
+    required String label,
+    IconData icon = Icons.analytics_outlined,
+    Color color = AppColors.primary,
+  }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(height: 7),
         Text(
           value,
           style: const TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           label,
+          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
-            letterSpacing: 0.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.4,
           ),
         ),
       ],
@@ -1568,82 +2018,93 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildDivider() {
     return Container(
-      height: 30,
+      height: 36,
       width: 1,
-      color: Colors.grey.shade200,
+      color: AppColors.borderColor,
     );
   }
 
-  Widget _buildSection({required String title, required Widget child}) {
+  Widget _buildSection({
+    required String title,
+    IconData? icon,
+    Widget? action,
+    required Widget child,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-              letterSpacing: 0.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  if (icon != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, size: 14, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+              if (action != null) action,
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildInterestChip(String label) {
+  Widget _buildInterestChip(String label, [IconData? icon]) {
+    final IconData effectiveIcon = icon ?? _resolveInterestIcon(label);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7.5),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.primary,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadgeItem(String icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderColor, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 14)),
+          Icon(effectiveIcon, size: 13.5, color: AppColors.primary),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
+              color: Color(0xFF334155),
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF4B5563),
             ),
           ),
         ],
@@ -1651,54 +2112,168 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  Widget _buildQuickActionItem(IconData icon, String label,
-      {VoidCallback? onTap, int? badgeCount}) {
-    final showBadge = badgeCount != null && badgeCount > 0;
-    return InkWell(
-      onTap: onTap ?? () {},
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: const Color(0xFF4B5563),
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF4B5563),
-              ),
-            ),
-            if (showBadge) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.error,
-                  borderRadius: BorderRadius.circular(10),
+  IconData _resolveInterestIcon(String label) {
+    final lower = label.toLowerCase();
+    if (lower.contains('beach') || lower.contains('sea')) {
+      return Icons.beach_access_rounded;
+    } else if (lower.contains('photo') || lower.contains('cam')) {
+      return Icons.camera_alt_outlined;
+    } else if (lower.contains('backpack') || lower.contains('hik')) {
+      return Icons.hiking_rounded;
+    } else if (lower.contains('temple') || lower.contains('zen')) {
+      return Icons.temple_buddhist_outlined;
+    } else if (lower.contains('food') || lower.contains('eat') || lower.contains('gourmet')) {
+      return Icons.restaurant_rounded;
+    } else if (lower.contains('solo')) {
+      return Icons.person_pin_circle_outlined;
+    }
+    return Icons.explore_outlined;
+  }
+
+  Widget _buildBadgeItem(String icon, String label, [String? subtitle]) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
                 ),
-                child: Text(
-                  '$badgeCount',
+              ),
+              if (subtitle != null && subtitle.isNotEmpty) ...[
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
                   style: const TextStyle(
-                    color: Colors.white,
                     fontSize: 10,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF64748B),
                   ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    int? badgeCount,
+  }) {
+    final showBadge = badgeCount != null && badgeCount > 0;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderColor, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: iconColor, size: 20),
+                  ),
+                  if (showBadge)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Text(
+                          '$badgeCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  color: showBadge ? AppColors.error : const Color(0xFF64748B),
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );

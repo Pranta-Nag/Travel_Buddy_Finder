@@ -215,6 +215,6 @@ All endpoints are configured relative to `AppUrl.baseUrl` (`http://localhost/tra
 
 1. Pranta Nag
 2. Yeasin Khan
-3. galib
+3. Abdullah Mohammad Galib
 
 Thank you!

@@ -229,6 +229,37 @@ class ChatProvider with ChangeNotifier {
     });
   }
 
+  /// Manually refresh all messages for a room
+  Future<void> fetchMessages(int roomId, {bool? silent}) async {
+    final bool isSilent = silent == true;
+    if (!isSilent) {
+      _isLoading = true;
+      try {
+        notifyListeners();
+      } catch (_) {}
+    }
+
+    try {
+      final fetched = await _chatController.getMessages(roomId);
+      _messages = fetched;
+      if (!_messageStreamController.isClosed) {
+        _messageStreamController.add(List.unmodifiable(_messages));
+      }
+      if (fetched.isNotEmpty) {
+        _lastKnownLatestMessageIds[roomId] = fetched.last.messageId;
+      }
+    } catch (e, stack) {
+      debugPrint('Error fetching messages: $e\n$stack');
+    } finally {
+      if (!isSilent) {
+        _isLoading = false;
+      }
+      try {
+        notifyListeners();
+      } catch (_) {}
+    }
+  }
+
   // Smart polling worker: fetches only messages where id > lastId
   Future<void> _pollNewMessages(int roomId, int lastId) async {
     try {

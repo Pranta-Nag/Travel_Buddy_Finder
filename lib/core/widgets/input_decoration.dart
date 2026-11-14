@@ -9,10 +9,14 @@ InputDecoration inputDecoration({
   Widget? prefixIcon,
   bool isDense = false,
   Color? prefixIconColor,
+  Color? fillColor,
+  Color? borderColor,
+  double borderRadius = 14.0,
+  EdgeInsetsGeometry? contentPadding,
 }) {
-  OutlineInputBorder outlineInputBorder(Color color, {double width = 1}) {
+  OutlineInputBorder outlineInputBorder(Color color, {double width = 1.0}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(13),
+      borderRadius: BorderRadius.circular(borderRadius),
       borderSide: BorderSide(
         color: color,
         width: width,
@@ -22,13 +26,19 @@ InputDecoration inputDecoration({
 
   return InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(
-      color: AppColors.greyText.withValues(alpha: 0.55),
+    hintStyle: const TextStyle(
+      color: AppColors.textTertiary,
       fontSize: 14,
+      fontWeight: FontWeight.w400,
     ),
     labelText: labelText,
-    labelStyle: TextStyle(
-      color: AppColors.greyText.withValues(alpha: 0.7),
+    labelStyle: const TextStyle(
+      color: AppColors.greyText,
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+    ),
+    floatingLabelStyle: const TextStyle(
+      color: AppColors.primary,
       fontSize: 13,
       fontWeight: FontWeight.w600,
     ),
@@ -36,22 +46,26 @@ InputDecoration inputDecoration({
     helperMaxLines: 2,
     prefixIcon: prefixIcon,
     suffixIcon: suffixIcon,
-    prefixIconColor: prefixIconColor ?? AppColors.primary,
+    prefixIconColor: prefixIconColor ?? AppColors.greyText,
     filled: true,
-    fillColor: AppColors.fieldColor,
+    fillColor: fillColor ?? AppColors.fieldColor,
     isDense: isDense,
-    contentPadding: EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: isDense ? 12 : 17,
-    ),
-    border: outlineInputBorder(AppColors.borderColor),
-    enabledBorder: outlineInputBorder(AppColors.borderColor),
-    focusedBorder: outlineInputBorder(AppColors.primary, width: 1.5),
-    errorBorder: outlineInputBorder(Colors.redAccent),
-    focusedErrorBorder: outlineInputBorder(Colors.redAccent, width: 1.5),
+    contentPadding: contentPadding ??
+        EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: isDense ? 12 : 16,
+        ),
+    border: outlineInputBorder(borderColor ?? AppColors.borderColor, width: 1.0),
+    enabledBorder:
+        outlineInputBorder(borderColor ?? AppColors.borderColor, width: 1.0),
+    focusedBorder: outlineInputBorder(AppColors.borderFocused, width: 1.8),
+    errorBorder: outlineInputBorder(AppColors.error, width: 1.0),
+    focusedErrorBorder: outlineInputBorder(AppColors.error, width: 1.8),
     errorStyle: const TextStyle(
+      color: AppColors.error,
       fontSize: 11.5,
       height: 1.3,
+      fontWeight: FontWeight.w500,
     ),
   );
 }

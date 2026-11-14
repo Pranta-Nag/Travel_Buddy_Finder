@@ -18,6 +18,7 @@ import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/comment_reply_sheet.dart';
+import 'package:travel_buddy_finder/core/services/location_service.dart';
 
 class ViewScreen extends StatefulWidget {
   final Trip trip;
@@ -480,20 +481,41 @@ class _ViewScreenState extends State<ViewScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded,
-                          color: AppColors.primary, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        trip.location,
-                        style: const TextStyle(
-                          color: AppColors.greyText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                  InkWell(
+                    onTap: () => LocationService.openMapForLocation(
+                      context,
+                      location: trip.location,
+                      tripTitle: trip.title,
+                    ),
+                    onLongPress: () => LocationService.showLocationOptionsSheet(
+                      context,
+                      location: trip.location,
+                      tripTitle: trip.title,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on_rounded,
+                              color: AppColors.primary, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            trip.location,
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.open_in_new_rounded,
+                              color: AppColors.primary, size: 14),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Container(

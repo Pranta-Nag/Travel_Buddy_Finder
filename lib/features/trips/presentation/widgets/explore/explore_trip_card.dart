@@ -6,6 +6,7 @@ import 'package:travel_buddy_finder/features/bookmarks/data/bookmark_store.dart'
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/explore/explore_filter.dart';
+import 'package:travel_buddy_finder/core/services/location_service.dart';
 
 class ExploreTripCard extends StatelessWidget {
   final Trip trip;
@@ -137,7 +138,7 @@ class ExploreTripCard extends StatelessWidget {
               flex: 9,
               child: Padding(
                 padding: const EdgeInsets.all(10),
-                child: _gridBody(),
+                child: _gridBody(context),
               ),
             ),
           ],
@@ -209,7 +210,7 @@ class ExploreTripCard extends StatelessWidget {
     );
   }
 
-  Widget _gridBody() {
+  Widget _gridBody(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -227,7 +228,7 @@ class ExploreTripCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            _location(),
+            _location(context),
           ],
         ),
         Row(
@@ -255,27 +256,50 @@ class ExploreTripCard extends StatelessWidget {
     );
   }
 
-  Widget _location() {
-    return Row(
-      children: [
-        const Icon(
-          Icons.location_on_rounded,
-          size: 12,
-          color: AppColors.primary,
-        ),
-        const SizedBox(width: 3),
-        Expanded(
-          child: Text(
-            trip.location,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 11,
+  Widget _location(BuildContext context) {
+    return InkWell(
+      onTap: () => LocationService.openMapForLocation(
+        context,
+        location: trip.location,
+        tripTitle: trip.title,
+      ),
+      onLongPress: () => LocationService.showLocationOptionsSheet(
+        context,
+        location: trip.location,
+        tripTitle: trip.title,
+      ),
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.location_on_rounded,
+              size: 12,
+              color: AppColors.primary,
             ),
-          ),
+            const SizedBox(width: 3),
+            Flexible(
+              child: Text(
+                trip.location,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(
+              Icons.open_in_new_rounded,
+              size: 10,
+              color: Color(0xFF94A3B8),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -341,7 +365,7 @@ class ExploreTripCard extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    _location(),
+                    _location(context),
                     Row(
                       mainAxisAlignment:
                           MainAxisAlignment.spaceBetween,

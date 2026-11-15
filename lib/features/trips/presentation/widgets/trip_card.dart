@@ -9,6 +9,7 @@ import 'package:travel_buddy_finder/features/trips/presentation/screens/rating_s
 import 'package:travel_buddy_finder/features/profile/presentation/user_profile_screen.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/screens/view_screen.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
+import 'package:travel_buddy_finder/core/services/location_service.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
@@ -118,9 +119,19 @@ class _TripCardState extends State<TripCard> {
                 child: Align(
                   alignment: Alignment.bottomLeft,
                   child: _pill(
-                    Icons.location_on,
+                    Icons.location_on_rounded,
                     widget.trip.location,
-                    Colors.black54,
+                    Colors.black.withValues(alpha: 0.65),
+                    onTap: () => LocationService.openMapForLocation(
+                      context,
+                      location: widget.trip.location,
+                      tripTitle: widget.trip.title,
+                    ),
+                    onLongPress: () => LocationService.showLocationOptionsSheet(
+                      context,
+                      location: widget.trip.location,
+                      tripTitle: widget.trip.title,
+                    ),
                   ),
                 ),
               ),
@@ -415,11 +426,14 @@ class _TripCardState extends State<TripCard> {
   Widget _pill(
     IconData? icon,
     String label,
-    Color color,
-  ) {
-    return Container(
+    Color color, {
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    String? tooltip,
+  }) {
+    final pillWidget = Container(
       constraints: const BoxConstraints(
-        maxWidth: 170,
+        maxWidth: 175,
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: 10,
@@ -428,6 +442,12 @@ class _TripCardState extends State<TripCard> {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(20),
+        border: onTap != null
+            ? Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+                width: 0.8,
+              )
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -452,7 +472,31 @@ class _TripCardState extends State<TripCard> {
               ),
             ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.open_in_new_rounded,
+              color: Colors.white70,
+              size: 10,
+            ),
+          ],
         ],
+      ),
+    );
+
+    if (onTap == null) return pillWidget;
+
+    return Tooltip(
+      message: tooltip ?? 'Tap to open map, long press for directions',
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: pillWidget,
+        ),
       ),
     );
   }

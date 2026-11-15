@@ -60,9 +60,18 @@ class _SplashScreenState extends State<SplashScreen> {
       body: ScreenBackground(
         child: Center(
           child: Image.asset(
-            AssetsPath.logoImg,
+            AssetsPath.tbfLogo,
             width: 300,
             height: 300,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                AssetsPath.logoImg,
+                width: 300,
+                height: 300,
+                fit: BoxFit.contain,
+              );
+            },
           ),
         ),
       ),

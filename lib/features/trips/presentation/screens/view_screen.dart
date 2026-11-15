@@ -14,6 +14,7 @@ import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
 import 'package:travel_buddy_finder/api/providers/comment_provider.dart';
+import 'package:travel_buddy_finder/api/providers/rating_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
@@ -38,6 +39,7 @@ class _ViewScreenState extends State<ViewScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<CommentProvider>().fetchComments(widget.trip.id);
+        context.read<RatingProvider>().fetchRating(widget.trip.id);
       }
     });
   }
@@ -1437,14 +1439,22 @@ class _ViewScreenState extends State<ViewScreen> {
   }
 
   Widget _buildReviewsSection() {
+    final ratingProvider = context.watch<RatingProvider>();
+    final backendRating = ratingProvider.getRatingForTrip(widget.trip.id);
+    final bool hasRated = backendRating?.hasRated ?? false;
+
     return ValueListenableBuilder<List<Review>>(
       valueListenable: ReviewStore.reviewsNotifier,
       builder: (context, allReviews, _) {
         final tripReviews = ReviewStore.getReviewsForTrip(widget.trip.id);
-        final reviewCount = tripReviews.length;
-        final avgRating = reviewCount > 0
-            ? ReviewStore.getAverageRating(widget.trip.id)
-            : (double.tryParse(widget.trip.rating) ?? 5.0);
+        final reviewCount = (backendRating != null && backendRating.totalRatings > 0)
+            ? backendRating.totalRatings
+            : tripReviews.length;
+        final avgRating = (backendRating != null && backendRating.totalRatings > 0)
+            ? backendRating.averageRating
+            : (tripReviews.isNotEmpty
+                ? ReviewStore.getAverageRating(widget.trip.id)
+                : (double.tryParse(widget.trip.rating) ?? 5.0));
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1483,6 +1493,7 @@ class _ViewScreenState extends State<ViewScreen> {
                 ),
                 TextButton.icon(
                   onPressed: () async {
+                    final ratingProv = context.read<RatingProvider>();
                     final updated = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1490,14 +1501,15 @@ class _ViewScreenState extends State<ViewScreen> {
                       ),
                     );
                     if (updated == true && mounted) {
+                      ratingProv.fetchRating(widget.trip.id);
                       setState(() {});
                     }
                   },
                   icon: const Icon(Icons.rate_review_outlined,
                       size: 15, color: AppColors.primary),
-                  label: const Text(
-                    "Rate Trip",
-                    style: TextStyle(
+                  label: Text(
+                    hasRated ? "Edit Rating" : "Rate Trip",
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,

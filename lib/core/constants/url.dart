@@ -47,6 +47,11 @@ class AppUrl {
   static const String replyComment = '/reply_comment';
   static const String getComments = '/get_comments';
 
+  // Rating API Endpoints
+  static const String rateTrip = '/rate_trip';
+  static const String editRating = '/edit_rating';
+  static const String getRating = '/get_rating';
+
   // Image URL Resolver
   static String get baseImageUrl => baseUrl;
 

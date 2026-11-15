@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
-import 'package:travel_buddy_finder/features/trips/data/models/trip_data.dart';
 import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
@@ -37,10 +38,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         0;
   }
 
-  List<Trip> get _filteredTrips {
+  List<Trip> _getFilteredTrips(List<Trip> sourceTrips) {
     final query = _searchController.text.trim().toLowerCase();
 
-    final result = tripList.where((trip) {
+    final result = sourceTrips.where((trip) {
       final matchesSearch =
           query.isEmpty ||
           trip.title.toLowerCase().contains(query) ||
@@ -48,11 +49,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
           trip.description.toLowerCase().contains(query) ||
           trip.hostName.toLowerCase().contains(query);
 
-      final matchesBudget = _price(trip.price) <= _budgetCap;
+      final matchesBudget =
+          _budgetCap >= ExploreFilterData.maxBudget || _price(trip.price) <= _budgetCap;
 
       final matchesGender =
           _selectedGender == ExploreFilterData.anyGender ||
-          trip.genderPreference == _selectedGender;
+          (trip.genderPreference != null &&
+              (trip.genderPreference!.toLowerCase().contains(_selectedGender.toLowerCase().replaceAll('only', '').trim()) ||
+               _selectedGender.toLowerCase().contains(trip.genderPreference!.toLowerCase())));
 
       final matchesCategory =
           _selectedCategory == ExploreFilterData.allCategory ||
@@ -62,7 +66,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _selectedTransportations.isEmpty ||
           (trip.transportationMethods != null &&
               _selectedTransportations.any(
-                (item) => trip.transportationMethods!.contains(item),
+                (filterMethod) => trip.transportationMethods!.any(
+                  (tripMethod) =>
+                      tripMethod.toLowerCase().contains(filterMethod.toLowerCase()) ||
+                      filterMethod.toLowerCase().contains(tripMethod.toLowerCase()),
+                ),
               ));
 
       return matchesSearch &&
@@ -176,6 +184,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     TripStore.tripListNotifier.addListener(_onTripListChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TripProvider>().fetchAllTrips();
+    });
   }
 
   @override
@@ -193,7 +204,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final trips = _filteredTrips;
+    final tripProvider = context.watch<TripProvider>();
+    final apiTrips = tripProvider.trips.map((m) => m.toTrip()).toList();
+    final trips = _getFilteredTrips(apiTrips);
 
     return Scaffold(
       body: ScreenBackground(
@@ -201,7 +214,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           child: Column(
             children: [
               ExploreHeader(
-                totalTrips: tripList.length,
+                totalTrips: apiTrips.length,
                 activeFilterCount: _activeFilterCount,
                 searchController: _searchController,
                 onFilterTap: _openFilterSheet,
@@ -213,7 +226,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 child: RefreshIndicator(
                   color: AppColors.primary,
                   onRefresh: () async {
-                    setState(() {});
+                    await context.read<TripProvider>().fetchAllTrips();
                   },
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -282,7 +295,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           },
                         ),
                       ),
-                      if (trips.isEmpty)
+                      if (tripProvider.isLoading && apiTrips.isEmpty)
+                        const SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        )
+                      else if (trips.isEmpty)
                         SliverFillRemaining(
                           hasScrollBody: false,
                           child: ExploreEmptyState(

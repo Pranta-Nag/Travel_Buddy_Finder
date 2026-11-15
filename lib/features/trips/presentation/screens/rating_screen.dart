@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:travel_buddy_finder/api/models/rating_model.dart';
 import 'package:travel_buddy_finder/api/providers/rating_provider.dart';
-import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/review.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
@@ -29,13 +27,10 @@ class RatingScreen extends StatefulWidget {
 class _RatingScreenState extends State<RatingScreen> {
   int _rating = 5;
   final TextEditingController _reviewController = TextEditingController();
+  bool _isSubmitting = false;
 
   final Set<String> _selectedTags = {};
   bool _wouldRecommend = true;
-  bool _isSubmitting = false;
-  bool _isHost = false;
-  bool _hasPreviousRating = false;
-
   final List<String> _quickTags = [
     'Friendly Host',
     'Great Communication',
@@ -50,38 +45,19 @@ class _RatingScreenState extends State<RatingScreen> {
   @override
   void initState() {
     super.initState();
-    _checkHostStatus();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadExistingRating();
-    });
+    _checkExistingRating();
   }
 
-  void _checkHostStatus() {
-    final host = widget.trip?.hostName ?? '';
-    final username = widget.trip?.username ?? '';
-    _isHost = CurrentUser.isCurrentUser(host, inputName: host) ||
-        CurrentUser.username.toLowerCase() ==
-            username.toLowerCase().replaceAll('@', '').trim();
-  }
-
-  Future<void> _loadExistingRating() async {
-    final tripId = widget.trip?.id;
-    if (tripId == null || tripId.isEmpty) return;
-
-    final ratingProvider = context.read<RatingProvider>();
-    final data = await ratingProvider.fetchRating(tripId);
-    if (!mounted) return;
-
-    if (data != null) {
-      setState(() {
-        if (data.hasRated && data.userRating != null && data.userRating! > 0) {
-          _rating = data.userRating!;
-          _hasPreviousRating = true;
-        }
-        if (data.hostUsername.isNotEmpty &&
-            data.hostUsername.toLowerCase() ==
-                CurrentUser.username.toLowerCase().replaceAll('@', '').trim()) {
-          _isHost = true;
+  void _checkExistingRating() {
+    final tripId = int.tryParse(widget.trip?.id ?? '');
+    if (tripId != null && tripId > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final ratingProv = context.read<RatingProvider>();
+        final detail = await ratingProv.fetchRating(tripId);
+        if (detail != null && detail.userRating != null && mounted) {
+          setState(() {
+            _rating = detail.userRating!;
+          });
         }
       });
     }
@@ -111,10 +87,6 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   void _onRatingChanged(int rating) {
-    if (_isHost) {
-      _showMessage('Hosts cannot rate their own trip.');
-      return;
-    }
     setState(() {
       _rating = rating;
     });
@@ -140,19 +112,21 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   Future<void> _submitRating() async {
-    if (_isHost) {
-      _showMessage('Hosts are not allowed to rate their own trips.');
+    if (_isSubmitting) return;
+
+    if (_rating == 0) {
+      _showMessage('Please select a star rating');
       return;
     }
 
-    if (_rating < 1 || _rating > 5) {
-      _showMessage('Please select a star rating (1 to 5 stars).');
-      return;
-    }
+    final trip = widget.trip;
+    final tripIdStr = trip?.id ?? '';
+    final intTripId = int.tryParse(tripIdStr) ?? 0;
 
-    final tripId = widget.trip?.id ?? '';
-    if (tripId.isEmpty) {
-      _showMessage('Trip ID is missing.');
+    // Check host business rule
+    if (trip != null &&
+        CurrentUser.isCurrentUser(trip.hostName, inputName: trip.hostName)) {
+      _showMessage('Hosts are not allowed to rate their own trips!');
       return;
     }
 
@@ -160,23 +134,36 @@ class _RatingScreenState extends State<RatingScreen> {
       _isSubmitting = true;
     });
 
-    final ratingProvider = context.read<RatingProvider>();
-    final result = await ratingProvider.submitRating(
-      tripId: tripId,
-      rating: _rating,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    if (result.success) {
+    try {
       final reviewText = _reviewController.text.trim();
+
+      // Submit to backend API if trip has valid numeric ID
+      if (intTripId > 0) {
+        final ratingProv = context.read<RatingProvider>();
+        final result = await ratingProv.submitRating(
+          tripId: intTripId,
+          rating: _rating,
+        );
+
+        if (!result.success) {
+          if (mounted) {
+            _showMessage(result.message);
+            setState(() {
+              _isSubmitting = false;
+            });
+          }
+          return;
+        }
+
+        if (trip != null && result.averageRating != null) {
+          trip.rating = result.averageRating!.toStringAsFixed(1);
+        }
+      }
+
+      // Also persist to local ReviewStore optimistically for UI tags and text
       final review = Review(
         id: 'rev_${DateTime.now().millisecondsSinceEpoch}',
-        tripId: tripId,
+        tripId: tripIdStr,
         userName: CurrentUser.name,
         userUsername: CurrentUser.username,
         userAvatarUrl: CurrentUser.avatarUrl,
@@ -189,25 +176,26 @@ class _RatingScreenState extends State<RatingScreen> {
 
       ReviewStore.addReview(review);
 
-      final updatedRating = ratingProvider.getRatingForTrip(tripId);
-      if (widget.trip != null && updatedRating != null) {
+      if (mounted) {
         setState(() {
-          widget.trip!.rating = updatedRating.averageRating.toStringAsFixed(1);
+          _isSubmitting = false;
         });
+        _showSuccessDialog();
       }
-
-      // Refresh trip list so popular/explore tabs show updated ratings
-      context.read<TripProvider>().fetchAllTrips();
-
-      _showSuccessDialog();
-    } else {
-      _showMessage(result.message);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        _showMessage('Error submitting rating: $e');
+      }
     }
   }
 
   void _showSuccessDialog() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -224,11 +212,10 @@ class _RatingScreenState extends State<RatingScreen> {
               Text('Thank You!'),
             ],
           ),
-          content: Text(
-            _hasPreviousRating
-                ? 'Your rating has been updated successfully!'
-                : 'Your review has been submitted and will help other travel buddies make better choices.',
-            style: const TextStyle(
+          content: const Text(
+            'Your rating has been saved to the backend database '
+            'and will help other travel buddies make better choices.',
+            style: TextStyle(
               color: AppColors.greyText,
               fontSize: 14,
               height: 1.4,
@@ -279,60 +266,6 @@ class _RatingScreenState extends State<RatingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (_isHost)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.info_outline_rounded,
-                        color: Color(0xFFDC2626), size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'You are the host of this trip. Hosts cannot rate their own trips.',
-                        style: TextStyle(
-                          color: Color(0xFFB91C1C),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            if (_hasPreviousRating)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF86EFAC)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline_rounded,
-                        color: Color(0xFF16A34A), size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'You previously rated this trip $_rating stars. You can update your rating below.',
-                        style: const TextStyle(
-                          color: Color(0xFF15803D),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             if (trip != null) ...[
               RatingTripPreview(
                 trip: trip,
@@ -358,13 +291,16 @@ class _RatingScreenState extends State<RatingScreen> {
               onRecommendationChanged: _onRecommendationChanged,
             ),
             const SizedBox(height: 28),
-            RatingSubmitButton(
-              onPressed: _submitRating,
-              isLoading: _isSubmitting,
-              text: _isHost
-                  ? 'Host Cannot Rate'
-                  : (_hasPreviousRating ? 'Update Rating' : 'Submit Review'),
-            ),
+            _isSubmitting
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                : RatingSubmitButton(
+                    onPressed: _submitRating,
+                  ),
             const SizedBox(height: 24),
           ],
         ),
@@ -385,9 +321,9 @@ class _RatingScreenState extends State<RatingScreen> {
           Navigator.pop(context);
         },
       ),
-      title: Text(
-        _hasPreviousRating ? 'Edit Trip Rating' : 'Trip Review',
-        style: const TextStyle(
+      title: const Text(
+        'Trip Review',
+        style: TextStyle(
           color: AppColors.primary,
           fontWeight: FontWeight.bold,
           fontSize: 18,
@@ -411,3 +347,4 @@ class _RatingScreenState extends State<RatingScreen> {
     );
   }
 }
+

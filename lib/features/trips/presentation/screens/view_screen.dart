@@ -1,4 +1,5 @@
 import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
+import 'package:travel_buddy_finder/api/providers/rating_provider.dart';
 import 'package:travel_buddy_finder/features/chat/presentation/screens/chat_room_screen.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -14,12 +15,12 @@ import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
 import 'package:travel_buddy_finder/api/providers/comment_provider.dart';
-import 'package:travel_buddy_finder/api/providers/rating_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/comment_reply_sheet.dart';
 import 'package:travel_buddy_finder/core/services/location_service.dart';
+import 'package:travel_buddy_finder/features/trips/presentation/widgets/map/trip_route_itinerary_card.dart';
 
 class ViewScreen extends StatefulWidget {
   final Trip trip;
@@ -39,7 +40,10 @@ class _ViewScreenState extends State<ViewScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<CommentProvider>().fetchComments(widget.trip.id);
-        context.read<RatingProvider>().fetchRating(widget.trip.id);
+        final intTripId = int.tryParse(widget.trip.id);
+        if (intTripId != null && intTripId > 0) {
+          context.read<RatingProvider>().fetchRating(intTripId);
+        }
       }
     });
   }
@@ -455,30 +459,76 @@ class _ViewScreenState extends State<ViewScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFDE68A)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star_rounded,
-                                color: Color(0xFFD97706), size: 18),
-                            const SizedBox(width: 4),
-                            Text(
-                              trip.rating,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF92400E),
-                                fontSize: 13,
+                      Consumer<RatingProvider>(
+                        builder: (context, rProv, _) {
+                          final intTripId = int.tryParse(trip.id) ?? 0;
+                          final bRating = intTripId > 0 ? rProv.getRatingForTrip(intTripId) : null;
+                          final hasRatingData = (bRating != null && bRating.totalRatings > 0) ||
+                              (trip.ratingCount > 0 &&
+                                  double.tryParse(trip.rating) != null &&
+                                  double.parse(trip.rating) > 0);
+                          final displayRating = (bRating != null && bRating.totalRatings > 0)
+                              ? bRating.averageRating.toStringAsFixed(1)
+                              : (trip.ratingCount > 0 &&
+                                      double.tryParse(trip.rating) != null &&
+                                      double.parse(trip.rating) > 0
+                                  ? double.parse(trip.rating).toStringAsFixed(1)
+                                  : null);
+
+                          if (hasRatingData && displayRating != null) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFFDE68A)),
                               ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded,
+                                      color: Color(0xFFD97706), size: 18),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    displayRating,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF92400E),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
                             ),
-                          ],
-                        ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star_outline_rounded,
+                                    color: Color(0xFF94A3B8), size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  "No ratings yet",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -891,6 +941,8 @@ class _ViewScreenState extends State<ViewScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  TripRouteItineraryCard(trip: widget.trip),
                   const SizedBox(height: 28),
                   _buildReviewsSection(),
                   Row(
@@ -1439,196 +1491,348 @@ class _ViewScreenState extends State<ViewScreen> {
   }
 
   Widget _buildReviewsSection() {
-    final ratingProvider = context.watch<RatingProvider>();
-    final backendRating = ratingProvider.getRatingForTrip(widget.trip.id);
-    final bool hasRated = backendRating?.hasRated ?? false;
+    final intTripId = int.tryParse(widget.trip.id) ?? 0;
+    final isHost = CurrentUser.isCurrentUser(widget.trip.hostName, inputName: widget.trip.hostName);
 
-    return ValueListenableBuilder<List<Review>>(
-      valueListenable: ReviewStore.reviewsNotifier,
-      builder: (context, allReviews, _) {
-        final tripReviews = ReviewStore.getReviewsForTrip(widget.trip.id);
-        final reviewCount = (backendRating != null && backendRating.totalRatings > 0)
-            ? backendRating.totalRatings
-            : tripReviews.length;
-        final avgRating = (backendRating != null && backendRating.totalRatings > 0)
-            ? backendRating.averageRating
-            : (tripReviews.isNotEmpty
-                ? ReviewStore.getAverageRating(widget.trip.id)
-                : (double.tryParse(widget.trip.rating) ?? 5.0));
+    return Consumer<RatingProvider>(
+      builder: (context, ratingProvider, _) {
+        final backendRating = intTripId > 0 ? ratingProvider.getRatingForTrip(intTripId) : null;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return ValueListenableBuilder<List<Review>>(
+          valueListenable: ReviewStore.reviewsNotifier,
+          builder: (context, allReviews, _) {
+            final tripReviews = ReviewStore.getReviewsForTrip(widget.trip.id);
+            final localReviewCount = tripReviews.length;
+            final bool hasBackendRating = backendRating != null && backendRating.totalRatings > 0;
+            final int displayReviewCount = hasBackendRating
+                ? backendRating.totalRatings
+                : (widget.trip.ratingCount > 0
+                    ? widget.trip.ratingCount
+                    : localReviewCount);
+
+            final double avgRating = hasBackendRating
+                ? backendRating.averageRating
+                : (displayReviewCount > 0
+                    ? (double.tryParse(widget.trip.rating) ??
+                        (localReviewCount > 0
+                            ? ReviewStore.getAverageRating(widget.trip.id)
+                            : 0.0))
+                    : 0.0);
+
+            final bool hasRated = backendRating?.hasRated ?? false;
+            final int? userRating = backendRating?.userRating;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Reviews & Ratings",
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        "$reviewCount",
-                        style: const TextStyle(
-                          color: Color(0xFFB45309),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                TextButton.icon(
-                  onPressed: () async {
-                    final ratingProv = context.read<RatingProvider>();
-                    final updated = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => RatingScreen(trip: widget.trip),
-                      ),
-                    );
-                    if (updated == true && mounted) {
-                      ratingProv.fetchRating(widget.trip.id);
-                      setState(() {});
-                    }
-                  },
-                  icon: const Icon(Icons.rate_review_outlined,
-                      size: 15, color: AppColors.primary),
-                  label: Text(
-                    hasRated ? "Edit Rating" : "Rate Trip",
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFDE68A)),
-              ),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            avgRating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF78350F),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "/ 5.0",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF92400E),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: List.generate(5, (index) {
-                          final starFill = index < avgRating.round();
-                          return Icon(
-                            starFill
-                                ? Icons.star_rounded
-                                : Icons.star_outline_rounded,
-                            size: 18,
-                            color: const Color(0xFFD97706),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "$reviewCount verified ${reviewCount == 1 ? 'review' : 'reviews'}",
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF92400E),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    Row(
                       children: [
-                        const Icon(
-                          Icons.thumb_up_alt_rounded,
-                          color: Colors.green,
-                          size: 22,
-                        ),
-                        const SizedBox(height: 4),
                         const Text(
-                          "Recommended",
+                          "Reviews & Ratings",
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 17,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        Text(
-                          reviewCount > 0
-                              ? "${((tripReviews.where((r) => r.wouldRecommend).length / reviewCount) * 100).round()}% recommend"
-                              : "100% positive",
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.greyText,
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            "$displayReviewCount",
+                            style: const TextStyle(
+                              color: Color(0xFFB45309),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    if (isHost)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.shield_outlined, size: 14, color: AppColors.greyText),
+                            SizedBox(width: 4),
+                            Text(
+                              "Host (Cannot Rate)",
+                              style: TextStyle(
+                                color: AppColors.greyText,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      TextButton.icon(
+                        onPressed: () async {
+                          final updated = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RatingScreen(trip: widget.trip),
+                            ),
+                          );
+                          if (updated == true && mounted) {
+                            if (intTripId > 0) {
+                              ratingProvider.fetchRating(intTripId);
+                            }
+                            setState(() {});
+                          }
+                        },
+                        icon: Icon(
+                          hasRated ? Icons.edit_rounded : Icons.rate_review_outlined,
+                          size: 15,
+                          color: AppColors.primary,
+                        ),
+                        label: Text(
+                          hasRated ? "Edit Rating ($userRating ★)" : "Rate Trip",
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
                   ),
-                ],
-              ),
-            ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (displayReviewCount > 0) ...[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      avgRating.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF78350F),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      "/ 5.0",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF92400E),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: List.generate(5, (index) {
+                                    final starFill = index < avgRating.round();
+                                    return Icon(
+                                      starFill
+                                          ? Icons.star_rounded
+                                          : Icons.star_outline_rounded,
+                                      size: 18,
+                                      color: const Color(0xFFD97706),
+                                    );
+                                  }),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "$displayReviewCount verified ${displayReviewCount == 1 ? 'review' : 'reviews'}",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF92400E),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ] else ...[
+                                const Text(
+                                  "No Ratings",
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF78350F),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: List.generate(
+                                    5,
+                                    (_) => const Icon(
+                                      Icons.star_outline_rounded,
+                                      size: 18,
+                                      color: Color(0xFFCBD5E1),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  "Be the first to rate this trip!",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF92400E),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.thumb_up_alt_rounded,
+                                  color: Colors.green,
+                                  size: 22,
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  "Recommended",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                Text(
+                                  displayReviewCount > 0
+                                      ? "${((tripReviews.where((r) => r.wouldRecommend).length / (localReviewCount > 0 ? localReviewCount : 1)) * 100).round()}% recommend"
+                                      : "100% positive",
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.greyText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (backendRating != null && backendRating.totalRatings > 0) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Live Rating Breakdown",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF78350F),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              ...[5, 4, 3, 2, 1].map((star) {
+                                final count = backendRating.breakdown[star] ?? 0;
+                                final pct = backendRating.totalRatings > 0
+                                    ? (count / backendRating.totalRatings)
+                                    : 0.0;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 1.5),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 28,
+                                        child: Text(
+                                          '$star ★',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF78350F),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: LinearProgressIndicator(
+                                            value: pct,
+                                            minHeight: 5,
+                                            backgroundColor: const Color(0xFFFEF3C7),
+                                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                                Color(0xFFD97706)),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      SizedBox(
+                                        width: 18,
+                                        child: Text(
+                                          '$count',
+                                          textAlign: TextAlign.end,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: Color(0xFF92400E),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
             const SizedBox(height: 16),
             if (tripReviews.isEmpty)
               Container(
@@ -1884,6 +2088,8 @@ class _ViewScreenState extends State<ViewScreen> {
             const SizedBox(height: 28),
           ],
         );
+      },
+    );
       },
     );
   }

@@ -180,6 +180,9 @@ class ExploreTripCard extends StatelessWidget {
   }
 
   Widget _ratingBadge() {
+    final rNum = double.tryParse(trip.rating);
+    final hasValidRating = trip.ratingCount > 0 && rNum != null && rNum > 0;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 6,
@@ -192,17 +195,18 @@ class ExploreTripCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.star_rounded,
-            color: Color(0xFFF59E0B),
+          Icon(
+            hasValidRating ? Icons.star_rounded : Icons.star_outline_rounded,
+            color: hasValidRating ? const Color(0xFFF59E0B) : const Color(0xFF94A3B8),
             size: 13,
           ),
           const SizedBox(width: 2),
           Text(
-            trip.rating,
-            style: const TextStyle(
+            hasValidRating ? rNum.toStringAsFixed(1) : 'New',
+            style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
+              color: hasValidRating ? Colors.black87 : const Color(0xFF64748B),
             ),
           ),
         ],

@@ -386,8 +386,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 22),
 
                           // Divider
-                          Row(
-                            children: const [
+                          const Row(
+                            children: [
                               Expanded(
                                 child: Divider(
                                   color: AppColors.borderColor,

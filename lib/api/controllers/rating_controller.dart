@@ -1,194 +1,134 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:travel_buddy_finder/api/models/rating_model.dart';
 import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
 
 class RatingController {
-  // 1. GET Rating Details for a Trip (/get_rating?trip_id=X)
-  Future<TripRatingModel?> getRating(dynamic tripId) async {
+  // 1. POST Rate Trip (/rate_trip)
+  Future<RatingResult> rateTrip({
+    required int tripId,
+    required int rating,
+  }) async {
     try {
-      final cleanId = tripId.toString().trim();
-      if (cleanId.isEmpty || cleanId == '0') return null;
+      final response = await ApiClient.post(
+        AppUrl.rateTrip,
+        body: {
+          'trip_id': tripId,
+          'rating': rating,
+        },
+        isJson: true,
+      );
 
-      final response = await ApiClient.get('${AppUrl.getRating}?trip_id=$cleanId');
-      print('Get Rating Status: ${response.statusCode}');
-      print('Get Rating Body: ${response.body}');
+      debugPrint('Rate Trip Status: ${response.statusCode}');
+      debugPrint('Rate Trip Body: ${response.body}');
+
+      final dynamic data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+      final String message = data is Map ? (data['message']?.toString() ?? '') : '';
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final resData = data is Map && data['data'] is Map ? data['data'] : {};
+        return RatingResult(
+          success: true,
+          statusCode: response.statusCode,
+          message: message.isNotEmpty ? message : 'Trip rated successfully!',
+          rating: rating,
+          averageRating: resData['average_rating'] != null
+              ? (resData['average_rating'] as num).toDouble()
+              : null,
+          totalRatings: resData['total_ratings'] != null
+              ? (resData['total_ratings'] as num).toInt()
+              : null,
+        );
+      }
+
+      final existingRating = data is Map && data['existing_rating'] != null
+          ? int.tryParse(data['existing_rating'].toString())
+          : null;
+
+      return RatingResult(
+        success: false,
+        statusCode: response.statusCode,
+        message: message.isNotEmpty ? message : 'Failed to submit rating (HTTP ${response.statusCode})',
+        existingRating: existingRating,
+      );
+    } catch (e) {
+      debugPrint('Rate Trip Exception: $e');
+      return RatingResult(
+        success: false,
+        message: 'Network error submitting rating: $e',
+      );
+    }
+  }
+
+  // 2. POST Edit Rating (/edit_rating)
+  Future<RatingResult> editRating({
+    required int tripId,
+    required int rating,
+  }) async {
+    try {
+      final response = await ApiClient.post(
+        AppUrl.editRating,
+        body: {
+          'trip_id': tripId,
+          'rating': rating,
+        },
+        isJson: true,
+      );
+
+      debugPrint('Edit Rating Status: ${response.statusCode}');
+      debugPrint('Edit Rating Body: ${response.body}');
+
+      final dynamic data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+      final String message = data is Map ? (data['message']?.toString() ?? '') : '';
+
+      if (response.statusCode == 200) {
+        final resData = data is Map && data['data'] is Map ? data['data'] : {};
+        return RatingResult(
+          success: true,
+          statusCode: response.statusCode,
+          message: message.isNotEmpty ? message : 'Rating updated successfully!',
+          rating: rating,
+          averageRating: resData['average_rating'] != null
+              ? (resData['average_rating'] as num).toDouble()
+              : null,
+          totalRatings: resData['total_ratings'] != null
+              ? (resData['total_ratings'] as num).toInt()
+              : null,
+        );
+      }
+
+      return RatingResult(
+        success: false,
+        statusCode: response.statusCode,
+        message: message.isNotEmpty ? message : 'Failed to update rating (HTTP ${response.statusCode})',
+      );
+    } catch (e) {
+      debugPrint('Edit Rating Exception: $e');
+      return RatingResult(
+        success: false,
+        message: 'Network error updating rating: $e',
+      );
+    }
+  }
+
+  // 3. GET Trip Rating Breakdown & Stats (/get_rating?trip_id=X)
+  Future<TripRatingDetail?> getTripRating(int tripId) async {
+    try {
+      final response = await ApiClient.get('${AppUrl.getRating}?trip_id=$tripId');
+      debugPrint('Get Rating Status: ${response.statusCode}');
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final dynamic data = jsonDecode(response.body);
         if (data is Map && data['data'] is Map) {
-          return TripRatingModel.fromJson(Map<String, dynamic>.from(data['data']));
+          return TripRatingDetail.fromJson(Map<String, dynamic>.from(data['data']));
+        } else if (data is Map) {
+          return TripRatingDetail.fromJson(Map<String, dynamic>.from(data));
         }
       }
     } catch (e) {
-      print('Get Rating Error: $e');
+      debugPrint('Get Rating Exception: $e');
     }
     return null;
-  }
-
-  // 2. POST Rate Trip (/rate_trip)
-  Future<({bool success, String message, dynamic data, bool isAlreadyRated})> rateTrip({
-    required dynamic tripId,
-    required int rating,
-  }) async {
-    try {
-      final int parsedId = int.tryParse(tripId.toString().trim()) ?? 0;
-      if (parsedId <= 0) {
-        return (
-          success: false,
-          message: 'Invalid trip ID',
-          data: null,
-          isAlreadyRated: false,
-        );
-      }
-
-      final Map<String, dynamic> body = {
-        'trip_id': parsedId,
-        'rating': rating,
-      };
-
-      final response = await ApiClient.post(
-        AppUrl.rateTrip,
-        body: body,
-        isJson: true,
-      );
-
-      print('Rate Trip Status: ${response.statusCode}');
-      print('Rate Trip Body: ${response.body}');
-
-      dynamic responseData;
-      if (response.body.isNotEmpty) {
-        try {
-          responseData = jsonDecode(response.body);
-        } catch (_) {}
-      }
-
-      final String message = (responseData is Map && responseData['message'] != null)
-          ? responseData['message'].toString()
-          : 'Trip rating response (${response.statusCode})';
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (
-          success: true,
-          message: message,
-          data: responseData is Map ? responseData['data'] : null,
-          isAlreadyRated: false,
-        );
-      }
-
-      // Status 409 means the user already rated this trip
-      if (response.statusCode == 409) {
-        return (
-          success: false,
-          message: message,
-          data: responseData,
-          isAlreadyRated: true,
-        );
-      }
-
-      return (
-        success: false,
-        message: message,
-        data: null,
-        isAlreadyRated: false,
-      );
-    } catch (e) {
-      print('Rate Trip Error: $e');
-      return (
-        success: false,
-        message: 'Network error rating trip: $e',
-        data: null,
-        isAlreadyRated: false,
-      );
-    }
-  }
-
-  // 3. POST Edit Rating (/edit_rating)
-  Future<({bool success, String message, dynamic data})> editRating({
-    required dynamic tripId,
-    required int rating,
-  }) async {
-    try {
-      final int parsedId = int.tryParse(tripId.toString().trim()) ?? 0;
-      if (parsedId <= 0) {
-        return (
-          success: false,
-          message: 'Invalid trip ID',
-          data: null,
-        );
-      }
-
-      final Map<String, dynamic> body = {
-        'trip_id': parsedId,
-        'rating': rating,
-      };
-
-      final response = await ApiClient.post(
-        AppUrl.editRating,
-        body: body,
-        isJson: true,
-      );
-
-      print('Edit Rating Status: ${response.statusCode}');
-      print('Edit Rating Body: ${response.body}');
-
-      dynamic responseData;
-      if (response.body.isNotEmpty) {
-        try {
-          responseData = jsonDecode(response.body);
-        } catch (_) {}
-      }
-
-      final String message = (responseData is Map && responseData['message'] != null)
-          ? responseData['message'].toString()
-          : 'Edit rating response (${response.statusCode})';
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return (
-          success: true,
-          message: message,
-          data: responseData is Map ? responseData['data'] : null,
-        );
-      }
-
-      return (
-        success: false,
-        message: message,
-        data: null,
-      );
-    } catch (e) {
-      print('Edit Rating Error: $e');
-      return (
-        success: false,
-        message: 'Network error editing rating: $e',
-        data: null,
-      );
-    }
-  }
-
-  // 4. Combined submitOrUpdate (calls rate_trip, or edit_rating if already rated)
-  Future<({bool success, String message, dynamic data})> submitOrUpdateRating({
-    required dynamic tripId,
-    required int rating,
-  }) async {
-    final rateResult = await rateTrip(tripId: tripId, rating: rating);
-    if (rateResult.success) {
-      return (
-        success: true,
-        message: rateResult.message,
-        data: rateResult.data,
-      );
-    }
-
-    if (rateResult.isAlreadyRated) {
-      // User has rated previously, update via edit_rating
-      return await editRating(tripId: tripId, rating: rating);
-    }
-
-    return (
-      success: false,
-      message: rateResult.message,
-      data: rateResult.data,
-    );
   }
 }

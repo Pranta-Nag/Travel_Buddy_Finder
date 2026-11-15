@@ -170,23 +170,60 @@ class _TripCardState extends State<TripCard> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: Colors.orange.shade600,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            widget.trip.rating,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                      Builder(
+                        builder: (context) {
+                          final rNum = double.tryParse(widget.trip.rating);
+                          final hasValidRating =
+                              widget.trip.ratingCount > 0 && rNum != null && rNum > 0;
+
+                          if (hasValidRating) {
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  color: Colors.orange.shade600,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  rNum.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                          ),
-                        ],
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_outline_rounded,
+                                  color: Color(0xFF94A3B8),
+                                  size: 14,
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  'New',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

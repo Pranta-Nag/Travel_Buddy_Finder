@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:travel_buddy_finder/api/models/trip_map_model.dart';
 
 class Trip {
   final String id,
@@ -12,10 +13,12 @@ class Trip {
       category,
       description;
   String rating;
+  final int ratingCount;
   final int seatsLeft;
   final Uint8List? imageBytes;
   final String? genderPreference;
   final List<String>? transportationMethods;
+  final TripMapModel? tripMap;
 
   Trip({
     required this.id,
@@ -29,10 +32,12 @@ class Trip {
     required this.avatarUrl,
     required this.category,
     required this.description,
+    this.ratingCount = 0,
     this.seatsLeft = 2,
     this.imageBytes,
     this.genderPreference,
     this.transportationMethods,
+    this.tripMap,
   });
 
   Trip copyWith({
@@ -41,6 +46,7 @@ class Trip {
     String? location,
     String? price,
     String? rating,
+    int? ratingCount,
     String? hostName,
     String? username,
     String? imageUrl,
@@ -51,6 +57,7 @@ class Trip {
     Uint8List? imageBytes,
     String? genderPreference,
     List<String>? transportationMethods,
+    TripMapModel? tripMap,
   }) {
     return Trip(
       id: id ?? this.id,
@@ -58,6 +65,7 @@ class Trip {
       location: location ?? this.location,
       price: price ?? this.price,
       rating: rating ?? this.rating,
+      ratingCount: ratingCount ?? this.ratingCount,
       hostName: hostName ?? this.hostName,
       username: username ?? this.username,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -69,6 +77,7 @@ class Trip {
       genderPreference: genderPreference ?? this.genderPreference,
       transportationMethods:
           transportationMethods ?? this.transportationMethods,
+      tripMap: tripMap ?? this.tripMap,
     );
   }
 }

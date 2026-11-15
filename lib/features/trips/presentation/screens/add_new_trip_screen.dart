@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:travel_buddy_finder/api/models/trip_map_model.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
@@ -14,6 +15,7 @@ import 'package:travel_buddy_finder/features/trips/presentation/widgets/add_trip
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/add_trip/trip_header.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/add_trip/trip_image_picker.dart';
 import 'package:travel_buddy_finder/features/trips/presentation/widgets/add_trip/trip_section_title.dart';
+import 'package:travel_buddy_finder/features/trips/presentation/widgets/map/trip_route_planner_widget.dart';
 import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
 
@@ -30,6 +32,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
 
   String? _selectedCategory;
   Uint8List? _coverImageBytes;
+  TripMapData? _plannedMapData;
 
   final _tripNameController = TextEditingController();
   final _destinationController = TextEditingController();
@@ -64,7 +67,10 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
     if (m.contains('car') || m.contains('drive') || m.contains('road')) {
       return Icons.directions_car_rounded;
     }
-    if (m.contains('boat') || m.contains('ferry') || m.contains('ship') || m.contains('cruise')) {
+    if (m.contains('boat') ||
+        m.contains('ferry') ||
+        m.contains('ship') ||
+        m.contains('cruise')) {
       return Icons.directions_boat_rounded;
     }
     if (m.contains('walk') || m.contains('trek') || m.contains('hike')) {
@@ -109,12 +115,14 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(22),
                             border: Border.all(
-                              color: AppColors.borderColor.withValues(alpha: 0.8),
+                              color:
+                                  AppColors.borderColor.withValues(alpha: 0.8),
                               width: 1,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                                color: const Color(0xFF0F172A)
+                                    .withValues(alpha: 0.06),
                                 blurRadius: 24,
                                 offset: const Offset(0, 8),
                               ),
@@ -129,22 +137,37 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                                 _buildTripDetailsSection(),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 20),
-                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                  child: Divider(
+                                      color: AppColors.borderColor,
+                                      thickness: 1),
                                 ),
                                 _buildScheduleSection(),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 20),
-                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                  child: Divider(
+                                      color: AppColors.borderColor,
+                                      thickness: 1),
                                 ),
                                 _buildMoreDetailsSection(),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 20),
-                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                  child: Divider(
+                                      color: AppColors.borderColor,
+                                      thickness: 1),
+                                ),
+                                _buildHighwayRouteSection(),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: Divider(
+                                      color: AppColors.borderColor,
+                                      thickness: 1),
                                 ),
                                 _buildTransportAndSeatsSection(),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 20),
-                                  child: Divider(color: AppColors.borderColor, thickness: 1),
+                                  child: Divider(
+                                      color: AppColors.borderColor,
+                                      thickness: 1),
                                 ),
                                 _buildCoverPhotoSection(),
                                 const SizedBox(height: 28),
@@ -373,7 +396,8 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
           controller: _descriptionController,
           maxLines: 4,
           decoration: inputDecoration(
-            hint: 'Describe your route, travel pace, planned activities, and what kind of buddy you are looking for...',
+            hint:
+                'Describe your route, travel pace, planned activities, and what kind of buddy you are looking for...',
             prefixIcon: const Icon(
               Icons.edit_note_rounded,
               size: 22,
@@ -384,6 +408,32 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
               return 'Enter description';
             }
             return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHighwayRouteSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TripSectionTitle(
+          title: 'Highway Route (OpenStreetMap)',
+          icon: Icons.map_outlined,
+        ),
+        const SizedBox(height: 10),
+        TripRoutePlannerWidget(
+          onRouteReady: (TripMapData mapData) {
+            _plannedMapData = mapData;
+            if (_destinationController.text.trim().isEmpty) {
+              final destWp = mapData.waypoints
+                  .where((w) => w.label.toLowerCase().contains('dest'))
+                  .firstOrNull;
+              if (destWp != null) {
+                _destinationController.text = destWp.name;
+              }
+            }
           },
         ),
       ],
@@ -482,9 +532,11 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                 children: [
                   IconButton(
                     splashRadius: 18,
-                    icon: const Icon(Icons.remove_rounded, size: 18, color: AppColors.primary),
+                    icon: const Icon(Icons.remove_rounded,
+                        size: 18, color: AppColors.primary),
                     onPressed: () {
-                      final current = int.tryParse(_seatsController.text.trim()) ?? 1;
+                      final current =
+                          int.tryParse(_seatsController.text.trim()) ?? 1;
                       if (current > 1) {
                         _seatsController.text = '${current - 1}';
                         setState(() {});
@@ -493,9 +545,11 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
                   ),
                   IconButton(
                     splashRadius: 18,
-                    icon: const Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+                    icon: const Icon(Icons.add_rounded,
+                        size: 18, color: AppColors.primary),
                     onPressed: () {
-                      final current = int.tryParse(_seatsController.text.trim()) ?? 0;
+                      final current =
+                          int.tryParse(_seatsController.text.trim()) ?? 0;
                       _seatsController.text = '${current + 1}';
                       setState(() {});
                     },
@@ -580,6 +634,7 @@ class _AddNewTripScreenState extends State<AddNewTripScreen> {
       seats: int.tryParse(_seatsController.text.trim()) ?? 4,
       transports: _selectedTransportations,
       coverPhotoBytes: _coverImageBytes,
+      mapData: _plannedMapData,
     );
 
     if (!mounted) return;

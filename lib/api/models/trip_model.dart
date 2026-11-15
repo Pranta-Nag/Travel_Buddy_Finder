@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:travel_buddy_finder/api/models/trip_map_model.dart';
 import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
@@ -18,8 +19,9 @@ class TripModel {
   final String hostGender;
   final int seats;
   final String rating;
+  final int ratingCount;
   final List<String> transports;
-  final Map<String, dynamic>? mapData;
+  final TripMapModel? mapData;
 
   TripModel({
     required this.id,
@@ -35,7 +37,8 @@ class TripModel {
     required this.hostAvatar,
     this.hostGender = 'Male',
     required this.seats,
-    this.rating = '4.9',
+    this.rating = '0.0',
+    this.ratingCount = 0,
     this.transports = const ['Flight', 'Bus'],
     this.mapData,
   });
@@ -72,6 +75,7 @@ class TripModel {
       location: location,
       price: '\$$price',
       rating: rating,
+      ratingCount: ratingCount,
       hostName: hostName,
       username: hostName.startsWith('@')
           ? hostName
@@ -86,6 +90,7 @@ class TripModel {
       imageBytes: localImageBytes,
       genderPreference: hostGender,
       transportationMethods: transports,
+      tripMap: mapData,
     );
   }
 
@@ -173,6 +178,22 @@ class TripModel {
       }
     }
 
+    final rawRatingCount = json['rating_count'] ?? json['total_ratings'] ?? json['ratings_count'];
+    final int parsedRatingCount = rawRatingCount != null
+        ? (rawRatingCount is int
+            ? rawRatingCount
+            : int.tryParse(rawRatingCount.toString()) ?? 0)
+        : 0;
+
+    TripMapModel? parsedMap;
+    if (json['map'] != null) {
+      parsedMap = TripMapModel.fromJson(json['map']);
+    } else if (json['start_location'] != null ||
+        json['waypoints_json'] != null ||
+        json['route_coordinates'] != null) {
+      parsedMap = TripMapModel.fromJson(json);
+    }
+
     return TripModel(
       id: json['id'] != null
           ? (json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0)
@@ -194,11 +215,12 @@ class TripModel {
       hostAvatar: rawAvatar.toString(),
       hostGender: json['host_gender'] ?? hostObj?['gender'] ?? json['gender'] ?? 'Male',
       seats: parsedSeats,
-      rating: json['rating']?.toString() ?? '4.9',
+      rating: (json['rating'] != null && json['rating'].toString() != '0' && json['rating'].toString() != '0.0')
+          ? (double.tryParse(json['rating'].toString())?.toStringAsFixed(1) ?? json['rating'].toString())
+          : (parsedRatingCount > 0 ? '0.0' : '0.0'),
+      ratingCount: parsedRatingCount,
       transports: parsedTransports.isNotEmpty ? parsedTransports : ['Flight', 'Bus'],
-      mapData: json['map'] is Map<String, dynamic>
-          ? json['map']
-          : (json['map'] is Map ? Map<String, dynamic>.from(json['map']) : null),
+      mapData: parsedMap,
     );
   }
 
@@ -217,8 +239,10 @@ class TripModel {
       'host_gender': hostGender,
       'available_seats': seats,
       'rating': rating,
+      'rating_count': ratingCount,
       'transport_method': transports.join(','),
-      'map': mapData,
+      'map': mapData?.toJson(),
     };
   }
 }
+

@@ -12,6 +12,8 @@ import 'package:travel_buddy_finder/core/widgets/input_decoration.dart';
 import 'package:travel_buddy_finder/core/widgets/screen_background.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/profile/data/current_user.dart';
+import 'package:travel_buddy_finder/api/models/trip_map_model.dart';
+import 'package:travel_buddy_finder/features/trips/presentation/widgets/map/trip_route_planner_widget.dart';
 
 class EditTripScreen extends StatefulWidget {
   final Trip trip;
@@ -25,6 +27,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
   String? _selectedCategory;
   final ImagePicker _picker = ImagePicker();
   Uint8List? _coverImageBytes;
+  TripMapData? _plannedMapData;
 
   late TextEditingController _tripNameController;
   late TextEditingController _destinationController;
@@ -48,6 +51,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
         ? widget.trip.category
         : (AppLists.categories.isNotEmpty ? AppLists.categories.first : null);
     _coverImageBytes = widget.trip.imageBytes;
+    _plannedMapData = widget.trip.tripMap;
   }
 
   @override
@@ -140,6 +144,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
       seats: widget.trip.seatsLeft,
       transports: widget.trip.transportationMethods,
       coverPhotoBytes: _coverImageBytes,
+      mapData: _plannedMapData,
     );
 
     if (!mounted) return;
@@ -324,6 +329,24 @@ class _EditTripScreenState extends State<EditTripScreen> {
                     controller: _descriptionController,
                     maxLines: 4,
                     decoration: inputDecoration(hint: "Describe your trip..."),
+                  ),
+
+                  const SizedBox(height: 20),
+                  _buildLabel("HIGHWAY ROUTE & STOPS (OPENSTREETMAP)"),
+                  const SizedBox(height: 6),
+                  TripRoutePlannerWidget(
+                    initialMapData: widget.trip.tripMap,
+                    onRouteReady: (mapData) {
+                      _plannedMapData = mapData;
+                      if (_destinationController.text.trim().isEmpty) {
+                        final destWp = mapData.waypoints
+                            .where((w) => w.label.toLowerCase().contains('dest'))
+                            .firstOrNull;
+                        if (destWp != null) {
+                          _destinationController.text = destWp.name;
+                        }
+                      }
+                    },
                   ),
 
                   const SizedBox(height: 20),

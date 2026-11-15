@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_buddy_finder/api/controllers/trip_controller.dart';
+import 'package:travel_buddy_finder/api/models/trip_map_model.dart';
 import 'package:travel_buddy_finder/api/models/trip_model.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_request.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_request_store.dart';
@@ -57,6 +58,7 @@ class TripProvider with ChangeNotifier {
     required int seats,
     List<String>? transports,
     List<int>? coverPhotoBytes,
+    TripMapData? mapData,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -72,6 +74,7 @@ class TripProvider with ChangeNotifier {
       seats: seats,
       transports: transports,
       coverPhotoBytes: coverPhotoBytes,
+      mapData: mapData,
     );
 
     _isLoading = false;
@@ -100,6 +103,7 @@ class TripProvider with ChangeNotifier {
     int? seats,
     List<String>? transports,
     List<int>? coverPhotoBytes,
+    TripMapData? mapData,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -116,6 +120,7 @@ class TripProvider with ChangeNotifier {
       seats: seats,
       transports: transports,
       coverPhotoBytes: coverPhotoBytes,
+      mapData: mapData,
     );
 
     _isLoading = false;

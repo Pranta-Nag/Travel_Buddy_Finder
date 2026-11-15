@@ -1,81 +1,94 @@
 import 'package:flutter/foundation.dart';
 import 'package:travel_buddy_finder/api/controllers/rating_controller.dart';
 import 'package:travel_buddy_finder/api/models/rating_model.dart';
-import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
 
 class RatingProvider with ChangeNotifier {
-  final RatingController _ratingController = RatingController();
+  final RatingController _controller = RatingController();
 
-  final Map<int, TripRatingModel> _ratings = {};
+  final Map<int, TripRatingDetail> _ratingCache = {};
   bool _isLoading = false;
   String? _errorMessage;
 
-  Map<int, TripRatingModel> get ratings => Map.unmodifiable(_ratings);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  TripRatingModel? getRatingForTrip(dynamic tripId) {
-    final id = int.tryParse(tripId.toString().trim()) ?? 0;
-    return _ratings[id];
+  TripRatingDetail? getRatingForTrip(int tripId) => _ratingCache[tripId];
+
+  // 1. Fetch live rating stats from backend
+  Future<TripRatingDetail?> fetchRating(int tripId, {bool notify = true}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    if (notify) notifyListeners();
+
+    final detail = await _controller.getTripRating(tripId);
+    _isLoading = false;
+
+    if (detail != null) {
+      _ratingCache[tripId] = detail;
+    }
+    if (notify) notifyListeners();
+    return detail;
   }
 
-  Future<TripRatingModel?> fetchRating(dynamic tripId) async {
-    final id = int.tryParse(tripId.toString().trim()) ?? 0;
-    if (id <= 0) return null;
-
+  // 2. Submit new rating to backend
+  Future<RatingResult> submitRating({
+    required int tripId,
+    required int rating,
+    bool autoUpdateIfAlreadyRated = true,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _ratingController.getRating(id);
+    RatingResult result = await _controller.rateTrip(
+      tripId: tripId,
+      rating: rating,
+    );
+
+    // If already rated (HTTP 409), automatically fall back to editRating if enabled
+    if (!result.success && result.statusCode == 409 && autoUpdateIfAlreadyRated) {
+      result = await _controller.editRating(
+        tripId: tripId,
+        rating: rating,
+      );
+    }
 
     _isLoading = false;
-    if (result != null) {
-      _ratings[id] = result;
+
+    if (result.success) {
+      // Refresh cache for this trip
+      await fetchRating(tripId, notify: false);
+    } else {
+      _errorMessage = result.message;
     }
+
     notifyListeners();
     return result;
   }
 
-  Future<({bool success, String message, dynamic data})> submitRating({
-    required dynamic tripId,
+  // 3. Edit existing rating in backend
+  Future<RatingResult> updateRating({
+    required int tripId,
     required int rating,
   }) async {
-    final id = int.tryParse(tripId.toString().trim()) ?? 0;
-    if (id <= 0) {
-      return (success: false, message: 'Invalid trip ID', data: null);
-    }
-
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
-    final result = await _ratingController.submitOrUpdateRating(
-      tripId: id,
+    final result = await _controller.editRating(
+      tripId: tripId,
       rating: rating,
     );
 
-    if (result.success) {
-      // Re-fetch latest rating aggregates from backend
-      final updatedRating = await _ratingController.getRating(id);
-      if (updatedRating != null) {
-        _ratings[id] = updatedRating;
+    _isLoading = false;
 
-        // Update in-memory Trip in TripStore if present
-        final stringId = id.toString();
-        final tripIndex = TripStore.trips.indexWhere((t) => t.id == stringId);
-        if (tripIndex != -1) {
-          final oldTrip = TripStore.trips[tripIndex];
-          final updatedTrip = oldTrip.copyWith(
-            rating: updatedRating.averageRating.toStringAsFixed(1),
-          );
-          TripStore.update(updatedTrip);
-        }
-      }
+    if (result.success) {
+      await fetchRating(tripId, notify: false);
+    } else {
+      _errorMessage = result.message;
     }
 
-    _isLoading = false;
     notifyListeners();
-
     return result;
   }
 }

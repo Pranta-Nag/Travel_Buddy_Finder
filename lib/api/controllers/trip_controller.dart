@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:travel_buddy_finder/api/models/trip_map_model.dart';
 import 'package:travel_buddy_finder/api/models/trip_model.dart';
 import 'package:travel_buddy_finder/core/constants/url.dart';
 import 'package:travel_buddy_finder/core/network/api_client.dart';
@@ -59,6 +60,7 @@ class TripController {
     required int seats,
     List<String>? transports,
     List<int>? coverPhotoBytes,
+    TripMapData? mapData,
   }) async {
     try {
       final Map<String, dynamic> fields = {
@@ -108,6 +110,10 @@ class TripController {
           'route_coordinates': [],
         }),
       };
+
+      if (mapData != null) {
+        fields['map'] = jsonEncode(mapData.toJson());
+      }
 
       http.Response response;
       if (coverPhotoBytes != null && coverPhotoBytes.isNotEmpty) {
@@ -203,6 +209,7 @@ class TripController {
     int? seats,
     List<String>? transports,
     List<int>? coverPhotoBytes,
+    TripMapData? mapData,
   }) async {
     try {
       final Map<String, dynamic> fields = {
@@ -236,6 +243,11 @@ class TripController {
       if (transports != null) {
         fields['transport_method'] = transports.join(',');
         fields['transports'] = transports.join(',');
+      }
+
+      if (mapData != null) {
+        final mapJson = jsonEncode(mapData.toJson());
+        fields['map'] = mapJson;
       }
 
       http.Response response;

@@ -19,6 +19,7 @@ class TripModel {
   final int seats;
   final String rating;
   final List<String> transports;
+  final Map<String, dynamic>? mapData;
 
   TripModel({
     required this.id,
@@ -36,6 +37,7 @@ class TripModel {
     required this.seats,
     this.rating = '4.9',
     this.transports = const ['Flight', 'Bus'],
+    this.mapData,
   });
 
   String get fullImageUrl => AppUrl.resolveImageUrl(imageUrl);
@@ -82,6 +84,7 @@ class TripModel {
       description: description,
       seatsLeft: seats,
       imageBytes: localImageBytes,
+      genderPreference: hostGender,
       transportationMethods: transports,
     );
   }
@@ -156,6 +159,20 @@ class TripModel {
         json['user_profile_pic_url'] ??
         '';
 
+    String finalImageUrl = rawImageUrl.toString().trim();
+    if (finalImageUrl.isEmpty || finalImageUrl == 'null') {
+      final categoryLower = (json['category'] ?? '').toString().toLowerCase();
+      if (categoryLower.contains('beach')) {
+        finalImageUrl = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800';
+      } else if (categoryLower.contains('mountain') || categoryLower.contains('trek')) {
+        finalImageUrl = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800';
+      } else if (categoryLower.contains('forest') || categoryLower.contains('camp')) {
+        finalImageUrl = 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=800';
+      } else {
+        finalImageUrl = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800';
+      }
+    }
+
     return TripModel(
       id: json['id'] != null
           ? (json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0)
@@ -167,7 +184,7 @@ class TripModel {
       endDate: json['end_day'] ?? json['end_date'] ?? '',
       category: json['category'] ?? 'Adventure',
       description: json['description'] ?? '',
-      imageUrl: rawImageUrl.toString(),
+      imageUrl: finalImageUrl,
       hostName: json['host_username'] ??
           hostObj?['username'] ??
           json['host_name'] ??
@@ -179,6 +196,9 @@ class TripModel {
       seats: parsedSeats,
       rating: json['rating']?.toString() ?? '4.9',
       transports: parsedTransports.isNotEmpty ? parsedTransports : ['Flight', 'Bus'],
+      mapData: json['map'] is Map<String, dynamic>
+          ? json['map']
+          : (json['map'] is Map ? Map<String, dynamic>.from(json['map']) : null),
     );
   }
 
@@ -198,6 +218,7 @@ class TripModel {
       'available_seats': seats,
       'rating': rating,
       'transport_method': transports.join(','),
+      'map': mapData,
     };
   }
 }

@@ -99,6 +99,14 @@ class TripController {
         'transport_method': (transports ?? ['Bus', 'Flight']).join(','),
         'transports': (transports ?? ['Bus', 'Flight']).join(','),
         'transportation': (transports ?? ['Bus', 'Flight']).join(','),
+
+        'map': jsonEncode({
+          'start_location': 'Dhaka',
+          'distance_km': 250.0,
+          'duration_hours': 5.0,
+          'waypoints': ['Dhaka', location],
+          'route_coordinates': [],
+        }),
       };
 
       http.Response response;
@@ -112,9 +120,6 @@ class TripController {
           fields: formFields,
           filesBytes: {
             'cover_picture': coverPhotoBytes,
-            'image': coverPhotoBytes,
-            'cover_photo': coverPhotoBytes,
-            'cover_image': coverPhotoBytes,
           },
         );
 
@@ -125,10 +130,6 @@ class TripController {
           final Map<String, dynamic> jsonFields =
               Map<String, dynamic>.from(fields);
           jsonFields['cover_picture'] = dataUriBase64;
-          jsonFields['image'] = dataUriBase64;
-          jsonFields['cover_photo'] = dataUriBase64;
-          jsonFields['cover_image'] = dataUriBase64;
-          jsonFields['cover_picture_base64'] = rawBase64;
 
           final jsonResponse = await ApiClient.post(
             AppUrl.createTrip,
@@ -247,9 +248,6 @@ class TripController {
           fields: formFields,
           filesBytes: {
             'cover_picture': coverPhotoBytes,
-            'image': coverPhotoBytes,
-            'cover_photo': coverPhotoBytes,
-            'cover_image': coverPhotoBytes,
           },
         );
 
@@ -259,9 +257,6 @@ class TripController {
           final Map<String, dynamic> jsonFields =
               Map<String, dynamic>.from(fields);
           jsonFields['cover_picture'] = dataUriBase64;
-          jsonFields['image'] = dataUriBase64;
-          jsonFields['cover_photo'] = dataUriBase64;
-          jsonFields['cover_image'] = dataUriBase64;
 
           final jsonResponse = await ApiClient.post(
             AppUrl.updateTrip,

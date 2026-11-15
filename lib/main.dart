@@ -5,6 +5,7 @@ import 'package:travel_buddy_finder/api/providers/bookmark_provider.dart';
 import 'package:travel_buddy_finder/api/providers/chat_provider.dart';
 import 'package:travel_buddy_finder/api/providers/comment_provider.dart';
 import 'package:travel_buddy_finder/api/providers/profile_provider.dart';
+import 'package:travel_buddy_finder/api/providers/rating_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/app.dart';
@@ -20,6 +21,7 @@ void main() {
         ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
         ChangeNotifierProvider<CommentProvider>(create: (_) => CommentProvider()),
         ChangeNotifierProvider<ProfileProvider>(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider<RatingProvider>(create: (_) => RatingProvider()),
         ChangeNotifierProvider<TripProvider>(create: (_) => TripProvider()),
         ChangeNotifierProvider<TripRequestProvider>(create: (_) => TripRequestProvider()),
       ],

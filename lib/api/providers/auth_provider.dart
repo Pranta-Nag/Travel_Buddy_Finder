@@ -32,18 +32,17 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> tryAutoLogin() async {
-    final savedToken = await ApiClient.getToken();
-    if (savedToken == null || savedToken.isEmpty) {
-      return false;
-    }
-
-    _token = savedToken;
-    _isLoading = true;
-    notifyListeners();
-
     try {
-      final profile = await _profileController.getMyProfile();
-      _isLoading = false;
+      final savedToken = await ApiClient.getToken();
+      if (savedToken == null || savedToken.isEmpty) {
+        return false;
+      }
+
+      _token = savedToken;
+
+      final profile = await _profileController
+          .getMyProfile()
+          .timeout(const Duration(seconds: 4), onTimeout: () => null);
 
       if (profile != null) {
         _setCurrentUser(profile);
@@ -57,8 +56,8 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (_) {
-      _isLoading = false;
-      notifyListeners();
+      _token = null;
+      _setCurrentUser(null);
       return false;
     }
   }

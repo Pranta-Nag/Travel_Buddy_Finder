@@ -11,3 +11,8 @@
 -keepclassmembers class io.flutter.plugins.sharedpreferences.** { *; }
 -keep class io.flutter.plugins.sharedpreferences.SharedPreferencesApiRegistrar { *; }
 -keepclassmembers class io.flutter.plugins.sharedpreferences.SharedPreferencesApiRegistrar { *; }
+
+# Suppress warnings for optional/deferred components
+-dontwarn com.google.android.play.**
+-dontwarn com.google.android.play.core.**
+-dontwarn **

@@ -9,9 +9,11 @@ import 'package:travel_buddy_finder/api/providers/rating_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_request_provider.dart';
 import 'package:travel_buddy_finder/app.dart';
+import 'package:travel_buddy_finder/core/network/http_overrides.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  setupHttpOverrides();
 
   runApp(
     MultiProvider(

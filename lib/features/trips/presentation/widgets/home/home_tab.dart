@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travel_buddy_finder/api/providers/trip_provider.dart';
+import 'package:travel_buddy_finder/core/constants/app_colors.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip.dart';
 import 'package:travel_buddy_finder/features/trips/data/models/trip_data.dart';
 import 'package:travel_buddy_finder/features/trips/data/stores/trip_store.dart';
@@ -69,42 +70,55 @@ class _HomeTabState extends State<HomeTab> {
       child: ValueListenableBuilder<int>(
         valueListenable: TripStore.tripListNotifier,
         builder: (context, _, __) {
-          return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              const SizedBox(height: 8),
-              const HomeHeader(),
-              const SizedBox(height: 18),
-              HomeSearchBar(
-                controller: _searchController,
-                query: _searchQuery,
-                onChanged: () => setState(() {}),
-                onClear: () {
-                  _searchController.clear();
-                  setState(() {});
-                },
-              ),
-              const SizedBox(height: 22),
-              CategoryBar(
-                selectedCategory: _selectedCategory,
-                onCategorySelected: (cat) {
-                  setState(() => _selectedCategory = cat);
-                  context.read<TripProvider>().fetchTripsByCategory(cat);
-                },
-              ),
-              const SizedBox(height: 24),
-              const SectionHeader(title: 'Popular Trips'),
-              const SizedBox(height: 12),
-              tripProvider.isLoading && apiTripModels.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : TripGrid(trips: filteredTrips),
-              const SizedBox(height: 24),
-            ],
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              if (_selectedCategory == 'All') {
+                await context.read<TripProvider>().fetchAllTrips();
+              } else {
+                await context
+                    .read<TripProvider>()
+                    .fetchTripsByCategory(_selectedCategory);
+              }
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                const SizedBox(height: 8),
+                const HomeHeader(),
+                const SizedBox(height: 18),
+                HomeSearchBar(
+                  controller: _searchController,
+                  query: _searchQuery,
+                  onChanged: () => setState(() {}),
+                  onClear: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 22),
+                CategoryBar(
+                  selectedCategory: _selectedCategory,
+                  onCategorySelected: (cat) {
+                    setState(() => _selectedCategory = cat);
+                    context.read<TripProvider>().fetchTripsByCategory(cat);
+                  },
+                ),
+                const SizedBox(height: 24),
+                const SectionHeader(title: 'Popular Trips'),
+                const SizedBox(height: 12),
+                tripProvider.isLoading && apiTripModels.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : TripGrid(trips: filteredTrips),
+                const SizedBox(height: 24),
+              ],
+            ),
           );
         },
       ),

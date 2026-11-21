@@ -102,7 +102,7 @@ class AuthController {
     List<int>? nidPicBytes,
   }) async {
     try {
-      final Map<String, String> fields = {
+      final Map<String, dynamic> jsonBody = {
         'full_name': fullName.trim(),
         'username': username.trim(),
         'email': email.trim(),
@@ -112,25 +112,53 @@ class AuthController {
         'dob': dob,
       };
 
-      final hasImages = (profilePicBytes != null && profilePicBytes.isNotEmpty) ||
-          (nidPicBytes != null && nidPicBytes.isNotEmpty);
+      if (profilePicBytes != null && profilePicBytes.isNotEmpty) {
+        jsonBody['profile_pic'] =
+            'data:image/jpeg;base64,${base64Encode(profilePicBytes)}';
+      }
+      if (nidPicBytes != null && nidPicBytes.isNotEmpty) {
+        jsonBody['nid_pic'] =
+            'data:image/jpeg;base64,${base64Encode(nidPicBytes)}';
+      }
 
-      var response = hasImages
-          ? await ApiClient.multipartPost(
+      // 1. Primary: JSON with Base64 images (completely avoids Apache 406 Not Acceptable on shared hosting)
+      var response = await ApiClient.post(
+        AppUrl.registration,
+        body: jsonBody,
+        isJson: true,
+      );
+
+      // 2. Fallback: if JSON fails and images exist, attempt multipart
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final hasImages = (profilePicBytes != null && profilePicBytes.isNotEmpty) ||
+            (nidPicBytes != null && nidPicBytes.isNotEmpty);
+        if (hasImages) {
+          try {
+            final Map<String, String> formFields = {
+              'full_name': fullName.trim(),
+              'username': username.trim(),
+              'email': email.trim(),
+              'password': password,
+              'gender': gender,
+              'country': country,
+              'dob': dob,
+            };
+            final mpResponse = await ApiClient.multipartPost(
               AppUrl.registration,
-              fields: fields,
+              fields: formFields,
               filesBytes: {
                 if (profilePicBytes != null && profilePicBytes.isNotEmpty)
                   'profile_pic': profilePicBytes,
                 if (nidPicBytes != null && nidPicBytes.isNotEmpty)
                   'nid_pic': nidPicBytes,
               },
-            )
-          : await ApiClient.post(
-              AppUrl.registration,
-              body: fields,
-              isJson: true,
             );
+            if (mpResponse.statusCode == 200 || mpResponse.statusCode == 201) {
+              response = mpResponse;
+            }
+          } catch (_) {}
+        }
+      }
 
       if (response.body.isEmpty) {
         return (

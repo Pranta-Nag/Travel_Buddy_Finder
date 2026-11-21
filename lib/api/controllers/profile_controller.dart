@@ -47,24 +47,47 @@ class ProfileController {
     List<int>? profilePicBytes,
   }) async {
     try {
-      final Map<String, String> fields = {
+      final Map<String, dynamic> jsonFields = {
         'full_name': fullName.trim(),
         'gender': gender.trim(),
         'country': country.trim(),
         'dob': dob.trim(),
       };
 
-      var response = profilePicBytes != null && profilePicBytes.isNotEmpty
-          ? await ApiClient.multipartPost(
-              AppUrl.updateProfile,
-              fields: fields,
-              filesBytes: {'profile_pic': profilePicBytes},
-            )
-          : await ApiClient.post(
-              AppUrl.updateProfile,
-              body: fields,
-              isJson: true,
-            );
+      if (profilePicBytes != null && profilePicBytes.isNotEmpty) {
+        jsonFields['profile_pic'] =
+            'data:image/jpeg;base64,${base64Encode(profilePicBytes)}';
+      }
+
+      // 1. Primary: JSON with Base64 image
+      var response = await ApiClient.post(
+        AppUrl.updateProfile,
+        body: jsonFields,
+        isJson: true,
+      );
+
+      // 2. Fallback: multipart if JSON fails and image exists
+      if (response.statusCode != 200 &&
+          response.statusCode != 201 &&
+          profilePicBytes != null &&
+          profilePicBytes.isNotEmpty) {
+        try {
+          final Map<String, String> formFields = {
+            'full_name': fullName.trim(),
+            'gender': gender.trim(),
+            'country': country.trim(),
+            'dob': dob.trim(),
+          };
+          final mpResponse = await ApiClient.multipartPost(
+            AppUrl.updateProfile,
+            fields: formFields,
+            filesBytes: {'profile_pic': profilePicBytes},
+          );
+          if (mpResponse.statusCode == 200 || mpResponse.statusCode == 201) {
+            response = mpResponse;
+          }
+        } catch (_) {}
+      }
 
       final data = jsonDecode(response.body);
       final String message = (data is Map && data['message'] != null)

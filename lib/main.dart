@@ -19,13 +19,17 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-        ChangeNotifierProvider<BookmarkProvider>(create: (_) => BookmarkProvider()),
+        ChangeNotifierProvider<BookmarkProvider>(
+            create: (_) => BookmarkProvider()),
         ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
-        ChangeNotifierProvider<CommentProvider>(create: (_) => CommentProvider()),
-        ChangeNotifierProvider<ProfileProvider>(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider<CommentProvider>(
+            create: (_) => CommentProvider()),
+        ChangeNotifierProvider<ProfileProvider>(
+            create: (_) => ProfileProvider()),
         ChangeNotifierProvider<RatingProvider>(create: (_) => RatingProvider()),
         ChangeNotifierProvider<TripProvider>(create: (_) => TripProvider()),
-        ChangeNotifierProvider<TripRequestProvider>(create: (_) => TripRequestProvider()),
+        ChangeNotifierProvider<TripRequestProvider>(
+            create: (_) => TripRequestProvider()),
       ],
       child: const App(),
     ),

@@ -4,7 +4,7 @@ class AppUrl {
   AppUrl._();
 
   // Base API URL
-  static const String baseUrl = 'http://localhost/travel_buddy/api';
+  static const String baseUrl = 'https://travelbuddy.kechybd.com/api';
 
   // Auth API Endpoints
   static const String login = '/login';
@@ -61,7 +61,8 @@ class AppUrl {
 
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       if (trimmed.contains('localhost/travel_buddy/uploads/')) {
-        trimmed = trimmed.replaceFirst('localhost/travel_buddy/uploads/', 'localhost/travel_buddy/api/uploads/');
+        trimmed = trimmed.replaceFirst('localhost/travel_buddy/uploads/',
+            'localhost/travel_buddy/api/uploads/');
       }
       return trimmed;
     }
@@ -73,7 +74,9 @@ class AppUrl {
     }
 
     var cleanPath = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
-    if (cleanPath.isEmpty || cleanPath == 'uploads' || cleanPath == 'uploads/') {
+    if (cleanPath.isEmpty ||
+        cleanPath == 'uploads' ||
+        cleanPath == 'uploads/') {
       return '';
     }
 

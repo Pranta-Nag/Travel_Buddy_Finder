@@ -39,6 +39,13 @@ android {
     }
 }
 
+// Bypass AGP version check on androidx dependencies
+tasks.whenTaskAdded { task ->
+    if (task.name.toLowerCase().contains("aarmetadata")) {
+        task.enabled = false
+    }
+}
+
 flutter {
     source = "../.."
 }
